@@ -1,158 +1,197 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="km">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShopFlow Dashboard</title>
+  <title>Luy Khmer POS</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="app-shell">
-    <header class="hero">
-      <div class="hero__top">
-        <div>
-          <p class="eyebrow" data-i18n="eyebrow">Daily shop overview</p>
-          <h1 data-i18n="heroTitle">A simple dashboard for your shop</h1>
-          <p class="hero__text" data-i18n="heroText">
-            See sales, cash, and stock in one place. Built to feel clear, calm, and easy on a phone.
-          </p>
-        </div>
-        <button class="language-toggle" id="languageToggle" type="button" aria-label="Toggle language">
-          ខ្មែរ
-        </button>
-      </div>
+  <div class="login-screen" id="loginScreen">
+    <section class="login-card">
+      <p class="section-kicker">Luy Khmer POS</p>
+      <h1>ចូលប្រើប្រព័ន្ធលក់</h1>
+      <p class="login-copy">
+        សម្រាប់ម្ចាស់ហាង និងបុគ្គលិកប្រើបានស្រួល។ ទិន្នន័យត្រូវបានរក្សាទុកក្នុងឧបករណ៍នេះ។
+      </p>
 
-      <div class="hero__stats">
-        <article class="stat-card stat-card--accent">
-          <p data-i18n="todaySales">Today sales</p>
-          <strong id="todaySalesValue">$1,240</strong>
-          <span data-i18n="salesHint">12 orders closed today</span>
-        </article>
-        <article class="stat-card">
-          <p data-i18n="cashOnHand">Cash on hand</p>
-          <strong id="cashOnHandValue">$3,480</strong>
-          <span data-i18n="cashHint">After expenses and payout</span>
-        </article>
-        <article class="stat-card">
-          <p data-i18n="lowStock">Low stock items</p>
-          <strong id="lowStockValue">08</strong>
-          <span data-i18n="stockHint">Time to refill soon</span>
-        </article>
+      <form id="loginForm" class="login-form">
+        <label>
+          <span>ឈ្មោះអ្នកប្រើ</span>
+          <input id="loginName" type="text" placeholder="ឧទាហរណ៍: ម្ចាស់ហាង">
+        </label>
+        <label>
+          <span>លេខសម្ងាត់</span>
+          <input id="loginPin" type="password" inputmode="numeric" placeholder="1234">
+        </label>
+        <button class="primary-button" type="submit">ចូលប្រើ</button>
+      </form>
+      <p class="login-help">សាកល្បងប្រើ: ឈ្មោះណាមួយ និងលេខសម្ងាត់ 1234</p>
+    </section>
+  </div>
+
+  <div class="app-shell hidden" id="appShell">
+    <header class="topbar">
+      <div>
+        <p class="section-kicker">POS សម្រាប់ទូរស័ព្ទ</p>
+        <h2>ផ្ទាំងគ្រប់គ្រងហាង</h2>
+      </div>
+      <div class="topbar__actions">
+        <div class="user-chip">
+          <span id="welcomeUser">សួស្តី</span>
+        </div>
+        <button class="secondary-button" id="logoutButton" type="button">ចាកចេញ</button>
       </div>
     </header>
 
-    <main class="dashboard-grid">
-      <section class="panel">
-        <div class="panel__head">
-          <div>
-            <p class="panel__eyebrow" data-i18n="salesSection">Sales</p>
-            <h2 data-i18n="quickSale">Quick sale</h2>
-          </div>
-          <span class="pill" data-i18n="fastEntry">Fast entry</span>
-        </div>
-
-        <form id="saleForm" class="form-grid">
-          <label>
-            <span data-i18n="productName">Product name</span>
-            <input id="saleProduct" type="text" value="Iced Coffee" data-i18n-placeholder="productPlaceholder">
-          </label>
-          <label>
-            <span data-i18n="qty">Qty</span>
-            <input id="saleQty" type="number" min="1" value="2">
-          </label>
-          <label>
-            <span data-i18n="price">Price</span>
-            <input id="salePrice" type="number" min="0" value="2.5" step="0.01">
-          </label>
-          <button class="primary-button" type="submit" data-i18n="addSale">Add sale</button>
-        </form>
-
-        <div class="list-card">
-          <div class="list-card__head">
-            <h3 data-i18n="recentSales">Recent sales</h3>
-            <span id="salesCount">3</span>
-          </div>
-          <div id="salesList" class="stack-list"></div>
+    <main class="mobile-layout">
+      <section class="panel panel--hero">
+        <div class="hero-grid">
+          <article class="summary-card summary-card--warm">
+            <p>លក់ថ្ងៃនេះ</p>
+            <strong id="salesToday">$0.00</strong>
+            <span id="ordersToday">0 វិក្កយបត្រ</span>
+          </article>
+          <article class="summary-card">
+            <p>ចំណាយថ្ងៃនេះ</p>
+            <strong id="expenseToday">$0.00</strong>
+            <span id="expenseCount">0 កំណត់ត្រា</span>
+          </article>
+          <article class="summary-card">
+            <p>សាច់ប្រាក់សុទ្ធ</p>
+            <strong id="netToday">$0.00</strong>
+            <span id="stockAlertCount">0 មុខទំនិញជិតអស់</span>
+          </article>
         </div>
       </section>
 
       <section class="panel">
-        <div class="panel__head">
+        <div class="panel-head">
           <div>
-            <p class="panel__eyebrow" data-i18n="moneySection">Money in / out</p>
-            <h2 data-i18n="cashFlow">Cash flow</h2>
+            <p class="section-kicker">លក់រហ័ស</p>
+            <h3>បង្កើតការបញ្ជាទិញ</h3>
           </div>
-          <span class="pill pill--soft" data-i18n="easyTrack">Easy track</span>
+          <button class="ghost-button" id="clearCartButton" type="button">សម្អាតកន្ត្រក</button>
         </div>
 
-        <form id="cashForm" class="form-grid">
-          <label>
-            <span data-i18n="entryNote">Note</span>
-            <input id="cashNote" type="text" value="Electricity bill" data-i18n-placeholder="notePlaceholder">
+        <form id="itemForm" class="entry-grid">
+          <label class="entry-grid__wide">
+            <span>ស្វែងរកមុខទំនិញ</span>
+            <input id="productSearch" list="productSuggestions" type="text" placeholder="ស្វែងរកឈ្មោះទំនិញ">
+            <datalist id="productSuggestions"></datalist>
           </label>
           <label>
-            <span data-i18n="amount">Amount</span>
-            <input id="cashAmount" type="number" min="0" value="45" step="0.01">
+            <span>ចំនួន</span>
+            <input id="productQty" type="number" min="1" value="1">
           </label>
           <label>
-            <span data-i18n="type">Type</span>
-            <select id="cashType">
-              <option value="in" data-i18n="moneyIn">Money in</option>
-              <option value="out" selected data-i18n="moneyOut">Money out</option>
-            </select>
+            <span>តម្លៃ</span>
+            <input id="productPrice" type="number" min="0" step="0.01" placeholder="0.00">
           </label>
-          <button class="primary-button" type="submit" data-i18n="saveEntry">Save entry</button>
+          <button class="primary-button" type="submit">បន្ថែមទៅកន្ត្រក</button>
         </form>
 
-        <div class="cash-summary">
-          <article>
-            <p data-i18n="moneyIn">Money in</p>
-            <strong id="moneyInValue">$1,820</strong>
-          </article>
-          <article>
-            <p data-i18n="moneyOut">Money out</p>
-            <strong id="moneyOutValue">$580</strong>
-          </article>
-        </div>
-
-        <div class="list-card">
-          <div class="list-card__head">
-            <h3 data-i18n="todayEntries">Today entries</h3>
-            <span id="cashCount">3</span>
+        <div class="cart-box">
+          <div class="list-head">
+            <h4>កន្ត្រកលក់</h4>
+            <span id="cartCount">0 មុខ</span>
           </div>
-          <div id="cashList" class="stack-list"></div>
+          <div class="stack-list" id="cartList"></div>
+          <div class="cart-footer">
+            <div>
+              <p>សរុបត្រូវទូទាត់</p>
+              <strong id="cartTotal">$0.00</strong>
+            </div>
+            <button class="primary-button" id="checkoutButton" type="button">បិទការលក់</button>
+          </div>
         </div>
       </section>
 
-      <section class="panel panel--wide">
-        <div class="panel__head">
+      <section class="panel">
+        <div class="panel-head">
           <div>
-            <p class="panel__eyebrow" data-i18n="stockSection">Stock count</p>
-            <h2 data-i18n="simpleStock">Simple stock watch</h2>
+            <p class="section-kicker">មុខទំនិញ</p>
+            <h3>រក្សាទុកឈ្មោះទំនិញ</h3>
           </div>
-          <span class="pill" data-i18n="mobileReady">Mobile ready</span>
         </div>
 
-        <form id="stockForm" class="form-grid form-grid--stock">
-          <label>
-            <span data-i18n="itemName">Item name</span>
-            <input id="stockName" type="text" value="Milk" data-i18n-placeholder="stockPlaceholder">
+        <form id="catalogForm" class="entry-grid">
+          <label class="entry-grid__wide">
+            <span>ឈ្មោះទំនិញ</span>
+            <input id="catalogName" type="text" placeholder="ឧទាហរណ៍: កាហ្វេទឹកកក">
           </label>
           <label>
-            <span data-i18n="currentCount">Current count</span>
-            <input id="stockCount" type="number" min="0" value="14">
+            <span>តម្លៃលំនាំដើម</span>
+            <input id="catalogPrice" type="number" min="0" step="0.01" placeholder="1.50">
           </label>
           <label>
-            <span data-i18n="warningAt">Warning at</span>
-            <input id="stockLimit" type="number" min="0" value="10">
+            <span>ស្តុកនៅសល់</span>
+            <input id="catalogStock" type="number" min="0" value="0">
           </label>
-          <button class="primary-button" type="submit" data-i18n="updateStock">Update stock</button>
+          <button class="primary-button" type="submit">រក្សាទុក</button>
         </form>
 
-        <div id="stockGrid" class="stock-grid"></div>
+        <div class="list-head">
+          <h4>បញ្ជីទំនិញដែលបានរក្សាទុក</h4>
+          <span id="productCount">0 មុខ</span>
+        </div>
+        <div class="product-grid" id="productGrid"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <p class="section-kicker">កំណត់ត្រាប្រចាំថ្ងៃ</p>
+            <h3>ចំណាយ និងរបាយការណ៍</h3>
+          </div>
+        </div>
+
+        <form id="expenseForm" class="entry-grid">
+          <label class="entry-grid__wide">
+            <span>ចំណាំចំណាយ</span>
+            <input id="expenseNote" type="text" placeholder="ឧទាហរណ៍: ទិញកញ្ចប់ ឬ បង់ភ្លើង">
+          </label>
+          <label>
+            <span>ចំនួនទឹកប្រាក់</span>
+            <input id="expenseAmount" type="number" min="0" step="0.01" placeholder="0.00">
+          </label>
+          <button class="primary-button" type="submit">បន្ថែមចំណាយ</button>
+        </form>
+
+        <div class="report-grid">
+          <article class="report-card">
+            <p>វិក្កយបត្រថ្ងៃនេះ</p>
+            <strong id="reportOrders">0</strong>
+          </article>
+          <article class="report-card">
+            <p>មុខទំនិញលក់បាន</p>
+            <strong id="reportItems">0</strong>
+          </article>
+          <article class="report-card">
+            <p>លក់មធ្យម / វិក្កយបត្រ</p>
+            <strong id="reportAverage">$0.00</strong>
+          </article>
+        </div>
+
+        <div class="record-columns">
+          <div class="record-box">
+            <div class="list-head">
+              <h4>ការបញ្ជាទិញថ្ងៃនេះ</h4>
+              <span id="saleHistoryCount">0</span>
+            </div>
+            <div class="stack-list" id="salesHistory"></div>
+          </div>
+          <div class="record-box">
+            <div class="list-head">
+              <h4>ចំណាយថ្ងៃនេះ</h4>
+              <span id="expenseHistoryCount">0</span>
+            </div>
+            <div class="stack-list" id="expenseHistory"></div>
+          </div>
+        </div>
       </section>
     </main>
   </div>

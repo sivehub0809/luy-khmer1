@@ -1,292 +1,459 @@
-const translations = {
-  en: {
-    eyebrow: "Daily shop overview",
-    heroTitle: "A simple dashboard for your shop",
-    heroText: "See sales, cash, and stock in one place. Built to feel clear, calm, and easy on a phone.",
-    todaySales: "Today sales",
-    salesHint: "12 orders closed today",
-    cashOnHand: "Cash on hand",
-    cashHint: "After expenses and payout",
-    lowStock: "Low stock items",
-    stockHint: "Time to refill soon",
-    salesSection: "Sales",
-    quickSale: "Quick sale",
-    fastEntry: "Fast entry",
-    productName: "Product name",
-    qty: "Qty",
-    price: "Price",
-    addSale: "Add sale",
-    recentSales: "Recent sales",
-    moneySection: "Money in / out",
-    cashFlow: "Cash flow",
-    easyTrack: "Easy track",
-    entryNote: "Note",
-    amount: "Amount",
-    type: "Type",
-    moneyIn: "Money in",
-    moneyOut: "Money out",
-    saveEntry: "Save entry",
-    todayEntries: "Today entries",
-    stockSection: "Stock count",
-    simpleStock: "Simple stock watch",
-    mobileReady: "Mobile ready",
-    itemName: "Item name",
-    currentCount: "Current count",
-    warningAt: "Warning at",
-    updateStock: "Update stock",
-    productPlaceholder: "Example: Iced Coffee",
-    notePlaceholder: "Example: Rent or supplier",
-    stockPlaceholder: "Example: Milk",
-    inStock: "Good level",
-    lowLevel: "Low stock",
-    itemsLeft: "left",
-    alertAt: "Alert at",
-    saleSaved: "Sale added",
-    cashSaved: "Cash entry saved",
-    stockSaved: "Stock updated"
-  },
-  km: {
-    eyebrow: "មើលហាងប្រចាំថ្ងៃ",
-    heroTitle: "ផ្ទាំងគ្រប់គ្រងសាមញ្ញសម្រាប់ហាងរបស់អ្នក",
-    heroText: "មើលការលក់ លុយចូលចេញ និងស្តុកនៅកន្លែងតែមួយ។ ងាយមើល ងាយចុច និងស្រួលប្រើលើទូរស័ព្ទ។",
-    todaySales: "ការលក់ថ្ងៃនេះ",
-    salesHint: "បានបិទការបញ្ជាទិញ 12 មុខថ្ងៃនេះ",
-    cashOnHand: "លុយនៅដៃ",
-    cashHint: "បន្ទាប់ពីចំណាយ និងដកចេញ",
-    lowStock: "ទំនិញជិតអស់",
-    stockHint: "គួរបំពេញស្តុកឆាប់ៗ",
-    salesSection: "ការលក់",
-    quickSale: "បញ្ចូលការលក់រហ័ស",
-    fastEntry: "ចូលទិន្នន័យលឿន",
-    productName: "ឈ្មោះទំនិញ",
-    qty: "ចំនួន",
-    price: "តម្លៃ",
-    addSale: "បន្ថែមការលក់",
-    recentSales: "ការលក់ថ្មីៗ",
-    moneySection: "លុយចូល / ចេញ",
-    cashFlow: "ចរន្តសាច់ប្រាក់",
-    easyTrack: "តាមដានងាយ",
-    entryNote: "កំណត់សម្គាល់",
-    amount: "ចំនួនទឹកប្រាក់",
-    type: "ប្រភេទ",
-    moneyIn: "លុយចូល",
-    moneyOut: "លុយចេញ",
-    saveEntry: "រក្សាទុក",
-    todayEntries: "បញ្ជីថ្ងៃនេះ",
-    stockSection: "ចំនួនស្តុក",
-    simpleStock: "មើលស្តុកបែបសាមញ្ញ",
-    mobileReady: "សមសម្រាប់ទូរស័ព្ទ",
-    itemName: "ឈ្មោះមុខទំនិញ",
-    currentCount: "ចំនួនបច្ចុប្បន្ន",
-    warningAt: "ជូនដំណឹងនៅពេល",
-    updateStock: "អាប់ដេតស្តុក",
-    productPlaceholder: "ឧទាហរណ៍: កាហ្វេទឹកកក",
-    notePlaceholder: "ឧទាហរណ៍: ថ្លៃជួល ឬ អ្នកផ្គត់ផ្គង់",
-    stockPlaceholder: "ឧទាហរណ៍: ទឹកដោះគោ",
-    inStock: "នៅគ្រប់គ្រាន់",
-    lowLevel: "ស្តុកទាប",
-    itemsLeft: "នៅសល់",
-    alertAt: "ជូនដំណឹងត្រឹម",
-    saleSaved: "បានបន្ថែមការលក់",
-    cashSaved: "បានរក្សាទុកបញ្ជីលុយ",
-    stockSaved: "បានអាប់ដេតស្តុក"
-  }
-};
+const STORAGE_KEY = "luy-khmer-pos-v2";
+const LOGIN_PIN = "1234";
+
+const todayKey = () => new Date().toISOString().slice(0, 10);
 
 const defaultState = {
-  language: "en",
-  sales: [
-    { name: "Iced Coffee", qty: 2, price: 2.5 },
-    { name: "Bread", qty: 4, price: 1.2 },
-    { name: "Noodles", qty: 3, price: 1.8 }
+  session: {
+    isLoggedIn: false,
+    username: ""
+  },
+  products: [
+    { id: crypto.randomUUID(), name: "កាហ្វេទឹកកក", price: 1.5, stock: 30, lowStockAt: 8 },
+    { id: crypto.randomUUID(), name: "តែទឹកដោះគោ", price: 2, stock: 18, lowStockAt: 6 },
+    { id: crypto.randomUUID(), name: "មីខ្ចប់", price: 0.75, stock: 42, lowStockAt: 10 }
   ],
-  cashEntries: [
-    { note: "Morning sales", amount: 920, type: "in" },
-    { note: "Supplier payment", amount: 320, type: "out" },
-    { note: "Delivery fee", amount: 260, type: "out" }
-  ],
-  stock: [
-    { name: "Milk", count: 14, limit: 10 },
-    { name: "Sugar", count: 9, limit: 10 },
-    { name: "Coffee Beans", count: 21, limit: 8 }
-  ]
+  orders: [],
+  expenses: [],
+  cart: []
 };
 
-const savedState = JSON.parse(localStorage.getItem("shopflow-dashboard") || "null");
+const savedState = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+const normalizeProducts = (products) =>
+  products.map((product) => ({
+    id: product.id || crypto.randomUUID(),
+    name: product.name || "ទំនិញថ្មី",
+    price: Number(product.price) || 0,
+    stock: Number(product.stock) || 0,
+    lowStockAt: Number(product.lowStockAt) || 5
+  }));
+
 const state = savedState
   ? {
-      language: savedState.language || defaultState.language,
-      sales: Array.isArray(savedState.sales) ? savedState.sales : defaultState.sales,
-      cashEntries: Array.isArray(savedState.cashEntries) ? savedState.cashEntries : defaultState.cashEntries,
-      stock: Array.isArray(savedState.stock) ? savedState.stock : defaultState.stock
+      session: savedState.session || defaultState.session,
+      products: Array.isArray(savedState.products)
+        ? normalizeProducts(savedState.products)
+        : normalizeProducts(defaultState.products),
+      orders: Array.isArray(savedState.orders) ? savedState.orders : defaultState.orders,
+      expenses: Array.isArray(savedState.expenses) ? savedState.expenses : defaultState.expenses,
+      cart: Array.isArray(savedState.cart) ? savedState.cart : defaultState.cart
     }
-  : { ...defaultState };
+  : {
+      ...structuredClone(defaultState),
+      products: normalizeProducts(defaultState.products)
+    };
 
 function persistState() {
-  localStorage.setItem("shopflow-dashboard", JSON.stringify(state));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-const formatCurrency = (value) =>
-  new Intl.NumberFormat(state.language === "km" ? "km-KH" : "en-US", {
+function money(value) {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-    maximumFractionDigits: 2
+    minimumFractionDigits: 2
   }).format(value);
+}
 
-function renderText() {
-  document.documentElement.lang = state.language;
-  document.querySelectorAll("[data-i18n]").forEach((element) => {
-    const key = element.dataset.i18n;
-    if (translations[state.language][key]) {
-      element.textContent = translations[state.language][key];
-    }
-  });
-  document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
-    const key = element.dataset.i18nPlaceholder;
-    if (translations[state.language][key]) {
-      element.placeholder = translations[state.language][key];
-    }
-  });
-  document.getElementById("languageToggle").textContent = state.language === "en" ? "ខ្មែរ" : "English";
+function safeText(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function todayOrders() {
+  return state.orders.filter((order) => order.date === todayKey());
+}
+
+function todayExpenses() {
+  return state.expenses.filter((expense) => expense.date === todayKey());
+}
+
+function findProductByName(name) {
+  return state.products.find((product) => product.name.toLowerCase() === name.trim().toLowerCase());
+}
+
+function fillProductSuggestions() {
+  const datalist = document.getElementById("productSuggestions");
+  datalist.innerHTML = state.products
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name, "km"))
+    .map((product) => `<option value="${safeText(product.name)}"></option>`)
+    .join("");
+}
+
+function renderAuth() {
+  const loginScreen = document.getElementById("loginScreen");
+  const appShell = document.getElementById("appShell");
+  loginScreen.classList.toggle("hidden", state.session.isLoggedIn);
+  appShell.classList.toggle("hidden", !state.session.isLoggedIn);
+  document.getElementById("welcomeUser").textContent = state.session.username
+    ? `សួស្តី ${state.session.username}`
+    : "សួស្តី";
 }
 
 function renderSummary() {
-  const todaySalesTotal = state.sales.reduce((sum, item) => sum + item.qty * item.price, 0);
-  const moneyInTotal = state.cashEntries
-    .filter((entry) => entry.type === "in")
-    .reduce((sum, entry) => sum + entry.amount, 0);
-  const moneyOutTotal = state.cashEntries
-    .filter((entry) => entry.type === "out")
-    .reduce((sum, entry) => sum + entry.amount, 0);
-  const lowStockCount = state.stock.filter((item) => item.count <= item.limit).length;
+  const orders = todayOrders();
+  const expenses = todayExpenses();
+  const salesTotal = orders.reduce((sum, order) => sum + order.total, 0);
+  const expenseTotal = expenses.reduce((sum, item) => sum + item.amount, 0);
+  const netTotal = salesTotal - expenseTotal;
+  const lowStock = state.products.filter((product) => product.stock <= product.lowStockAt).length;
 
-  document.getElementById("todaySalesValue").textContent = formatCurrency(todaySalesTotal);
-  document.getElementById("cashOnHandValue").textContent = formatCurrency(moneyInTotal - moneyOutTotal);
-  document.getElementById("lowStockValue").textContent = String(lowStockCount).padStart(2, "0");
-  document.getElementById("moneyInValue").textContent = formatCurrency(moneyInTotal);
-  document.getElementById("moneyOutValue").textContent = formatCurrency(moneyOutTotal);
+  document.getElementById("salesToday").textContent = money(salesTotal);
+  document.getElementById("ordersToday").textContent = `${orders.length} វិក្កយបត្រ`;
+  document.getElementById("expenseToday").textContent = money(expenseTotal);
+  document.getElementById("expenseCount").textContent = `${expenses.length} កំណត់ត្រា`;
+  document.getElementById("netToday").textContent = money(netTotal);
+  document.getElementById("stockAlertCount").textContent = `${lowStock} មុខទំនិញជិតអស់`;
 }
 
-function renderSales() {
-  const salesList = document.getElementById("salesList");
-  salesList.innerHTML = state.sales
-    .slice()
-    .reverse()
-    .map(
-      (item) => `
-        <article class="list-row">
-          <div>
-            <strong>${item.name}</strong>
-            <small>${item.qty} x ${formatCurrency(item.price)}</small>
-          </div>
-          <strong>${formatCurrency(item.qty * item.price)}</strong>
-        </article>
-      `
-    )
-    .join("");
-  document.getElementById("salesCount").textContent = state.sales.length;
-}
+function renderCart() {
+  const cartList = document.getElementById("cartList");
+  const total = state.cart.reduce((sum, item) => sum + item.qty * item.price, 0);
 
-function renderCashEntries() {
-  const cashList = document.getElementById("cashList");
-  cashList.innerHTML = state.cashEntries
-    .slice()
-    .reverse()
-    .map((entry) => {
-      const sign = entry.type === "in" ? "+" : "-";
-      const color = entry.type === "in" ? "var(--green)" : "var(--red)";
-      return `
-        <article class="list-row">
-          <div>
-            <strong>${entry.note}</strong>
-            <small>${translations[state.language][entry.type === "in" ? "moneyIn" : "moneyOut"]}</small>
-          </div>
-          <strong style="color:${color}">${sign}${formatCurrency(entry.amount)}</strong>
-        </article>
-      `;
-    })
-    .join("");
-  document.getElementById("cashCount").textContent = state.cashEntries.length;
-}
-
-function renderStock() {
-  const stockGrid = document.getElementById("stockGrid");
-  stockGrid.innerHTML = state.stock
-    .map((item) => {
-      const low = item.count <= item.limit;
-      return `
-        <article class="stock-item">
-          <div class="stock-item__top">
+  if (!state.cart.length) {
+    cartList.innerHTML = '<p class="empty-state">មិនទាន់មានមុខទំនិញក្នុងកន្ត្រកទេ</p>';
+  } else {
+    cartList.innerHTML = state.cart
+      .map(
+        (item) => `
+          <article class="cart-row">
             <div>
-              <strong>${item.name}</strong>
-              <span>${item.count} ${translations[state.language].itemsLeft}</span>
+              <div class="cart-title">${safeText(item.name)}</div>
+              <div class="cart-meta">${item.qty} x ${money(item.price)}</div>
             </div>
-            <span class="badge ${low ? "badge--low" : "badge--ok"}">
-              ${translations[state.language][low ? "lowLevel" : "inStock"]}
-            </span>
-          </div>
-          <div class="stock-item__bottom">
-            <span>${translations[state.language].alertAt}: ${item.limit}</span>
-            <strong>${item.count}</strong>
-          </div>
-        </article>
-      `;
-    })
-    .join("");
+            <div class="chip-row">
+              <strong>${money(item.qty * item.price)}</strong>
+              <button class="delete-button" type="button" onclick="removeCartItem('${item.id}')">លុប</button>
+            </div>
+          </article>
+        `
+      )
+      .join("");
+  }
+
+  document.getElementById("cartCount").textContent = `${state.cart.length} មុខ`;
+  document.getElementById("cartTotal").textContent = money(total);
+}
+
+function renderProducts() {
+  const productGrid = document.getElementById("productGrid");
+  if (!state.products.length) {
+    productGrid.innerHTML = '<p class="empty-state">មិនទាន់មានទំនិញដែលបានរក្សាទុកទេ</p>';
+  } else {
+    productGrid.innerHTML = state.products
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name, "km"))
+      .map((product) => {
+        const isLow = product.stock <= product.lowStockAt;
+        return `
+          <article class="product-card">
+            <div class="product-row">
+              <div>
+                <div class="product-title">${safeText(product.name)}</div>
+                <div class="product-note">តម្លៃ ${money(product.price)} • ស្តុក ${product.stock}</div>
+              </div>
+              <button class="delete-button" type="button" onclick="deleteProduct('${product.id}')">លុប</button>
+            </div>
+            <div class="chip-row">
+              <button class="chip-button" type="button" onclick="quickPickProduct('${product.id}')">ជ្រើសលក់</button>
+              <span class="product-note">${isLow ? "ជិតអស់ស្តុក" : "ស្តុកធម្មតា"}</span>
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+  }
+  document.getElementById("productCount").textContent = `${state.products.length} មុខ`;
+  fillProductSuggestions();
+}
+
+function renderReports() {
+  const orders = todayOrders();
+  const expenses = todayExpenses();
+  const soldItems = orders.reduce(
+    (sum, order) => sum + order.items.reduce((itemSum, item) => itemSum + item.qty, 0),
+    0
+  );
+  const average = orders.length
+    ? orders.reduce((sum, order) => sum + order.total, 0) / orders.length
+    : 0;
+
+  document.getElementById("reportOrders").textContent = orders.length;
+  document.getElementById("reportItems").textContent = soldItems;
+  document.getElementById("reportAverage").textContent = money(average);
+  document.getElementById("saleHistoryCount").textContent = orders.length;
+  document.getElementById("expenseHistoryCount").textContent = expenses.length;
+
+  const salesHistory = document.getElementById("salesHistory");
+  if (!orders.length) {
+    salesHistory.innerHTML = '<p class="empty-state">ថ្ងៃនេះមិនទាន់មានការលក់ទេ</p>';
+  } else {
+    salesHistory.innerHTML = orders
+      .slice()
+      .reverse()
+      .map((order) => {
+        const names = order.items.map((item) => `${safeText(item.name)} x${item.qty}`).join(", ");
+        return `
+          <article class="record-row">
+            <div>
+              <div class="record-title">វិក្កយបត្រ ${safeText(order.invoice)}</div>
+              <div class="record-meta">${names}</div>
+            </div>
+            <div class="chip-row">
+              <strong>${money(order.total)}</strong>
+              <button class="delete-button" type="button" onclick="deleteOrder('${order.id}')">លុប</button>
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+  }
+
+  const expenseHistory = document.getElementById("expenseHistory");
+  if (!expenses.length) {
+    expenseHistory.innerHTML = '<p class="empty-state">ថ្ងៃនេះមិនទាន់មានចំណាយទេ</p>';
+  } else {
+    expenseHistory.innerHTML = expenses
+      .slice()
+      .reverse()
+      .map(
+        (expense) => `
+          <article class="record-row">
+            <div>
+              <div class="record-title">${safeText(expense.note)}</div>
+              <div class="record-meta">${safeText(expense.createdAt)}</div>
+            </div>
+            <div class="chip-row">
+              <strong>${money(expense.amount)}</strong>
+              <button class="delete-button" type="button" onclick="deleteExpense('${expense.id}')">លុប</button>
+            </div>
+          </article>
+        `
+      )
+      .join("");
+  }
 }
 
 function renderApp() {
-  renderText();
+  renderAuth();
+  if (!state.session.isLoggedIn) {
+    return;
+  }
   renderSummary();
-  renderSales();
-  renderCashEntries();
-  renderStock();
+  renderCart();
+  renderProducts();
+  renderReports();
 }
 
-document.getElementById("languageToggle").addEventListener("click", () => {
-  state.language = state.language === "en" ? "km" : "en";
-  persistState();
-  renderApp();
-});
-
-document.getElementById("saleForm").addEventListener("submit", (event) => {
-  event.preventDefault();
-  const name = document.getElementById("saleProduct").value.trim();
-  const qty = Number(document.getElementById("saleQty").value);
-  const price = Number(document.getElementById("salePrice").value);
-  if (!name || qty <= 0 || price < 0) return;
-  state.sales.push({ name, qty, price });
-  persistState();
-  renderApp();
-});
-
-document.getElementById("cashForm").addEventListener("submit", (event) => {
-  event.preventDefault();
-  const note = document.getElementById("cashNote").value.trim();
-  const amount = Number(document.getElementById("cashAmount").value);
-  const type = document.getElementById("cashType").value;
-  if (!note || amount < 0) return;
-  state.cashEntries.push({ note, amount, type });
-  persistState();
-  renderApp();
-});
-
-document.getElementById("stockForm").addEventListener("submit", (event) => {
-  event.preventDefault();
-  const name = document.getElementById("stockName").value.trim();
-  const count = Number(document.getElementById("stockCount").value);
-  const limit = Number(document.getElementById("stockLimit").value);
-  if (!name || count < 0 || limit < 0) return;
-
-  const existing = state.stock.find((item) => item.name.toLowerCase() === name.toLowerCase());
+function saveOrUpdateProduct({ name, price, stock }) {
+  const existing = findProductByName(name);
   if (existing) {
-    existing.count = count;
-    existing.limit = limit;
-  } else {
-    state.stock.push({ name, count, limit });
+    existing.price = price;
+    existing.stock = stock;
+    return existing;
   }
+  const product = {
+    id: crypto.randomUUID(),
+    name,
+    price,
+    stock,
+    lowStockAt: Math.max(3, Math.min(10, Math.ceil(stock * 0.25) || 5))
+  };
+  state.products.push(product);
+  return product;
+}
+
+function addToCart(name, qty, price) {
+  const existing = state.cart.find((item) => item.name.toLowerCase() === name.toLowerCase() && item.price === price);
+  if (existing) {
+    existing.qty += qty;
+  } else {
+    state.cart.push({
+      id: crypto.randomUUID(),
+      name,
+      qty,
+      price
+    });
+  }
+}
+
+function resetQuickForm() {
+  document.getElementById("productSearch").value = "";
+  document.getElementById("productQty").value = 1;
+  document.getElementById("productPrice").value = "";
+}
+
+document.getElementById("loginForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const username = document.getElementById("loginName").value.trim() || "ម្ចាស់ហាង";
+  const pin = document.getElementById("loginPin").value.trim();
+
+  if (pin !== LOGIN_PIN) {
+    window.alert("លេខសម្ងាត់មិនត្រឹមត្រូវទេ។ សូមប្រើ 1234");
+    return;
+  }
+
+  state.session.isLoggedIn = true;
+  state.session.username = username;
   persistState();
   renderApp();
 });
+
+document.getElementById("logoutButton").addEventListener("click", () => {
+  state.session.isLoggedIn = false;
+  persistState();
+  renderApp();
+});
+
+document.getElementById("productSearch").addEventListener("input", (event) => {
+  const product = findProductByName(event.target.value);
+  if (!product) {
+    return;
+  }
+  document.getElementById("productPrice").value = product.price;
+  document.getElementById("productQty").value = 1;
+});
+
+document.getElementById("itemForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const name = document.getElementById("productSearch").value.trim();
+  const qty = Number(document.getElementById("productQty").value);
+  const enteredPrice = Number(document.getElementById("productPrice").value);
+
+  if (!name || qty <= 0 || enteredPrice < 0) {
+    return;
+  }
+
+  const matched = findProductByName(name);
+  const product = matched || saveOrUpdateProduct({ name, price: enteredPrice, stock: 0 });
+  product.price = enteredPrice;
+  addToCart(product.name, qty, enteredPrice);
+  persistState();
+  renderApp();
+  resetQuickForm();
+});
+
+document.getElementById("catalogForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const name = document.getElementById("catalogName").value.trim();
+  const price = Number(document.getElementById("catalogPrice").value);
+  const stock = Number(document.getElementById("catalogStock").value);
+
+  if (!name || price < 0 || stock < 0) {
+    return;
+  }
+
+  saveOrUpdateProduct({ name, price, stock });
+  persistState();
+  renderApp();
+  event.target.reset();
+});
+
+document.getElementById("expenseForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const note = document.getElementById("expenseNote").value.trim();
+  const amount = Number(document.getElementById("expenseAmount").value);
+
+  if (!note || amount < 0) {
+    return;
+  }
+
+  state.expenses.push({
+    id: crypto.randomUUID(),
+    note,
+    amount,
+    date: todayKey(),
+    createdAt: new Date().toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit"
+    })
+  });
+  persistState();
+  renderApp();
+  event.target.reset();
+});
+
+document.getElementById("clearCartButton").addEventListener("click", () => {
+  state.cart = [];
+  persistState();
+  renderApp();
+});
+
+document.getElementById("checkoutButton").addEventListener("click", () => {
+  if (!state.cart.length) {
+    return;
+  }
+
+  const orderItems = state.cart.map((item) => ({ ...item }));
+  const total = orderItems.reduce((sum, item) => sum + item.qty * item.price, 0);
+
+  orderItems.forEach((item) => {
+    const product = findProductByName(item.name);
+    if (product) {
+      product.stock = Math.max(0, product.stock - item.qty);
+    }
+  });
+
+  state.orders.push({
+    id: crypto.randomUUID(),
+    invoice: `#${String(state.orders.length + 1).padStart(3, "0")}`,
+    items: orderItems,
+    total,
+    date: todayKey()
+  });
+
+  state.cart = [];
+  persistState();
+  renderApp();
+});
+
+window.removeCartItem = (id) => {
+  state.cart = state.cart.filter((item) => item.id !== id);
+  persistState();
+  renderApp();
+};
+
+window.deleteExpense = (id) => {
+  state.expenses = state.expenses.filter((item) => item.id !== id);
+  persistState();
+  renderApp();
+};
+
+window.deleteOrder = (id) => {
+  const order = state.orders.find((item) => item.id === id);
+  if (order) {
+    order.items.forEach((item) => {
+      const product = findProductByName(item.name);
+      if (product) {
+        product.stock += item.qty;
+      }
+    });
+  }
+  state.orders = state.orders.filter((item) => item.id !== id);
+  persistState();
+  renderApp();
+};
+
+window.deleteProduct = (id) => {
+  state.products = state.products.filter((item) => item.id !== id);
+  persistState();
+  renderApp();
+};
+
+window.quickPickProduct = (id) => {
+  const product = state.products.find((item) => item.id === id);
+  if (!product) {
+    return;
+  }
+  document.getElementById("productSearch").value = product.name;
+  document.getElementById("productPrice").value = product.price;
+  document.getElementById("productQty").value = 1;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
 
 renderApp();
