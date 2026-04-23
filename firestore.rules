@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isAdmin() {
+      return isSignedIn() && userDoc().data.role == "admin";
+    }
+
+    function sameShop(shopId) {
+      return isSignedIn() && userDoc().data.shopId == shopId;
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /shops/{shopId} {
+      allow read: if sameShop(shopId) || isAdmin();
+      allow create, update: if isAdmin();
+      allow delete: if false;
+    }
+
+    match /products/{productId} {
+      allow read: if sameShop(resource.data.shopId) || isAdmin();
+      allow create: if sameShop(request.resource.data.shopId) || isAdmin();
+      allow update, delete: if sameShop(resource.data.shopId) || isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow read: if sameShop(resource.data.shopId) || isAdmin();
+      allow create: if sameShop(request.resource.data.shopId) || isAdmin();
+      allow update, delete: if sameShop(resource.data.shopId) || isAdmin();
+    }
+
+    match /expenses/{expenseId} {
+      allow read: if sameShop(resource.data.shopId) || isAdmin();
+      allow create: if sameShop(request.resource.data.shopId) || isAdmin();
+      allow update, delete: if sameShop(resource.data.shopId) || isAdmin();
+    }
+  }
+}

@@ -3,135 +3,182 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Luy Khmer POS</title>
+  <title>nilaa-os</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="login-screen" id="loginScreen">
-    <section class="login-card">
-      <p class="section-kicker">Luy Khmer POS</p>
-      <h1>ចូលប្រើប្រព័ន្ធលក់</h1>
-      <p class="login-copy">
-        សម្រាប់ម្ចាស់ហាង និងបុគ្គលិកប្រើបានស្រួល។ ទិន្នន័យត្រូវបានរក្សាទុកក្នុងឧបករណ៍នេះ។
-      </p>
+  <div id="setupBanner" class="setup-banner hidden"></div>
 
-      <form id="loginForm" class="login-form">
-        <label>
-          <span>ឈ្មោះអ្នកប្រើ</span>
-          <input id="loginName" type="text" placeholder="ឧទាហរណ៍: ម្ចាស់ហាង">
-        </label>
-        <label>
-          <span>លេខសម្ងាត់</span>
-          <input id="loginPin" type="password" inputmode="numeric" placeholder="1234">
-        </label>
-        <button class="primary-button" type="submit">ចូលប្រើ</button>
-      </form>
-      <p class="login-help">សាកល្បងប្រើ: ឈ្មោះណាមួយ និងលេខសម្ងាត់ 1234</p>
-    </section>
-  </div>
-
-  <div class="app-shell hidden" id="appShell">
-    <header class="topbar">
-      <div>
-        <p class="section-kicker">POS សម្រាប់ទូរស័ព្ទ</p>
-        <h2>ផ្ទាំងគ្រប់គ្រងហាង</h2>
-      </div>
-      <div class="topbar__actions">
-        <div class="user-chip">
-          <span id="welcomeUser">សួស្តី</span>
-        </div>
-        <button class="secondary-button" id="logoutButton" type="button">ចាកចេញ</button>
-      </div>
-    </header>
-
-    <main class="mobile-layout">
-      <section class="panel panel--hero">
-        <div class="hero-grid">
-          <article class="summary-card summary-card--warm">
-            <p>លក់ថ្ងៃនេះ</p>
-            <strong id="salesToday">$0.00</strong>
-            <span id="ordersToday">0 វិក្កយបត្រ</span>
-          </article>
-          <article class="summary-card">
-            <p>ចំណាយថ្ងៃនេះ</p>
-            <strong id="expenseToday">$0.00</strong>
-            <span id="expenseCount">0 កំណត់ត្រា</span>
-          </article>
-          <article class="summary-card">
-            <p>សាច់ប្រាក់សុទ្ធ</p>
-            <strong id="netToday">$0.00</strong>
-            <span id="stockAlertCount">0 មុខទំនិញជិតអស់</span>
-          </article>
+  <section class="auth-shell" id="authShell">
+    <div class="auth-shell__inner">
+      <section class="auth-card auth-card--warm">
+        <p class="eyebrow">nilaa-os</p>
+        <h1>ប្រព័ន្ធ POS សម្រាប់ហាង និងភោជនីយដ្ឋាន</h1>
+        <p class="auth-copy">
+          ស្នើសុំគណនីតាម Telegram មុនសិន។ បន្ទាប់ពី admin អនុម័ត អ្នកអាចចូលប្រើបាន និងនៅតែ signed in លើឧបករណ៍នេះ។
+        </p>
+        <a id="telegramLink" class="primary-button auth-link" href="#" target="_blank" rel="noreferrer">
+          ស្នើសុំគណនីតាម Telegram
+        </a>
+        <div class="auth-note">
+          <strong>Admin preview</strong>
+          <span>Username: `nilaa-os0809$`</span>
+          <span>Password: `08090809`</span>
         </div>
       </section>
 
-      <section class="panel">
-        <div class="panel-head">
-          <div>
-            <p class="section-kicker">លក់រហ័ស</p>
-            <h3>បង្កើតការបញ្ជាទិញ</h3>
-          </div>
-          <button class="ghost-button" id="clearCartButton" type="button">សម្អាតកន្ត្រក</button>
+      <section class="auth-card">
+        <div class="auth-tabs">
+          <button id="showLoginTab" class="tab-button tab-button--active" type="button">ចូលប្រើ</button>
+          <button id="showRequestTab" class="tab-button" type="button">របៀបស្នើសុំគណនី</button>
         </div>
 
-        <form id="itemForm" class="entry-grid">
-          <label class="entry-grid__wide">
-            <span>ឈ្មោះអ្នកទិញ</span>
-            <input id="buyerName" type="text" placeholder="ឧទាហរណ៍: បងដារ៉ា">
-          </label>
-          <label class="entry-grid__wide">
-            <span>ស្វែងរកមុខទំនិញ</span>
-            <input id="productSearch" list="productSuggestions" type="text" placeholder="ស្វែងរកឈ្មោះទំនិញ">
-            <datalist id="productSuggestions"></datalist>
-          </label>
-          <label>
-            <span>ចំនួន</span>
-            <input id="productQty" type="number" min="1" value="1">
-          </label>
-          <label>
-            <span>តម្លៃ</span>
-            <input id="productPrice" type="number" min="0" step="0.01" placeholder="0.00">
-          </label>
-          <button class="primary-button" type="submit">បន្ថែមទៅកន្ត្រក</button>
-        </form>
+        <div id="loginPanel">
+          <h2>ចូលប្រើគណនី</h2>
+          <form id="loginForm" class="form-stack">
+            <label>
+              <span>ឈ្មោះអ្នកប្រើ</span>
+              <input id="loginUsername" type="text" placeholder="ឧទាហរណ៍: nilaa-os0809$">
+            </label>
+            <label>
+              <span>ពាក្យសម្ងាត់</span>
+              <input id="loginPassword" type="password" placeholder="********">
+            </label>
+            <button class="primary-button" type="submit">ចូលប្រើ</button>
+          </form>
+        </div>
 
-        <div class="cart-box">
-          <div class="list-head">
-            <h4>កន្ត្រកលក់</h4>
-            <span id="cartCount">0 មុខ</span>
+        <div id="requestPanel" class="hidden">
+          <h2>ស្នើសុំគណនី</h2>
+          <ol class="simple-steps">
+            <li>ផ្ញើសារ Telegram ទៅ admin</li>
+            <li>ប្រាប់ឈ្មោះហាង និងលេខទូរស័ព្ទ</li>
+            <li>រង់ចាំ admin បង្កើតគណនីអោយ</li>
+            <li>ចូលប្រើម្តងហើយ app នឹងរក្សា session លើឧបករណ៍នេះ</li>
+          </ol>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <div id="appShell" class="app-shell hidden">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">nilaa-os</p>
+        <h2 id="shopName">ការបញ្ជាទិញ</h2>
+      </div>
+      <div class="topbar__actions">
+        <div class="user-chip">
+          <span id="welcomeLabel">សួស្តី</span>
+        </div>
+        <button id="openDashboardButton" class="secondary-button" type="button">Dashboard</button>
+        <button id="logoutButton" class="secondary-button" type="button">ចាកចេញ</button>
+      </div>
+    </header>
+
+    <aside id="dashboardDrawer" class="drawer hidden">
+      <div class="drawer__card">
+        <div class="drawer__head">
+          <strong>Dashboard</strong>
+          <button id="closeDashboardButton" class="icon-button" type="button">×</button>
+        </div>
+        <nav class="drawer__nav">
+          <button class="nav-button nav-button--active" data-route="orders" type="button">ការបញ្ជាទិញ</button>
+          <button class="nav-button" data-route="money" type="button">លុយ</button>
+          <button class="nav-button" data-route="stock" type="button">ស្តុក</button>
+          <button class="nav-button" data-route="reports" type="button">របាយការណ៍</button>
+          <button class="nav-button hidden" id="adminNavButton" data-route="admin" type="button">Admin</button>
+        </nav>
+      </div>
+    </aside>
+
+    <main class="screen-stack">
+      <section id="ordersScreen" class="screen screen--active">
+        <article class="panel">
+          <div class="panel__head">
+            <div>
+              <p class="eyebrow">Homepage</p>
+              <h3>ការបញ្ជាទិញ</h3>
+            </div>
+            <button id="clearCartButton" class="ghost-button" type="button">សម្អាតកន្ត្រក</button>
           </div>
-          <div class="stack-list" id="cartList"></div>
-          <div class="cart-footer">
-            <div class="cart-footer__totals">
-              <label>
+
+          <form id="orderForm" class="grid-form">
+            <label class="grid-form__wide">
+              <span>ឈ្មោះអ្នកទិញ</span>
+              <input id="buyerName" type="text" placeholder="ឧទាហរណ៍: បងវិសាល">
+            </label>
+            <label class="grid-form__wide">
+              <span>មុខទំនិញ</span>
+              <input id="productSearch" list="productSuggestions" type="text" placeholder="ស្វែងរកឈ្មោះទំនិញ">
+              <datalist id="productSuggestions"></datalist>
+            </label>
+            <label>
+              <span>ចំនួន</span>
+              <input id="productQty" type="number" min="1" value="1">
+            </label>
+            <label>
+              <span>តម្លៃ</span>
+              <input id="productPrice" type="number" min="0" step="0.01" placeholder="0.00">
+            </label>
+            <button class="primary-button" type="submit">បន្ថែម</button>
+          </form>
+
+          <div class="cart-box">
+            <div class="list-head">
+              <h4>កន្ត្រកលក់</h4>
+              <span id="cartCount">0 មុខ</span>
+            </div>
+            <div id="cartList" class="stack-list"></div>
+            <div class="cart-footer">
+              <label class="cart-footer__fee">
                 <span>ថ្លៃបន្ថែម</span>
                 <input id="orderFee" type="number" min="0" step="0.01" value="0">
               </label>
+              <div>
+                <p>សរុបមុខទំនិញ</p>
+                <strong id="cartSubtotal">$0.00</strong>
+              </div>
+              <div>
+                <p>សរុបត្រូវបង់</p>
+                <strong id="cartTotal">$0.00</strong>
+              </div>
+              <button id="checkoutButton" class="primary-button" type="button">បិទការលក់</button>
             </div>
-            <div>
-              <p>សរុបមុខទំនិញ</p>
-              <strong id="cartSubtotal">$0.00</strong>
-            </div>
-            <div>
-              <p>សរុបត្រូវទូទាត់</p>
-              <strong id="cartTotal">$0.00</strong>
-            </div>
-            <button class="primary-button" id="checkoutButton" type="button">បិទការលក់</button>
           </div>
-        </div>
+        </article>
+      </section>
 
-        <div class="record-box expense-box">
-          <div class="list-head">
-            <h4>លុយចូល / ចេញ</h4>
-            <span>កត់ត្រាប្រចាំថ្ងៃ</span>
+      <section id="moneyScreen" class="screen hidden">
+        <article class="panel">
+          <div class="panel__head">
+            <div>
+              <p class="eyebrow">Money</p>
+              <h3>គ្រប់គ្រងលុយ</h3>
+            </div>
           </div>
-          <form id="expenseForm" class="entry-grid">
-            <label class="entry-grid__wide">
-              <span>ចំណាំចំណាយ</span>
-              <input id="expenseNote" type="text" placeholder="ឧទាហរណ៍: ទិញកញ្ចប់ ឬ បង់ភ្លើង">
+          <div class="summary-grid">
+            <article class="summary-card summary-card--warm">
+              <p>លក់ថ្ងៃនេះ</p>
+              <strong id="todaySalesValue">$0.00</strong>
+            </article>
+            <article class="summary-card">
+              <p>ចំណាយថ្ងៃនេះ</p>
+              <strong id="todayExpenseValue">$0.00</strong>
+            </article>
+            <article class="summary-card">
+              <p>សាច់ប្រាក់សុទ្ធ</p>
+              <strong id="todayNetValue">$0.00</strong>
+            </article>
+          </div>
+
+          <form id="expenseForm" class="grid-form">
+            <label class="grid-form__wide">
+              <span>កំណត់សម្គាល់ចំណាយ</span>
+              <input id="expenseNote" type="text" placeholder="ឧទាហរណ៍: បង់ភ្លើង ឬ ទិញកញ្ចប់">
             </label>
             <label>
               <span>ចំនួនទឹកប្រាក់</span>
@@ -139,122 +186,183 @@
             </label>
             <button class="primary-button" type="submit">បន្ថែមចំណាយ</button>
           </form>
-        </div>
-      </section>
 
-      <section class="panel">
-        <div class="panel-head">
-          <div>
-            <p class="section-kicker">មុខទំនិញ</p>
-            <h3>រក្សាទុកឈ្មោះទំនិញ</h3>
-          </div>
-        </div>
-
-        <form id="catalogForm" class="entry-grid">
-          <label class="entry-grid__wide">
-            <span>ឈ្មោះទំនិញ</span>
-            <input id="catalogName" type="text" placeholder="ឧទាហរណ៍: កាហ្វេទឹកកក">
-          </label>
-          <label>
-            <span>តម្លៃលំនាំដើម</span>
-            <input id="catalogPrice" type="number" min="0" step="0.01" placeholder="1.50">
-          </label>
-          <label>
-            <span>ស្តុកនៅសល់</span>
-            <input id="catalogStock" type="number" min="0" value="0">
-          </label>
-          <button class="primary-button" type="submit">រក្សាទុក</button>
-        </form>
-
-        <div class="list-head">
-          <h4>បញ្ជីទំនិញដែលបានរក្សាទុក</h4>
-          <span id="productCount">0 មុខ</span>
-        </div>
-        <div class="product-grid" id="productGrid"></div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-head">
-          <div>
-            <p class="section-kicker">កំណត់ត្រាប្រចាំថ្ងៃ</p>
-            <h3>ចំណាយ និងរបាយការណ៍</h3>
-          </div>
-        </div>
-
-        <div class="report-grid">
-          <article class="report-card">
-            <p>វិក្កយបត្រថ្ងៃនេះ</p>
-            <strong id="reportOrders">0</strong>
-          </article>
-          <article class="report-card">
-            <p>មុខទំនិញលក់បាន</p>
-            <strong id="reportItems">0</strong>
-          </article>
-          <article class="report-card">
-            <p>លក់មធ្យម / វិក្កយបត្រ</p>
-            <strong id="reportAverage">$0.00</strong>
-          </article>
-        </div>
-
-        <div class="record-columns">
           <div class="record-box">
             <div class="list-head">
-              <h4>ការបញ្ជាទិញថ្ងៃនេះ</h4>
-              <span id="saleHistoryCount">0</span>
+              <h4>បញ្ជីចំណាយថ្ងៃនេះ</h4>
+              <span id="expenseCount">0</span>
             </div>
-            <div class="stack-list" id="salesHistory"></div>
+            <div id="expenseList" class="stack-list"></div>
           </div>
+        </article>
+      </section>
+
+      <section id="stockScreen" class="screen hidden">
+        <article class="panel">
+          <div class="panel__head">
+            <div>
+              <p class="eyebrow">Stock</p>
+              <h3>គ្រប់គ្រងស្តុក</h3>
+            </div>
+          </div>
+
+          <form id="productForm" class="grid-form">
+            <label class="grid-form__wide">
+              <span>ឈ្មោះទំនិញ</span>
+              <input id="productNameInput" type="text" placeholder="ឧទាហរណ៍: កាហ្វេទឹកកក">
+            </label>
+            <label>
+              <span>តម្លៃ</span>
+              <input id="productPriceInput" type="number" min="0" step="0.01" placeholder="0.00">
+            </label>
+            <label>
+              <span>ស្តុកនៅសល់</span>
+              <input id="productStockInput" type="number" min="0" value="0">
+            </label>
+            <label>
+              <span>ព្រមាននៅចំនួន</span>
+              <input id="productLowStockInput" type="number" min="0" value="5">
+            </label>
+            <button class="primary-button" type="submit">រក្សាទុកទំនិញ</button>
+          </form>
+
           <div class="record-box">
             <div class="list-head">
-              <h4>ចំណាយថ្ងៃនេះ</h4>
-              <span id="expenseHistoryCount">0</span>
+              <h4>បញ្ជីទំនិញ</h4>
+              <span id="productCount">0</span>
             </div>
-            <div class="stack-list" id="expenseHistory"></div>
+            <div id="productList" class="stack-list"></div>
           </div>
-        </div>
+        </article>
+      </section>
+
+      <section id="reportsScreen" class="screen hidden">
+        <article class="panel">
+          <div class="panel__head">
+            <div>
+              <p class="eyebrow">Reports</p>
+              <h3>របាយការណ៍ប្រចាំថ្ងៃ</h3>
+            </div>
+          </div>
+          <div class="summary-grid">
+            <article class="summary-card">
+              <p>ចំនួនវិក្កយបត្រ</p>
+              <strong id="reportOrderCount">0</strong>
+            </article>
+            <article class="summary-card">
+              <p>ទំនិញលក់បាន</p>
+              <strong id="reportItemCount">0</strong>
+            </article>
+            <article class="summary-card">
+              <p>ជិតអស់ស្តុក</p>
+              <strong id="reportLowStockCount">0</strong>
+            </article>
+          </div>
+          <div class="two-column">
+            <div class="record-box">
+              <div class="list-head">
+                <h4>បញ្ជីការលក់</h4>
+                <span id="orderCount">0</span>
+              </div>
+              <div id="orderList" class="stack-list"></div>
+            </div>
+            <div class="record-box">
+              <div class="list-head">
+                <h4>ស្ថានភាពស្តុក</h4>
+                <span id="lowStockLabel">0</span>
+              </div>
+              <div id="lowStockList" class="stack-list"></div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section id="adminScreen" class="screen hidden">
+        <article class="panel">
+          <div class="panel__head">
+            <div>
+              <p class="eyebrow">Admin</p>
+              <h3>បង្កើតអ្នកប្រើថ្មី</h3>
+            </div>
+          </div>
+          <form id="adminCreateUserForm" class="grid-form">
+            <label>
+              <span>ឈ្មោះអ្នកប្រើ</span>
+              <input id="newUsername" type="text" placeholder="new-shop-owner">
+            </label>
+            <label>
+              <span>ពាក្យសម្ងាត់</span>
+              <input id="newPassword" type="password" placeholder="********">
+            </label>
+            <label>
+              <span>ឈ្មោះហាង</span>
+              <input id="newShopName" type="text" placeholder="Nilaa Coffee">
+            </label>
+            <label>
+              <span>តួនាទី</span>
+              <select id="newUserRole">
+                <option value="owner">owner</option>
+                <option value="staff">staff</option>
+                <option value="admin">admin</option>
+              </select>
+            </label>
+            <button class="primary-button" type="submit">បង្កើតគណនី</button>
+          </form>
+
+          <div class="record-box">
+            <div class="list-head">
+              <h4>អ្នកប្រើក្នុងហាងនេះ</h4>
+              <span id="userCount">0</span>
+            </div>
+            <div id="userList" class="stack-list"></div>
+          </div>
+        </article>
       </section>
     </main>
   </div>
 
-  <section class="receipt-sheet hidden" id="receiptSheet">
-    <div class="receipt-card" id="receiptCard">
-      <div class="receipt-brand">
-        <h1>nilaa-os</h1>
-        <p>វិក្កយបត្រលក់</p>
-        <p id="receiptBuyer">អ្នកទិញ:</p>
-      </div>
-      <div class="receipt-divider"></div>
-      <div class="receipt-meta">
-        <span id="receiptDate"></span>
-        <span id="receiptInvoice"></span>
-      </div>
-      <div class="receipt-table">
-        <div class="receipt-table__head">
-          <span>ចំនួន</span>
-          <span>មុខទំនិញ</span>
-          <span>តម្លៃ</span>
+  <section id="receiptModal" class="modal hidden">
+    <div class="receipt-card">
+      <div class="receipt-card__top">
+        <div>
+          <h3>nilaa-os</h3>
+          <p>វិក្កយបត្រលក់</p>
         </div>
-        <div id="receiptItems"></div>
+        <button id="closeReceiptButton" class="icon-button" type="button">×</button>
       </div>
-      <div class="receipt-divider"></div>
-      <div class="receipt-total">
-        <span>សរុបមុខទំនិញ</span>
-        <strong id="receiptSubtotal"></strong>
+      <div class="receipt-paper" id="receiptPaper">
+        <div class="receipt-brand">
+          <h1>nilaa-os</h1>
+          <p>វិក្កយបត្រលក់</p>
+          <p id="receiptBuyer">អ្នកទិញ:</p>
+        </div>
+        <div class="receipt-divider"></div>
+        <div class="receipt-meta">
+          <span id="receiptDate"></span>
+          <span id="receiptInvoice"></span>
+        </div>
+        <div class="receipt-table">
+          <div class="receipt-row receipt-row--head">
+            <span>ចំនួន</span>
+            <span>មុខទំនិញ</span>
+            <span>តម្លៃ</span>
+          </div>
+          <div id="receiptItems"></div>
+        </div>
+        <div class="receipt-divider"></div>
+        <div class="receipt-total"><span>សរុបមុខទំនិញ</span><strong id="receiptSubtotal"></strong></div>
+        <div class="receipt-total"><span>ថ្លៃបន្ថែម</span><strong id="receiptFee"></strong></div>
+        <div class="receipt-total receipt-total--grand"><span>សរុបចុងក្រោយ</span><strong id="receiptTotal"></strong></div>
+        <div class="receipt-divider"></div>
+        <p class="receipt-thanks">Thanks you bong! please come again.</p>
       </div>
-      <div class="receipt-total">
-        <span>ថ្លៃបន្ថែម</span>
-        <strong id="receiptFee"></strong>
+      <div class="receipt-actions">
+        <button id="downloadReceiptButton" class="primary-button" type="button">Download PDF</button>
+        <button id="printReceiptButton" class="secondary-button" type="button">Print</button>
       </div>
-      <div class="receipt-total receipt-total--grand">
-        <span>សរុបចុងក្រោយ</span>
-        <strong id="receiptGrandTotal"></strong>
-      </div>
-      <div class="receipt-divider"></div>
-      <p class="receipt-thanks">Thanks you bong! please come again.</p>
-      <button class="primary-button receipt-print" id="printReceiptButton" type="button">Save PDF / Print</button>
     </div>
   </section>
 
-  <script src="script.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
