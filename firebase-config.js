@@ -9,6 +9,6 @@ export const firebaseConfig = {
 };
 
 export const appSettings = {
-  telegramRequestUrl: "https://t.me/your_telegram_account",
+  telegramRequestUrl: "https://t.me/SivesivY",
   appName: "nilaa-os"
 };
