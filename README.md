@@ -28,7 +28,7 @@ Production-ready scaffold for a Khmer-first POS app using Supabase Auth, Postgre
 
 Create the first Supabase auth user as a real email, for example:
 
-- email: `nilaademo@gmail.com`
-- password: `08090809`
+- email: `dalisyes@gmail.com`
+- password: `123`
 
 Then add the matching row in table `users` with username `nilaa-os0809$` and role `admin`.
