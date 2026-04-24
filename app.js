@@ -1,8 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { appSettings, supabaseConfig } from "./supabase-config.js";
 
-const ADMIN_USERNAME = "nilaa-os0809$";
-const ADMIN_PASSWORD = "08090809";
 const MOCK_STORAGE_KEY = "nilaa-os-preview-store-v2";
 
 const state = {
@@ -132,6 +130,19 @@ function usernameToEmail(username) {
 function normalizeLoginIdentifier(value) {
   const input = String(value || "").trim();
   return input.includes("@") ? input : usernameToEmail(input);
+}
+
+function loginErrorMessage(error, attemptedIdentifier) {
+  const fallback = "មិនអាចចូលប្រើបានទេ។ សូមពិនិត្យអ៊ីមែល និងពាក្យសម្ងាត់ម្តងទៀត។";
+  const message = String(error?.message || "").trim();
+  if (!message) return fallback;
+  if (message.toLowerCase().includes("invalid login credentials")) {
+    if (!String(attemptedIdentifier || "").includes("@")) {
+      return "សូមប្រើអ៊ីមែលដែលបានបង្កើតក្នុងគណនីរបស់អ្នក មិនមែនឈ្មោះខ្លីទេ។";
+    }
+    return fallback;
+  }
+  return message;
 }
 
 function currentReservedQty(productId) {
@@ -424,15 +435,7 @@ function createMockBackend() {
   const seed = () => ({
     sessionUserId: null,
     shops: [{ id: "shop-admin", name: "Nilaa Main Shop", status: "active", created_at: new Date().toISOString() }],
-    users: [{
-      id: "admin-user",
-      username: ADMIN_USERNAME,
-      password: ADMIN_PASSWORD,
-      role: "admin",
-      shop_id: "shop-admin",
-      status: "active",
-      created_at: new Date().toISOString()
-    }],
+    users: [],
     products: [
       { id: crypto.randomUUID(), shop_id: "shop-admin", name: "កាហ្វេទឹកកក", price: 1.5, stock_qty: 20, low_stock_at: 5 },
       { id: crypto.randomUUID(), shop_id: "shop-admin", name: "តែទឹកដោះគោ", price: 2, stock_qty: 15, low_stock_at: 5 }
@@ -783,10 +786,11 @@ elements.navButtons.forEach((button) => {
 
 elements.loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  const identifier = elements.loginUsername.value.trim();
   try {
-    await backend.signIn(elements.loginUsername.value.trim(), elements.loginPassword.value.trim());
+    await backend.signIn(identifier, elements.loginPassword.value.trim());
   } catch (error) {
-    window.alert(error.message || "ចូលប្រើមិនបាន");
+    window.alert(loginErrorMessage(error, identifier));
   }
 });
 
