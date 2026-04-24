@@ -85,6 +85,7 @@ button {
 .cart-box,
 .record-box,
 .drawer__card,
+.payment-card,
 .receipt-card {
   border: 1px solid var(--line);
   border-radius: 26px;
@@ -310,6 +311,38 @@ button:focus {
   background: var(--surface-soft);
 }
 
+.quick-products {
+  margin: 16px 0;
+}
+
+.quick-product-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 10px;
+}
+
+.quick-product {
+  display: grid;
+  gap: 4px;
+  min-height: 74px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-strong);
+  color: var(--text);
+  text-align: left;
+}
+
+.quick-product span {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.quick-product:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
 .summary-card {
   padding: 16px;
 }
@@ -428,6 +461,60 @@ button:focus {
   padding: 16px;
 }
 
+.payment-card {
+  width: min(100%, 420px);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 16px;
+}
+
+.payment-total {
+  display: grid;
+  gap: 4px;
+  margin: 14px 0;
+  padding: 14px;
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+
+.payment-total strong {
+  font-size: 2rem;
+}
+
+.qr-box {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  margin: 14px auto;
+  padding: 18px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.qr-grid {
+  display: grid;
+  grid-template-columns: repeat(9, 14px);
+  gap: 4px;
+  padding: 12px;
+  border: 6px solid #111;
+  background: #fff;
+}
+
+.qr-dot {
+  width: 14px;
+  height: 14px;
+  background: transparent;
+}
+
+.qr-dot--active {
+  background: #111;
+}
+
+.payment-methods {
+  margin-top: 12px;
+}
+
 .receipt-paper {
   margin-top: 12px;
   border-radius: 0;
@@ -538,6 +625,7 @@ button:focus {
   .cart-box,
   .record-box,
   .drawer__card,
+  .payment-card,
   .receipt-card {
     border-radius: 22px;
   }
@@ -613,6 +701,20 @@ button:focus {
 
   .receipt-card {
     padding: 12px;
+  }
+
+  .quick-product-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .qr-grid {
+    grid-template-columns: repeat(9, 12px);
+    gap: 3px;
+  }
+
+  .qr-dot {
+    width: 12px;
+    height: 12px;
   }
 }
 

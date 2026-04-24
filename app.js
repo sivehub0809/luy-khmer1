@@ -16,6 +16,8 @@ const state = {
   users: [],
   cart: [],
   currentBuyer: "",
+  currentPhone: "",
+  pendingPaymentOrder: null,
   latestReceipt: null,
   backendMode: "setup"
 };
@@ -46,8 +48,10 @@ const elements = {
   navButtons: [...document.querySelectorAll(".nav-button")],
   orderForm: document.getElementById("orderForm"),
   buyerName: document.getElementById("buyerName"),
+  buyerPhone: document.getElementById("buyerPhone"),
   productSearch: document.getElementById("productSearch"),
   productSuggestions: document.getElementById("productSuggestions"),
+  quickProductList: document.getElementById("quickProductList"),
   productQty: document.getElementById("productQty"),
   productPrice: document.getElementById("productPrice"),
   clearCartButton: document.getElementById("clearCartButton"),
@@ -94,8 +98,17 @@ const elements = {
     admin: document.getElementById("adminScreen")
   },
   receiptModal: document.getElementById("receiptModal"),
+  paymentModal: document.getElementById("paymentModal"),
+  closePaymentButton: document.getElementById("closePaymentButton"),
+  cancelPaymentButton: document.getElementById("cancelPaymentButton"),
+  markPaidButton: document.getElementById("markPaidButton"),
+  paymentTotal: document.getElementById("paymentTotal"),
+  paymentInvoice: document.getElementById("paymentInvoice"),
+  paymentMethod: document.getElementById("paymentMethod"),
+  betaQrGrid: document.getElementById("betaQrGrid"),
   closeReceiptButton: document.getElementById("closeReceiptButton"),
   receiptBuyer: document.getElementById("receiptBuyer"),
+  receiptPhone: document.getElementById("receiptPhone"),
   receiptDate: document.getElementById("receiptDate"),
   receiptInvoice: document.getElementById("receiptInvoice"),
   receiptItems: document.getElementById("receiptItems"),
@@ -134,11 +147,15 @@ const translations = {
     clearCart: "សម្អាតកន្ត្រក",
     buyerNameLabel: "ឈ្មោះអ្នកទិញ",
     buyerNamePlaceholder: "ឧទាហរណ៍: បងវិសាល",
+    buyerPhoneLabel: "លេខទូរស័ព្ទអ្នកទិញ",
+    buyerPhonePlaceholder: "ឧទាហរណ៍: 012 345 678",
     productLabel: "មុខទំនិញ",
     productSearchPlaceholder: "ស្វែងរកឈ្មោះទំនិញ",
     qtyLabel: "ចំនួន",
     priceLabel: "តម្លៃ",
     addButton: "បន្ថែម",
+    quickProductsHeading: "ចុចជ្រើសទំនិញ",
+    quickProductsHint: "POS quick menu",
     cartHeading: "កន្ត្រកលក់",
     feeLabel: "ថ្លៃបន្ថែម",
     subtotalLabel: "សរុបមុខទំនិញ",
@@ -192,6 +209,14 @@ const translations = {
     adminOnlyUsers: "Admin ប៉ុណ្ណោះដែលអាចមើលបាន",
     noUsers: "មិនទាន់មានអ្នកប្រើទេ",
     buyerLine: "អ្នកទិញ: {buyer}",
+    phoneLine: "ទូរស័ព្ទ: {phone}",
+    paymentHeading: "ការទូទាត់",
+    paymentSubheading: "ស្កេន QR ដើម្បីបង់ប្រាក់",
+    paymentMethodLabel: "វិធីបង់ប្រាក់",
+    paymentBank: "ផ្ទេរទៅធនាគារ",
+    paymentCash: "ទទួលលុយផ្ទាល់",
+    markPaidButton: "បានទូទាត់រួច",
+    cancelButton: "បោះបង់",
     previewBanner: "Preview mode is active. Add Supabase URL and anon key, then run the SQL in supabase/schema.sql to move to real production.",
     popupAlert: "សូមអនុញ្ញាត popup ដើម្បី print receipt",
     loginFailed: "មិនអាចចូលប្រើបានទេ។ សូមពិនិត្យអ៊ីមែល និងពាក្យសម្ងាត់ម្តងទៀត។",
@@ -231,11 +256,15 @@ const translations = {
     clearCart: "Clear cart",
     buyerNameLabel: "Buyer name",
     buyerNamePlaceholder: "Example: Vichea",
+    buyerPhoneLabel: "Buyer phone",
+    buyerPhonePlaceholder: "Example: 012 345 678",
     productLabel: "Product",
     productSearchPlaceholder: "Search saved product",
     qtyLabel: "Qty",
     priceLabel: "Price",
     addButton: "Add",
+    quickProductsHeading: "Tap product",
+    quickProductsHint: "POS quick menu",
     cartHeading: "Sale cart",
     feeLabel: "Extra fee",
     subtotalLabel: "Subtotal",
@@ -289,6 +318,14 @@ const translations = {
     adminOnlyUsers: "Only admin can see this section.",
     noUsers: "No users yet.",
     buyerLine: "Buyer: {buyer}",
+    phoneLine: "Phone: {phone}",
+    paymentHeading: "Payment",
+    paymentSubheading: "Scan QR to pay",
+    paymentMethodLabel: "Payment method",
+    paymentBank: "Bank transfer",
+    paymentCash: "Cash received",
+    markPaidButton: "Payment received",
+    cancelButton: "Cancel",
     previewBanner: "Preview mode is active. Add Supabase URL and anon key, then run the SQL in supabase/schema.sql to move to real production.",
     popupAlert: "Please allow popups to print the receipt.",
     loginFailed: "Could not sign in. Please check your email and password.",
@@ -392,6 +429,27 @@ function effectiveStock(product) {
 
 function orderSummary(order) {
   return (order.items || []).map((item) => `${item.name} x${item.qty}`).join(", ");
+}
+
+function qrSeed(value) {
+  return String(value || "nilaa-os")
+    .split("")
+    .reduce((sum, char) => sum + char.charCodeAt(0), 0);
+}
+
+function renderBetaQr(value) {
+  if (!elements.betaQrGrid) return;
+  const seed = qrSeed(value);
+  elements.betaQrGrid.innerHTML = Array.from({ length: 81 }, (_, index) => {
+    const row = Math.floor(index / 9);
+    const col = index % 9;
+    const finder =
+      (row < 3 && col < 3) ||
+      (row < 3 && col > 5) ||
+      (row > 5 && col < 3);
+    const active = finder || ((index * 7 + seed + row * col) % 5 < 2);
+    return `<span class="${active ? "qr-dot qr-dot--active" : "qr-dot"}"></span>`;
+  }).join("");
 }
 
 function blankState(message) {
@@ -505,6 +563,17 @@ function renderProducts() {
     .sort((a, b) => a.name.localeCompare(b.name, "km"))
     .map((product) => `<option value="${safeText(product.name)}"></option>`)
     .join("");
+  elements.quickProductList.innerHTML = state.products.length
+    ? state.products.map((product) => {
+        const left = effectiveStock(product);
+        return `
+          <button class="quick-product" type="button" data-quick-product-id="${product.id}" ${left <= 0 ? "disabled" : ""}>
+            <strong>${safeText(product.name)}</strong>
+            <span>${money(product.price)} • ${left}</span>
+          </button>
+        `;
+      }).join("")
+    : blankState(t("noProducts"));
 
   elements.productList.innerHTML = state.products.length
     ? state.products.map((product) => {
@@ -599,6 +668,8 @@ function buildReceipt(order) {
   return {
     invoiceNo: order.invoice_no || order.invoiceNo,
     buyerName: order.buyer_name || order.buyerName,
+    buyerPhone: order.buyer_phone || order.buyerPhone,
+    paymentMethod: order.payment_method || order.paymentMethod,
     items: order.items || [],
     subtotal: Number(order.subtotal || 0),
     fee: Number(order.fee || 0),
@@ -614,6 +685,7 @@ function renderReceipt() {
   }
   elements.receiptModal.classList.remove("hidden");
   elements.receiptBuyer.textContent = t("buyerLine", { buyer: state.latestReceipt.buyerName || t("guestBuyer") });
+  elements.receiptPhone.textContent = state.latestReceipt.buyerPhone ? t("phoneLine", { phone: state.latestReceipt.buyerPhone }) : "";
   elements.receiptDate.textContent = state.latestReceipt.createdAtText;
   elements.receiptInvoice.textContent = state.latestReceipt.invoiceNo;
   elements.receiptItems.innerHTML = state.latestReceipt.items.map((item) => `
@@ -633,6 +705,7 @@ function renderAll() {
   renderAuth();
   if (!state.authUser || !state.profile) return;
   elements.buyerName.value = state.currentBuyer;
+  elements.buyerPhone.value = state.currentPhone;
   renderCart();
   renderMoney();
   renderProducts();
@@ -645,6 +718,39 @@ function renderAll() {
 function closeReceipt() {
   state.latestReceipt = null;
   renderReceipt();
+}
+
+function openPayment(order) {
+  state.pendingPaymentOrder = order;
+  elements.paymentTotal.textContent = money(order.total);
+  elements.paymentInvoice.textContent = order.invoice_no || order.invoiceNo;
+  renderBetaQr(`${order.invoice_no || order.invoiceNo}-${order.total}`);
+  elements.paymentModal.classList.remove("hidden");
+}
+
+function closePayment() {
+  state.pendingPaymentOrder = null;
+  elements.paymentModal.classList.add("hidden");
+}
+
+async function completePayment() {
+  if (!state.pendingPaymentOrder) return;
+  const method = elements.paymentMethod.value;
+  const receiptOrder = {
+    ...state.pendingPaymentOrder,
+    payment_method: method,
+    paymentMethod: method
+  };
+  try {
+    await backend.markPaid(state.pendingPaymentOrder.id, method);
+  } catch (_error) {
+    // Receipt can still be issued because the sale was already recorded.
+  }
+  state.pendingPaymentOrder = null;
+  elements.paymentModal.classList.add("hidden");
+  state.latestReceipt = buildReceipt(receiptOrder);
+  await afterMutation();
+  renderAll();
 }
 
 function makeDownload(data) {
@@ -780,6 +886,7 @@ function createMockBackend() {
         shop_id: shopId,
         invoice_no: `#${String(store.orders.length + 1).padStart(4, "0")}`,
         buyer_name: payload.buyerName,
+        buyer_phone: payload.buyerPhone,
         items: payload.items,
         subtotal: payload.subtotal,
         fee: payload.fee,
@@ -813,13 +920,19 @@ function createMockBackend() {
       store.users.push({ id: crypto.randomUUID(), username: payload.username, password: payload.password, role: payload.role, shop_id: shopId, status: "active", created_at: new Date().toISOString() });
       save(store);
     },
+    async markPaid(orderId, paymentMethod) {
+      const store = load();
+      const order = store.orders.find((item) => item.id === orderId);
+      if (order) order.payment_method = paymentMethod;
+      save(store);
+    },
     async generateReceiptPdf(receipt) {
       const html = `
       <!DOCTYPE html><html lang="km"><head><meta charset="UTF-8"><style>
       body{font-family:Arial,sans-serif;padding:20px;width:300px}h1{text-align:center;text-transform:uppercase;margin:0}
       p{margin:4px 0;text-align:center}.divider{border-top:1px dashed #666;margin:12px 0}.row,.total{display:flex;justify-content:space-between;gap:8px;font-size:12px}.total{font-weight:700}
       </style></head><body>
-      <h1>nilaa-os</h1><p>វិក្កយបត្រលក់</p><p>អ្នកទិញ: ${safeText(receipt.buyerName || "ភ្ញៀវ")}</p>
+      <h1>nilaa-os</h1><p>វិក្កយបត្រលក់</p><p>អ្នកទិញ: ${safeText(receipt.buyerName || "ភ្ញៀវ")}</p>${receipt.buyerPhone ? `<p>ទូរស័ព្ទ: ${safeText(receipt.buyerPhone)}</p>` : ""}
       <div class="divider"></div><div class="row"><span>${safeText(receipt.createdAtText)}</span><span>${safeText(receipt.invoiceNo)}</span></div>
       <div class="divider"></div>${receipt.items.map((item) => `<div class="row"><span>${item.qty}</span><span>${safeText(item.name)}</span><span>${money(item.qty * item.price)}</span></div>`).join("")}
       <div class="divider"></div><div class="row"><span>សរុបមុខទំនិញ</span><span>${money(receipt.subtotal)}</span></div>
@@ -840,6 +953,8 @@ function createSupabaseBackend() {
     if (error) throw error;
     return data;
   };
+
+  const columnMissing = (error) => String(error?.message || "").toLowerCase().includes("column");
 
   return {
     mode: "supabase",
@@ -958,6 +1073,7 @@ function createSupabaseBackend() {
         shop_id: shopId,
         invoice_no: nextInvoiceNumber(),
         buyer_name: payload.buyerName,
+        buyer_phone: payload.buyerPhone,
         items: payload.items,
         subtotal: payload.subtotal,
         fee: payload.fee,
@@ -968,9 +1084,15 @@ function createSupabaseBackend() {
         date: todayKey()
       };
 
-      const { data, error } = await supabase.from("orders").insert(orderRecord).select("*").single();
+      let { data, error } = await supabase.from("orders").insert(orderRecord).select("*").single();
+      if (error && columnMissing(error)) {
+        const { buyer_phone: _buyerPhone, payment_method: _paymentMethod, ...legacyOrderRecord } = orderRecord;
+        const legacyResult = await supabase.from("orders").insert(legacyOrderRecord).select("*").single();
+        data = legacyResult.data;
+        error = legacyResult.error;
+      }
       if (error) throw error;
-      return data;
+      return { ...data, buyer_phone: payload.buyerPhone };
     },
     async deleteOrder(shopId, orderId) {
       const { data: order, error: orderError } = await supabase
@@ -1003,6 +1125,17 @@ function createSupabaseBackend() {
     async createUser(payload) {
       await callFunction("admin-create-user", payload);
     },
+    async markPaid(orderId, paymentMethod) {
+      let { error } = await supabase
+        .from("orders")
+        .update({ status: "completed", payment_method: paymentMethod })
+        .eq("id", orderId);
+      if (error && columnMissing(error)) {
+        const fallback = await supabase.from("orders").update({ status: "completed" }).eq("id", orderId);
+        error = fallback.error;
+      }
+      if (error) throw error;
+    },
     async generateReceiptPdf(receipt) {
       try {
         return await callFunction("generate-receipt-pdf", { receipt });
@@ -1012,7 +1145,7 @@ function createSupabaseBackend() {
         body{font-family:Arial,sans-serif;padding:20px;width:300px}h1{text-align:center;text-transform:uppercase;margin:0}
         p{margin:4px 0;text-align:center}.divider{border-top:1px dashed #666;margin:12px 0}.row,.total{display:flex;justify-content:space-between;gap:8px;font-size:12px}.total{font-weight:700}
         </style></head><body>
-        <h1>nilaa-os</h1><p>${safeText(t("receiptTitle"))}</p><p>${safeText(t("buyerLine", { buyer: receipt.buyerName || t("guestBuyer") }))}</p>
+        <h1>nilaa-os</h1><p>${safeText(t("receiptTitle"))}</p><p>${safeText(t("buyerLine", { buyer: receipt.buyerName || t("guestBuyer") }))}</p>${receipt.buyerPhone ? `<p>${safeText(t("phoneLine", { phone: receipt.buyerPhone }))}</p>` : ""}
         <div class="divider"></div><div class="row"><span>${safeText(receipt.createdAtText)}</span><span>${safeText(receipt.invoiceNo)}</span></div>
         <div class="divider"></div>${receipt.items.map((item) => `<div class="row"><span>${item.qty}</span><span>${safeText(item.name)}</span><span>${money(item.qty * item.price)}</span></div>`).join("")}
         <div class="divider"></div><div class="row"><span>${safeText(t("subtotalLabel"))}</span><span>${money(receipt.subtotal)}</span></div>
@@ -1062,7 +1195,9 @@ async function loadSignedInUser(user) {
     state.orders = [];
     state.users = [];
     state.cart = [];
+    state.pendingPaymentOrder = null;
     state.latestReceipt = null;
+    elements.paymentModal.classList.add("hidden");
     renderAll();
     return;
   }
@@ -1118,9 +1253,23 @@ elements.buyerName.addEventListener("input", (event) => {
   state.currentBuyer = event.target.value.trim();
 });
 
+elements.buyerPhone.addEventListener("input", (event) => {
+  state.currentPhone = event.target.value.trim();
+});
+
 elements.productSearch.addEventListener("input", () => {
   const product = currentProductByName(elements.productSearch.value);
   if (!product) return;
+  elements.productPrice.value = product.price;
+  elements.productQty.value = 1;
+});
+
+elements.quickProductList.addEventListener("click", (event) => {
+  const target = event.target.closest("[data-quick-product-id]");
+  if (!target) return;
+  const product = state.products.find((item) => item.id === target.dataset.quickProductId);
+  if (!product || effectiveStock(product) <= 0) return;
+  elements.productSearch.value = product.name;
   elements.productPrice.value = product.price;
   elements.productQty.value = 1;
 });
@@ -1165,7 +1314,8 @@ elements.checkoutButton.addEventListener("click", async () => {
   const subtotal = state.cart.reduce((sum, item) => sum + item.qty * item.price, 0);
   const fee = Number(elements.orderFee.value || 0);
   const payload = {
-    buyerName: elements.buyerName.value.trim() || "ភ្ញៀវ",
+    buyerName: elements.buyerName.value.trim() || t("guestBuyer"),
+    buyerPhone: elements.buyerPhone.value.trim(),
     items: state.cart.map((item) => ({ productId: item.productId, name: item.name, qty: item.qty, price: item.price })),
     subtotal,
     fee,
@@ -1173,12 +1323,14 @@ elements.checkoutButton.addEventListener("click", async () => {
   };
   try {
     const order = await backend.checkout(state.profile.shop_id || state.profile.shopId, payload, state.profile);
-    state.latestReceipt = buildReceipt(order);
     state.cart = [];
     state.currentBuyer = "";
+    state.currentPhone = "";
     elements.buyerName.value = "";
+    elements.buyerPhone.value = "";
     elements.orderFee.value = "0";
     await afterMutation();
+    openPayment(order);
   } catch (error) {
     window.alert(error.message || t("checkoutFailed"));
   }
@@ -1268,6 +1420,12 @@ elements.closeReceiptButton.addEventListener("click", closeReceipt);
 elements.receiptModal.addEventListener("click", (event) => {
   if (event.target.id === "receiptModal") closeReceipt();
 });
+elements.closePaymentButton.addEventListener("click", closePayment);
+elements.cancelPaymentButton.addEventListener("click", closePayment);
+elements.paymentModal.addEventListener("click", (event) => {
+  if (event.target.id === "paymentModal") closePayment();
+});
+elements.markPaidButton.addEventListener("click", completePayment);
 elements.printReceiptButton.addEventListener("click", () => window.print());
 elements.downloadReceiptButton.addEventListener("click", async () => {
   if (!state.latestReceipt) return;

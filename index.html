@@ -116,6 +116,10 @@
               <input id="buyerName" type="text" data-i18n-placeholder="buyerNamePlaceholder" placeholder="ឧទាហរណ៍: បងវិសាល">
             </label>
             <label class="grid-form__wide">
+              <span data-i18n="buyerPhoneLabel">លេខទូរស័ព្ទអ្នកទិញ</span>
+              <input id="buyerPhone" type="tel" inputmode="tel" data-i18n-placeholder="buyerPhonePlaceholder" placeholder="ឧទាហរណ៍: 012 345 678">
+            </label>
+            <label class="grid-form__wide">
               <span data-i18n="productLabel">មុខទំនិញ</span>
               <input id="productSearch" list="productSuggestions" type="text" data-i18n-placeholder="productSearchPlaceholder" placeholder="ស្វែងរកឈ្មោះទំនិញ">
               <datalist id="productSuggestions"></datalist>
@@ -130,6 +134,14 @@
             </label>
             <button class="primary-button primary-button--full" type="submit" data-i18n="addButton">បន្ថែម</button>
           </form>
+
+          <div class="quick-products">
+            <div class="list-head">
+              <h4 data-i18n="quickProductsHeading">ចុចជ្រើសទំនិញ</h4>
+              <span data-i18n="quickProductsHint">POS quick menu</span>
+            </div>
+            <div id="quickProductList" class="quick-product-list"></div>
+          </div>
 
           <div class="cart-box">
             <div class="list-head">
@@ -325,6 +337,44 @@
     </main>
   </div>
 
+  <section id="paymentModal" class="modal hidden">
+    <div class="payment-card">
+      <div class="receipt-card__top">
+        <div>
+          <h3 data-i18n="paymentHeading">ការទូទាត់</h3>
+          <p data-i18n="paymentSubheading">ស្កេន QR ដើម្បីបង់ប្រាក់</p>
+        </div>
+        <button id="closePaymentButton" class="icon-button" type="button">&times;</button>
+      </div>
+
+      <div class="payment-total">
+        <span data-i18n="totalLabel">សរុបត្រូវបង់</span>
+        <strong id="paymentTotal">$0.00</strong>
+      </div>
+
+      <div class="qr-box" aria-label="Beta QR">
+        <div class="qr-grid" id="betaQrGrid"></div>
+        <strong>Beta QR</strong>
+        <span id="paymentInvoice">#00000000</span>
+      </div>
+
+      <div class="payment-methods">
+        <label>
+          <span data-i18n="paymentMethodLabel">វិធីបង់ប្រាក់</span>
+          <select id="paymentMethod">
+            <option value="bank" data-i18n="paymentBank">ផ្ទេរទៅធនាគារ</option>
+            <option value="cash" data-i18n="paymentCash">ទទួលលុយផ្ទាល់</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="receipt-actions">
+        <button id="markPaidButton" class="primary-button" type="button" data-i18n="markPaidButton">បានទូទាត់រួច</button>
+        <button id="cancelPaymentButton" class="secondary-button" type="button" data-i18n="cancelButton">បោះបង់</button>
+      </div>
+    </div>
+  </section>
+
   <section id="receiptModal" class="modal hidden">
     <div class="receipt-card">
       <div class="receipt-card__top">
@@ -339,6 +389,7 @@
           <h1>nilaa-os</h1>
           <p data-i18n="receiptTitle">វិក្កយបត្រលក់</p>
           <p id="receiptBuyer">អ្នកទិញ:</p>
+          <p id="receiptPhone"></p>
         </div>
         <div class="receipt-divider"></div>
         <div class="receipt-meta">

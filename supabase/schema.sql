@@ -44,6 +44,8 @@ create table if not exists orders (
   shop_id uuid not null references shops(id) on delete cascade,
   invoice_no text not null,
   buyer_name text,
+  buyer_phone text,
+  payment_method text,
   items jsonb not null default '[]'::jsonb,
   subtotal numeric(12,2) not null default 0,
   fee numeric(12,2) not null default 0,
@@ -53,6 +55,9 @@ create table if not exists orders (
   created_at timestamptz not null default now(),
   date text not null
 );
+
+alter table orders add column if not exists buyer_phone text;
+alter table orders add column if not exists payment_method text;
 
 alter table shops enable row level security;
 alter table users enable row level security;
