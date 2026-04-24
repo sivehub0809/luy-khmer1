@@ -14,45 +14,50 @@
 
   <section class="auth-shell" id="authShell">
     <div class="auth-shell__inner">
+      <div class="language-switch auth-language-switch">
+        <button id="langKmButton" class="tab-button tab-button--active" type="button">ខ្មែរ</button>
+        <button id="langEnButton" class="tab-button" type="button">English</button>
+      </div>
+
       <section class="auth-card auth-card--warm">
         <p class="eyebrow">nilaa-os</p>
-        <h1>ប្រព័ន្ធ POS សម្រាប់ហាង និងភោជនីយដ្ឋាន</h1>
-        <p class="auth-copy">
-          ស្នើសុំគណនីតាម Telegram មុនសិន។ បន្ទាប់ពី admin អនុម័ត អ្នកអាចចូលប្រើបាន និងនៅតែ signed in លើឧបករណ៍នេះ។
+        <h1 data-i18n="authTitle">ប្រព័ន្ធ POS សម្រាប់ហាង និងភោជនីយដ្ឋាន</h1>
+        <p class="auth-copy" data-i18n="authCopy">
+          ស្នើសុំគណនីតាម Telegram មុនសិន។ បន្ទាប់ពី admin អនុម័ត អ្នកអាចចូលប្រើបាន ហើយប្រព័ន្ធនឹងរក្សា session លើឧបករណ៍នេះ។
         </p>
         <a id="telegramLink" class="primary-button auth-link" href="#" target="_blank" rel="noreferrer">
-          ស្នើសុំគណនីតាម Telegram
+          <span data-i18n="requestTelegram">ស្នើសុំគណនីតាម Telegram</span>
         </a>
       </section>
 
       <section class="auth-card">
         <div class="auth-tabs">
-          <button id="showLoginTab" class="tab-button tab-button--active" type="button">ចូលប្រើ</button>
-          <button id="showRequestTab" class="tab-button" type="button">របៀបស្នើសុំគណនី</button>
+          <button id="showLoginTab" class="tab-button tab-button--active" type="button" data-i18n="loginTab">ចូលប្រើ</button>
+          <button id="showRequestTab" class="tab-button" type="button" data-i18n="requestTab">របៀបស្នើសុំគណនី</button>
         </div>
 
         <div id="loginPanel">
-          <h2>ចូលប្រើគណនី</h2>
+          <h2 data-i18n="loginHeading">ចូលប្រើគណនី</h2>
           <form id="loginForm" class="form-stack">
             <label>
-              <span>អ៊ីមែលគណនី</span>
-              <input id="loginUsername" type="email" autocomplete="username" placeholder="ឧទាហរណ៍: nilaademo@gmail.com">
+              <span data-i18n="emailLabel">អ៊ីមែលគណនី</span>
+              <input id="loginUsername" type="email" autocomplete="username" data-i18n-placeholder="loginEmailPlaceholder" placeholder="ឧទាហរណ៍: nilaademo@gmail.com">
             </label>
             <label>
-              <span>ពាក្យសម្ងាត់</span>
+              <span data-i18n="passwordLabel">ពាក្យសម្ងាត់</span>
               <input id="loginPassword" type="password" autocomplete="current-password" placeholder="********">
             </label>
-            <button class="primary-button" type="submit">ចូលប្រើ</button>
+            <button class="primary-button" type="submit" data-i18n="loginButton">ចូលប្រើ</button>
           </form>
         </div>
 
         <div id="requestPanel" class="hidden">
-          <h2>ស្នើសុំគណនី</h2>
+          <h2 data-i18n="requestHeading">ស្នើសុំគណនី</h2>
           <ol class="simple-steps">
-            <li>ផ្ញើសារ Telegram ទៅ admin</li>
-            <li>ប្រាប់ឈ្មោះហាង និងលេខទូរស័ព្ទ</li>
-            <li>រង់ចាំ admin បង្កើតគណនីអោយ</li>
-            <li>ចូលប្រើម្តងហើយ app នឹងរក្សា session លើឧបករណ៍នេះ</li>
+            <li data-i18n="requestStep1">ផ្ញើសារ Telegram ទៅ admin</li>
+            <li data-i18n="requestStep2">ប្រាប់ឈ្មោះហាង និងលេខទូរស័ព្ទ</li>
+            <li data-i18n="requestStep3">រង់ចាំ admin បង្កើតគណនីអោយ</li>
+            <li data-i18n="requestStep4">ចូលប្រើម្តងហើយ app នឹងរក្សា session លើឧបករណ៍នេះ</li>
           </ol>
         </div>
       </section>
@@ -66,25 +71,29 @@
         <h2 id="shopName">ការបញ្ជាទិញ</h2>
       </div>
       <div class="topbar__actions">
+        <div class="language-switch app-language-switch">
+          <button id="appLangKmButton" class="tab-button tab-button--active" type="button">ខ្មែរ</button>
+          <button id="appLangEnButton" class="tab-button" type="button">English</button>
+        </div>
         <div class="user-chip">
           <span id="welcomeLabel">សួស្តី</span>
         </div>
-        <button id="openDashboardButton" class="secondary-button" type="button">Dashboard</button>
-        <button id="logoutButton" class="secondary-button" type="button">ចាកចេញ</button>
+        <button id="openDashboardButton" class="secondary-button" type="button" data-i18n="dashboardButton">Dashboard</button>
+        <button id="logoutButton" class="secondary-button" type="button" data-i18n="logoutButton">ចាកចេញ</button>
       </div>
     </header>
 
     <aside id="dashboardDrawer" class="drawer hidden">
       <div class="drawer__card">
         <div class="drawer__head">
-          <strong>Dashboard</strong>
-          <button id="closeDashboardButton" class="icon-button" type="button">×</button>
+          <strong data-i18n="dashboardButton">Dashboard</strong>
+          <button id="closeDashboardButton" class="icon-button" type="button">&times;</button>
         </div>
         <nav class="drawer__nav">
-          <button class="nav-button nav-button--active" data-route="orders" type="button">ការបញ្ជាទិញ</button>
-          <button class="nav-button" data-route="money" type="button">លុយ</button>
-          <button class="nav-button" data-route="stock" type="button">ស្តុក</button>
-          <button class="nav-button" data-route="reports" type="button">របាយការណ៍</button>
+          <button class="nav-button nav-button--active" data-route="orders" type="button" data-i18n="navOrders">ការបញ្ជាទិញ</button>
+          <button class="nav-button" data-route="money" type="button" data-i18n="navMoney">លុយ</button>
+          <button class="nav-button" data-route="stock" type="button" data-i18n="navStock">ស្តុក</button>
+          <button class="nav-button" data-route="reports" type="button" data-i18n="navReports">របាយការណ៍</button>
           <button class="nav-button hidden" id="adminNavButton" data-route="admin" type="button">Admin</button>
         </nav>
       </div>
@@ -93,55 +102,55 @@
     <main class="screen-stack">
       <section id="ordersScreen" class="screen screen--active">
         <article class="panel">
-          <div class="panel__head">
+          <div class="panel__head panel__head--stack">
             <div>
               <p class="eyebrow">Homepage</p>
-              <h3>ការបញ្ជាទិញ</h3>
+              <h3 data-i18n="navOrders">ការបញ្ជាទិញ</h3>
             </div>
-            <button id="clearCartButton" class="ghost-button" type="button">សម្អាតកន្ត្រក</button>
+            <button id="clearCartButton" class="ghost-button" type="button" data-i18n="clearCart">សម្អាតកន្ត្រក</button>
           </div>
 
           <form id="orderForm" class="grid-form">
             <label class="grid-form__wide">
-              <span>ឈ្មោះអ្នកទិញ</span>
-              <input id="buyerName" type="text" placeholder="ឧទាហរណ៍: បងវិសាល">
+              <span data-i18n="buyerNameLabel">ឈ្មោះអ្នកទិញ</span>
+              <input id="buyerName" type="text" data-i18n-placeholder="buyerNamePlaceholder" placeholder="ឧទាហរណ៍: បងវិសាល">
             </label>
             <label class="grid-form__wide">
-              <span>មុខទំនិញ</span>
-              <input id="productSearch" list="productSuggestions" type="text" placeholder="ស្វែងរកឈ្មោះទំនិញ">
+              <span data-i18n="productLabel">មុខទំនិញ</span>
+              <input id="productSearch" list="productSuggestions" type="text" data-i18n-placeholder="productSearchPlaceholder" placeholder="ស្វែងរកឈ្មោះទំនិញ">
               <datalist id="productSuggestions"></datalist>
             </label>
             <label>
-              <span>ចំនួន</span>
+              <span data-i18n="qtyLabel">ចំនួន</span>
               <input id="productQty" type="number" min="1" value="1">
             </label>
             <label>
-              <span>តម្លៃ</span>
+              <span data-i18n="priceLabel">តម្លៃ</span>
               <input id="productPrice" type="number" min="0" step="0.01" placeholder="0.00">
             </label>
-            <button class="primary-button" type="submit">បន្ថែម</button>
+            <button class="primary-button primary-button--full" type="submit" data-i18n="addButton">បន្ថែម</button>
           </form>
 
           <div class="cart-box">
             <div class="list-head">
-              <h4>កន្ត្រកលក់</h4>
+              <h4 data-i18n="cartHeading">កន្ត្រកលក់</h4>
               <span id="cartCount">0 មុខ</span>
             </div>
             <div id="cartList" class="stack-list"></div>
             <div class="cart-footer">
               <label class="cart-footer__fee">
-                <span>ថ្លៃបន្ថែម</span>
+                <span data-i18n="feeLabel">ថ្លៃបន្ថែម</span>
                 <input id="orderFee" type="number" min="0" step="0.01" value="0">
               </label>
-              <div>
-                <p>សរុបមុខទំនិញ</p>
+              <div class="cart-footer__summary">
+                <p data-i18n="subtotalLabel">សរុបមុខទំនិញ</p>
                 <strong id="cartSubtotal">$0.00</strong>
               </div>
-              <div>
-                <p>សរុបត្រូវបង់</p>
+              <div class="cart-footer__summary">
+                <p data-i18n="totalLabel">សរុបត្រូវបង់</p>
                 <strong id="cartTotal">$0.00</strong>
               </div>
-              <button id="checkoutButton" class="primary-button" type="button">បិទការលក់</button>
+              <button id="checkoutButton" class="primary-button primary-button--full" type="button" data-i18n="checkoutButton">បិទការលក់</button>
             </div>
           </div>
         </article>
@@ -152,39 +161,39 @@
           <div class="panel__head">
             <div>
               <p class="eyebrow">Money</p>
-              <h3>គ្រប់គ្រងលុយ</h3>
+              <h3 data-i18n="moneyHeading">គ្រប់គ្រងលុយ</h3>
             </div>
           </div>
           <div class="summary-grid">
             <article class="summary-card summary-card--warm">
-              <p>លក់ថ្ងៃនេះ</p>
+              <p data-i18n="todaySales">លក់ថ្ងៃនេះ</p>
               <strong id="todaySalesValue">$0.00</strong>
             </article>
             <article class="summary-card">
-              <p>ចំណាយថ្ងៃនេះ</p>
+              <p data-i18n="todayExpenses">ចំណាយថ្ងៃនេះ</p>
               <strong id="todayExpenseValue">$0.00</strong>
             </article>
             <article class="summary-card">
-              <p>សាច់ប្រាក់សុទ្ធ</p>
+              <p data-i18n="todayNet">សាច់ប្រាក់សុទ្ធ</p>
               <strong id="todayNetValue">$0.00</strong>
             </article>
           </div>
 
           <form id="expenseForm" class="grid-form">
             <label class="grid-form__wide">
-              <span>កំណត់សម្គាល់ចំណាយ</span>
-              <input id="expenseNote" type="text" placeholder="ឧទាហរណ៍: បង់ភ្លើង ឬ ទិញកញ្ចប់">
+              <span data-i18n="expenseNoteLabel">កំណត់សម្គាល់ចំណាយ</span>
+              <input id="expenseNote" type="text" data-i18n-placeholder="expenseNotePlaceholder" placeholder="ឧទាហរណ៍: បង់ភ្លើង ឬ ទិញកញ្ចប់">
             </label>
             <label>
-              <span>ចំនួនទឹកប្រាក់</span>
+              <span data-i18n="expenseAmountLabel">ចំនួនទឹកប្រាក់</span>
               <input id="expenseAmount" type="number" min="0" step="0.01" placeholder="0.00">
             </label>
-            <button class="primary-button" type="submit">បន្ថែមចំណាយ</button>
+            <button class="primary-button primary-button--full" type="submit" data-i18n="addExpenseButton">បន្ថែមចំណាយ</button>
           </form>
 
           <div class="record-box">
             <div class="list-head">
-              <h4>បញ្ជីចំណាយថ្ងៃនេះ</h4>
+              <h4 data-i18n="expenseListHeading">បញ្ជីចំណាយថ្ងៃនេះ</h4>
               <span id="expenseCount">0</span>
             </div>
             <div id="expenseList" class="stack-list"></div>
@@ -197,33 +206,33 @@
           <div class="panel__head">
             <div>
               <p class="eyebrow">Stock</p>
-              <h3>គ្រប់គ្រងស្តុក</h3>
+              <h3 data-i18n="stockHeading">គ្រប់គ្រងស្តុក</h3>
             </div>
           </div>
 
           <form id="productForm" class="grid-form">
             <label class="grid-form__wide">
-              <span>ឈ្មោះទំនិញ</span>
-              <input id="productNameInput" type="text" placeholder="ឧទាហរណ៍: កាហ្វេទឹកកក">
+              <span data-i18n="productNameLabel">ឈ្មោះទំនិញ</span>
+              <input id="productNameInput" type="text" data-i18n-placeholder="productNamePlaceholder" placeholder="ឧទាហរណ៍: កាហ្វេទឹកកក">
             </label>
             <label>
-              <span>តម្លៃ</span>
+              <span data-i18n="priceLabel">តម្លៃ</span>
               <input id="productPriceInput" type="number" min="0" step="0.01" placeholder="0.00">
             </label>
             <label>
-              <span>ស្តុកនៅសល់</span>
+              <span data-i18n="stockLeftLabel">ស្តុកនៅសល់</span>
               <input id="productStockInput" type="number" min="0" value="0">
             </label>
             <label>
-              <span>ព្រមាននៅចំនួន</span>
+              <span data-i18n="lowStockLabelText">ព្រមាននៅចំនួន</span>
               <input id="productLowStockInput" type="number" min="0" value="5">
             </label>
-            <button class="primary-button" type="submit">រក្សាទុកទំនិញ</button>
+            <button class="primary-button primary-button--full" type="submit" data-i18n="saveProductButton">រក្សាទុកទំនិញ</button>
           </form>
 
           <div class="record-box">
             <div class="list-head">
-              <h4>បញ្ជីទំនិញ</h4>
+              <h4 data-i18n="productListHeading">បញ្ជីទំនិញ</h4>
               <span id="productCount">0</span>
             </div>
             <div id="productList" class="stack-list"></div>
@@ -236,34 +245,34 @@
           <div class="panel__head">
             <div>
               <p class="eyebrow">Reports</p>
-              <h3>របាយការណ៍ប្រចាំថ្ងៃ</h3>
+              <h3 data-i18n="reportsHeading">របាយការណ៍ប្រចាំថ្ងៃ</h3>
             </div>
           </div>
           <div class="summary-grid">
             <article class="summary-card">
-              <p>ចំនួនវិក្កយបត្រ</p>
+              <p data-i18n="orderCountLabel">ចំនួនវិក្កយបត្រ</p>
               <strong id="reportOrderCount">0</strong>
             </article>
             <article class="summary-card">
-              <p>ទំនិញលក់បាន</p>
+              <p data-i18n="itemsSoldLabel">ទំនិញលក់បាន</p>
               <strong id="reportItemCount">0</strong>
             </article>
             <article class="summary-card">
-              <p>ជិតអស់ស្តុក</p>
+              <p data-i18n="lowStockSummaryLabel">ជិតអស់ស្តុក</p>
               <strong id="reportLowStockCount">0</strong>
             </article>
           </div>
           <div class="two-column">
             <div class="record-box">
               <div class="list-head">
-                <h4>បញ្ជីការលក់</h4>
+                <h4 data-i18n="salesListHeading">បញ្ជីការលក់</h4>
                 <span id="orderCount">0</span>
               </div>
               <div id="orderList" class="stack-list"></div>
             </div>
             <div class="record-box">
               <div class="list-head">
-                <h4>ស្ថានភាពស្តុក</h4>
+                <h4 data-i18n="lowStockHeading">ស្ថានភាពស្តុក</h4>
                 <span id="lowStockLabel">0</span>
               </div>
               <div id="lowStockList" class="stack-list"></div>
@@ -277,36 +286,36 @@
           <div class="panel__head">
             <div>
               <p class="eyebrow">Admin</p>
-              <h3>បង្កើតអ្នកប្រើថ្មី</h3>
+              <h3 data-i18n="adminHeading">បង្កើតអ្នកប្រើថ្មី</h3>
             </div>
           </div>
           <form id="adminCreateUserForm" class="grid-form">
             <label>
-              <span>ឈ្មោះអ្នកប្រើ</span>
+              <span data-i18n="newUsernameLabel">ឈ្មោះអ្នកប្រើ</span>
               <input id="newUsername" type="text" placeholder="new-shop-owner">
             </label>
             <label>
-              <span>ពាក្យសម្ងាត់</span>
+              <span data-i18n="passwordLabel">ពាក្យសម្ងាត់</span>
               <input id="newPassword" type="password" placeholder="********">
             </label>
             <label>
-              <span>ឈ្មោះហាង</span>
+              <span data-i18n="shopNameLabel">ឈ្មោះហាង</span>
               <input id="newShopName" type="text" placeholder="Nilaa Coffee">
             </label>
             <label>
-              <span>តួនាទី</span>
+              <span data-i18n="roleLabel">តួនាទី</span>
               <select id="newUserRole">
                 <option value="owner">owner</option>
                 <option value="staff">staff</option>
                 <option value="admin">admin</option>
               </select>
             </label>
-            <button class="primary-button" type="submit">បង្កើតគណនី</button>
+            <button class="primary-button primary-button--full" type="submit" data-i18n="createAccountButton">បង្កើតគណនី</button>
           </form>
 
           <div class="record-box">
             <div class="list-head">
-              <h4>អ្នកប្រើក្នុងហាងនេះ</h4>
+              <h4 data-i18n="userListHeading">អ្នកប្រើក្នុងហាងនេះ</h4>
               <span id="userCount">0</span>
             </div>
             <div id="userList" class="stack-list"></div>
@@ -321,14 +330,14 @@
       <div class="receipt-card__top">
         <div>
           <h3>nilaa-os</h3>
-          <p>វិក្កយបត្រលក់</p>
+          <p data-i18n="receiptTitle">វិក្កយបត្រលក់</p>
         </div>
-        <button id="closeReceiptButton" class="icon-button" type="button">×</button>
+        <button id="closeReceiptButton" class="icon-button" type="button">&times;</button>
       </div>
       <div class="receipt-paper" id="receiptPaper">
         <div class="receipt-brand">
           <h1>nilaa-os</h1>
-          <p>វិក្កយបត្រលក់</p>
+          <p data-i18n="receiptTitle">វិក្កយបត្រលក់</p>
           <p id="receiptBuyer">អ្នកទិញ:</p>
         </div>
         <div class="receipt-divider"></div>
@@ -338,22 +347,22 @@
         </div>
         <div class="receipt-table">
           <div class="receipt-row receipt-row--head">
-            <span>ចំនួន</span>
-            <span>មុខទំនិញ</span>
-            <span>តម្លៃ</span>
+            <span data-i18n="qtyLabel">ចំនួន</span>
+            <span data-i18n="productLabel">មុខទំនិញ</span>
+            <span data-i18n="priceLabel">តម្លៃ</span>
           </div>
           <div id="receiptItems"></div>
         </div>
         <div class="receipt-divider"></div>
-        <div class="receipt-total"><span>សរុបមុខទំនិញ</span><strong id="receiptSubtotal"></strong></div>
-        <div class="receipt-total"><span>ថ្លៃបន្ថែម</span><strong id="receiptFee"></strong></div>
-        <div class="receipt-total receipt-total--grand"><span>សរុបចុងក្រោយ</span><strong id="receiptTotal"></strong></div>
+        <div class="receipt-total"><span data-i18n="subtotalLabel">សរុបមុខទំនិញ</span><strong id="receiptSubtotal"></strong></div>
+        <div class="receipt-total"><span data-i18n="feeLabel">ថ្លៃបន្ថែម</span><strong id="receiptFee"></strong></div>
+        <div class="receipt-total receipt-total--grand"><span data-i18n="totalLabel">សរុបត្រូវបង់</span><strong id="receiptTotal"></strong></div>
         <div class="receipt-divider"></div>
-        <p class="receipt-thanks">Thanks you bong! please come again.</p>
+        <p class="receipt-thanks" data-i18n="receiptThanks">Thanks you bong! please come again.</p>
       </div>
       <div class="receipt-actions">
-        <button id="downloadReceiptButton" class="primary-button" type="button">Download PDF</button>
-        <button id="printReceiptButton" class="secondary-button" type="button">Print</button>
+        <button id="downloadReceiptButton" class="primary-button" type="button" data-i18n="downloadPdfButton">Download PDF</button>
+        <button id="printReceiptButton" class="secondary-button" type="button" data-i18n="printButton">Print</button>
       </div>
     </div>
   </section>

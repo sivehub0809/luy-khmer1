@@ -2,9 +2,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { appSettings, supabaseConfig } from "./supabase-config.js";
 
 const MOCK_STORAGE_KEY = "nilaa-os-preview-store-v2";
+const LANGUAGE_STORAGE_KEY = "nilaa-os-language";
 
 const state = {
   route: "orders",
+  language: localStorage.getItem(LANGUAGE_STORAGE_KEY) || "km",
   authUser: null,
   profile: null,
   shop: null,
@@ -23,6 +25,10 @@ const elements = {
   appShell: document.getElementById("appShell"),
   setupBanner: document.getElementById("setupBanner"),
   telegramLink: document.getElementById("telegramLink"),
+  langKmButton: document.getElementById("langKmButton"),
+  langEnButton: document.getElementById("langEnButton"),
+  appLangKmButton: document.getElementById("appLangKmButton"),
+  appLangEnButton: document.getElementById("appLangEnButton"),
   showLoginTab: document.getElementById("showLoginTab"),
   showRequestTab: document.getElementById("showRequestTab"),
   loginPanel: document.getElementById("loginPanel"),
@@ -102,6 +108,235 @@ const elements = {
 
 elements.telegramLink.href = appSettings.telegramRequestUrl;
 
+const translations = {
+  km: {
+    authTitle: "ប្រព័ន្ធ POS សម្រាប់ហាង និងភោជនីយដ្ឋាន",
+    authCopy: "ស្នើសុំគណនីតាម Telegram មុនសិន។ បន្ទាប់ពី admin អនុម័ត អ្នកអាចចូលប្រើបាន ហើយប្រព័ន្ធនឹងរក្សា session លើឧបករណ៍នេះ។",
+    requestTelegram: "ស្នើសុំគណនីតាម Telegram",
+    loginTab: "ចូលប្រើ",
+    requestTab: "របៀបស្នើសុំគណនី",
+    loginHeading: "ចូលប្រើគណនី",
+    emailLabel: "អ៊ីមែលគណនី",
+    loginEmailPlaceholder: "ឧទាហរណ៍: nilaademo@gmail.com",
+    passwordLabel: "ពាក្យសម្ងាត់",
+    loginButton: "ចូលប្រើ",
+    requestHeading: "ស្នើសុំគណនី",
+    requestStep1: "ផ្ញើសារ Telegram ទៅ admin",
+    requestStep2: "ប្រាប់ឈ្មោះហាង និងលេខទូរស័ព្ទ",
+    requestStep3: "រង់ចាំ admin បង្កើតគណនីអោយ",
+    requestStep4: "ចូលប្រើម្តងហើយ app នឹងរក្សា session លើឧបករណ៍នេះ",
+    dashboardButton: "Dashboard",
+    logoutButton: "ចាកចេញ",
+    navOrders: "ការបញ្ជាទិញ",
+    navMoney: "លុយ",
+    navStock: "ស្តុក",
+    navReports: "របាយការណ៍",
+    clearCart: "សម្អាតកន្ត្រក",
+    buyerNameLabel: "ឈ្មោះអ្នកទិញ",
+    buyerNamePlaceholder: "ឧទាហរណ៍: បងវិសាល",
+    productLabel: "មុខទំនិញ",
+    productSearchPlaceholder: "ស្វែងរកឈ្មោះទំនិញ",
+    qtyLabel: "ចំនួន",
+    priceLabel: "តម្លៃ",
+    addButton: "បន្ថែម",
+    cartHeading: "កន្ត្រកលក់",
+    feeLabel: "ថ្លៃបន្ថែម",
+    subtotalLabel: "សរុបមុខទំនិញ",
+    totalLabel: "សរុបត្រូវបង់",
+    checkoutButton: "បិទការលក់",
+    moneyHeading: "គ្រប់គ្រងលុយ",
+    todaySales: "លក់ថ្ងៃនេះ",
+    todayExpenses: "ចំណាយថ្ងៃនេះ",
+    todayNet: "សាច់ប្រាក់សុទ្ធ",
+    expenseNoteLabel: "កំណត់សម្គាល់ចំណាយ",
+    expenseNotePlaceholder: "ឧទាហរណ៍: បង់ភ្លើង ឬ ទិញកញ្ចប់",
+    expenseAmountLabel: "ចំនួនទឹកប្រាក់",
+    addExpenseButton: "បន្ថែមចំណាយ",
+    expenseListHeading: "បញ្ជីចំណាយថ្ងៃនេះ",
+    stockHeading: "គ្រប់គ្រងស្តុក",
+    productNameLabel: "ឈ្មោះទំនិញ",
+    productNamePlaceholder: "ឧទាហរណ៍: កាហ្វេទឹកកក",
+    stockLeftLabel: "ស្តុកនៅសល់",
+    lowStockLabelText: "ព្រមាននៅចំនួន",
+    saveProductButton: "រក្សាទុកទំនិញ",
+    productListHeading: "បញ្ជីទំនិញ",
+    reportsHeading: "របាយការណ៍ប្រចាំថ្ងៃ",
+    orderCountLabel: "ចំនួនវិក្កយបត្រ",
+    itemsSoldLabel: "ទំនិញលក់បាន",
+    lowStockSummaryLabel: "ជិតអស់ស្តុក",
+    salesListHeading: "បញ្ជីការលក់",
+    lowStockHeading: "ស្ថានភាពស្តុក",
+    adminHeading: "បង្កើតអ្នកប្រើថ្មី",
+    newUsernameLabel: "ឈ្មោះអ្នកប្រើ",
+    shopNameLabel: "ឈ្មោះហាង",
+    roleLabel: "តួនាទី",
+    createAccountButton: "បង្កើតគណនី",
+    userListHeading: "អ្នកប្រើក្នុងហាងនេះ",
+    receiptTitle: "វិក្កយបត្រលក់",
+    receiptThanks: "Thanks you bong! please come again.",
+    downloadPdfButton: "Download PDF",
+    printButton: "Print",
+    itemUnit: "មុខ",
+    deleteButton: "លុប",
+    emptyCart: "មិនទាន់មានទំនិញក្នុងកន្ត្រកទេ",
+    noExpenses: "មិនទាន់មានចំណាយថ្ងៃនេះទេ",
+    noProducts: "មិនទាន់មានទំនិញទេ",
+    productMeta: "តម្លៃ {price} • ស្តុកនៅសល់ {left}",
+    lowStock: "ជិតអស់",
+    normalStock: "ធម្មតា",
+    orderMeta: "{buyer} • {summary}",
+    guestBuyer: "ភ្ញៀវ",
+    noSales: "មិនទាន់មានការលក់ថ្ងៃនេះទេ",
+    stockStatusMeta: "នៅសល់ {left} • ព្រមាននៅ {lowAt}",
+    stockStable: "ស្តុកមិនទាបទេ",
+    adminOnlyUsers: "Admin ប៉ុណ្ណោះដែលអាចមើលបាន",
+    noUsers: "មិនទាន់មានអ្នកប្រើទេ",
+    buyerLine: "អ្នកទិញ: {buyer}",
+    previewBanner: "Preview mode is active. Add Supabase URL and anon key, then run the SQL in supabase/schema.sql to move to real production.",
+    popupAlert: "សូមអនុញ្ញាត popup ដើម្បី print receipt",
+    loginFailed: "មិនអាចចូលប្រើបានទេ។ សូមពិនិត្យអ៊ីមែល និងពាក្យសម្ងាត់ម្តងទៀត។",
+    loginEmailOnly: "សូមប្រើអ៊ីមែលដែលបានបង្កើតក្នុងគណនីរបស់អ្នក មិនមែនឈ្មោះខ្លីទេ។",
+    invalidProduct: "សូមជ្រើសរើសទំនិញ និងបញ្ចូលតម្លៃអោយត្រឹមត្រូវ",
+    insufficientStock: "ស្តុកមិនគ្រប់",
+    checkoutFailed: "បិទការលក់មិនបាន",
+    expenseInvalid: "សូមបញ្ចូលចំណាយអោយត្រឹមត្រូវ",
+    productInvalid: "សូមបំពេញព័ត៌មានទំនិញអោយត្រឹមត្រូវ",
+    createUserFailed: "បង្កើតអ្នកប្រើមិនបាន",
+    createPdfFailed: "មិនអាចបង្កើត PDF បាន",
+    saveExpenseFailed: "រក្សាទុកចំណាយមិនបាន",
+    saveProductFailed: "រក្សាទុកទំនិញមិនបាន"
+  },
+  en: {
+    authTitle: "POS system for shops and restaurants",
+    authCopy: "Request your account on Telegram first. After the admin approves it, you can sign in and stay signed in on this device.",
+    requestTelegram: "Request Account on Telegram",
+    loginTab: "Login",
+    requestTab: "How to request an account",
+    loginHeading: "Sign in",
+    emailLabel: "Account email",
+    loginEmailPlaceholder: "Example: nilaademo@gmail.com",
+    passwordLabel: "Password",
+    loginButton: "Login",
+    requestHeading: "Request account",
+    requestStep1: "Send a Telegram message to the admin",
+    requestStep2: "Share your shop name and phone number",
+    requestStep3: "Wait for the admin to create your account",
+    requestStep4: "After you sign in once, the app keeps your session on this device",
+    dashboardButton: "Dashboard",
+    logoutButton: "Logout",
+    navOrders: "Orders",
+    navMoney: "Money",
+    navStock: "Stock",
+    navReports: "Reports",
+    clearCart: "Clear cart",
+    buyerNameLabel: "Buyer name",
+    buyerNamePlaceholder: "Example: Vichea",
+    productLabel: "Product",
+    productSearchPlaceholder: "Search saved product",
+    qtyLabel: "Qty",
+    priceLabel: "Price",
+    addButton: "Add",
+    cartHeading: "Sale cart",
+    feeLabel: "Extra fee",
+    subtotalLabel: "Subtotal",
+    totalLabel: "Total due",
+    checkoutButton: "Close sale",
+    moneyHeading: "Money management",
+    todaySales: "Today sales",
+    todayExpenses: "Today expenses",
+    todayNet: "Net cash",
+    expenseNoteLabel: "Expense note",
+    expenseNotePlaceholder: "Example: electricity or package",
+    expenseAmountLabel: "Amount",
+    addExpenseButton: "Add expense",
+    expenseListHeading: "Today's expenses",
+    stockHeading: "Stock management",
+    productNameLabel: "Product name",
+    productNamePlaceholder: "Example: Iced coffee",
+    stockLeftLabel: "Stock left",
+    lowStockLabelText: "Low stock alert at",
+    saveProductButton: "Save product",
+    productListHeading: "Product list",
+    reportsHeading: "Daily reports",
+    orderCountLabel: "Invoices",
+    itemsSoldLabel: "Items sold",
+    lowStockSummaryLabel: "Low stock",
+    salesListHeading: "Sales list",
+    lowStockHeading: "Stock status",
+    adminHeading: "Create new user",
+    newUsernameLabel: "Username",
+    shopNameLabel: "Shop name",
+    roleLabel: "Role",
+    createAccountButton: "Create account",
+    userListHeading: "Users in this shop",
+    receiptTitle: "Sales receipt",
+    receiptThanks: "Thanks you bong! please come again.",
+    downloadPdfButton: "Download PDF",
+    printButton: "Print",
+    itemUnit: "items",
+    deleteButton: "Delete",
+    emptyCart: "No items in the cart yet.",
+    noExpenses: "No expenses recorded today.",
+    noProducts: "No products saved yet.",
+    productMeta: "Price {price} • Left {left}",
+    lowStock: "Low",
+    normalStock: "Normal",
+    orderMeta: "{buyer} • {summary}",
+    guestBuyer: "Guest",
+    noSales: "No sales recorded today.",
+    stockStatusMeta: "Left {left} • Alert at {lowAt}",
+    stockStable: "Stock looks fine.",
+    adminOnlyUsers: "Only admin can see this section.",
+    noUsers: "No users yet.",
+    buyerLine: "Buyer: {buyer}",
+    previewBanner: "Preview mode is active. Add Supabase URL and anon key, then run the SQL in supabase/schema.sql to move to real production.",
+    popupAlert: "Please allow popups to print the receipt.",
+    loginFailed: "Could not sign in. Please check your email and password.",
+    loginEmailOnly: "Please use your approved account email, not the short username.",
+    invalidProduct: "Please choose a product and enter a valid price.",
+    insufficientStock: "Not enough stock.",
+    checkoutFailed: "Could not close the sale.",
+    expenseInvalid: "Please enter a valid expense.",
+    productInvalid: "Please enter valid product details.",
+    createUserFailed: "Could not create the user.",
+    createPdfFailed: "Could not generate the PDF.",
+    saveExpenseFailed: "Could not save the expense.",
+    saveProductFailed: "Could not save the product."
+  }
+};
+
+function t(key, vars = {}) {
+  const pack = translations[state.language] || translations.km;
+  let text = pack[key] || translations.km[key] || key;
+  Object.entries(vars).forEach(([name, value]) => {
+    text = text.replaceAll(`{${name}}`, String(value));
+  });
+  return text;
+}
+
+function applyLanguage() {
+  document.documentElement.lang = state.language;
+  document.querySelectorAll("[data-i18n]").forEach((node) => {
+    node.textContent = t(node.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((node) => {
+    node.placeholder = t(node.dataset.i18nPlaceholder);
+  });
+  [elements.langKmButton, elements.appLangKmButton].forEach((button) => {
+    button?.classList.toggle("tab-button--active", state.language === "km");
+  });
+  [elements.langEnButton, elements.appLangEnButton].forEach((button) => {
+    button?.classList.toggle("tab-button--active", state.language === "en");
+  });
+}
+
+function setLanguage(language) {
+  state.language = language;
+  localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+  applyLanguage();
+  renderAll();
+}
+
 function money(value) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -133,12 +368,12 @@ function normalizeLoginIdentifier(value) {
 }
 
 function loginErrorMessage(error, attemptedIdentifier) {
-  const fallback = "មិនអាចចូលប្រើបានទេ។ សូមពិនិត្យអ៊ីមែល និងពាក្យសម្ងាត់ម្តងទៀត។";
+  const fallback = t("loginFailed");
   const message = String(error?.message || "").trim();
   if (!message) return fallback;
   if (message.toLowerCase().includes("invalid login credentials")) {
     if (!String(attemptedIdentifier || "").includes("@")) {
-      return "សូមប្រើអ៊ីមែលដែលបានបង្កើតក្នុងគណនីរបស់អ្នក មិនមែនឈ្មោះខ្លីទេ។";
+      return t("loginEmailOnly");
     }
     return fallback;
   }
@@ -182,10 +417,10 @@ function switchAuthTab(mode) {
 
 function buttonLabel(route) {
   return {
-    orders: "ការបញ្ជាទិញ",
-    money: "លុយ",
-    stock: "ស្តុក",
-    reports: "របាយការណ៍",
+    orders: t("navOrders"),
+    money: t("navMoney"),
+    stock: t("navStock"),
+    reports: t("navReports"),
     admin: "Admin"
   }[route] || "nilaa-os";
 }
@@ -198,7 +433,7 @@ function setRoute(route) {
   elements.navButtons.forEach((button) => {
     button.classList.toggle("nav-button--active", button.dataset.route === route);
   });
-  elements.shopName.textContent = route === "orders" ? "ការបញ្ជាទិញ" : buttonLabel(route);
+  elements.shopName.textContent = route === "orders" ? t("navOrders") : buttonLabel(route);
 }
 
 function openDrawer(open) {
@@ -210,7 +445,7 @@ function renderAuth() {
   elements.authShell.classList.toggle("hidden", loggedIn);
   elements.appShell.classList.toggle("hidden", !loggedIn);
   if (!loggedIn) return;
-  elements.welcomeLabel.textContent = `សួស្តី ${state.profile.username}`;
+  elements.welcomeLabel.textContent = `${state.language === "en" ? "Hello" : "សួស្តី"} ${state.profile.username}`;
   elements.adminNavButton.classList.toggle("hidden", state.profile.role !== "admin");
   if (state.profile.role !== "admin" && state.route === "admin") {
     setRoute("orders");
@@ -220,7 +455,7 @@ function renderAuth() {
 function renderCart() {
   const subtotal = state.cart.reduce((sum, item) => sum + item.qty * item.price, 0);
   const fee = Number(elements.orderFee.value || 0);
-  elements.cartCount.textContent = `${state.cart.length} មុខ`;
+  elements.cartCount.textContent = `${state.cart.length} ${t("itemUnit")}`;
   elements.cartSubtotal.textContent = money(subtotal);
   elements.cartTotal.textContent = money(subtotal + fee);
 
@@ -233,11 +468,11 @@ function renderCart() {
           </div>
           <div>
             <strong>${money(item.qty * item.price)}</strong>
-            <button class="delete-button" type="button" data-cart-id="${item.id}">លុប</button>
+            <button class="delete-button" type="button" data-cart-id="${item.id}">${t("deleteButton")}</button>
           </div>
         </article>
       `).join("")
-    : blankState("មិនទាន់មានទំនិញក្នុងកន្ត្រកទេ");
+    : blankState(t("emptyCart"));
 }
 
 function renderMoney() {
@@ -256,11 +491,11 @@ function renderMoney() {
           </div>
           <div>
             <strong>${money(expense.amount)}</strong>
-            <button class="delete-button" type="button" data-expense-id="${expense.id}">លុប</button>
+            <button class="delete-button" type="button" data-expense-id="${expense.id}">${t("deleteButton")}</button>
           </div>
         </article>
       `).join("")
-    : blankState("មិនទាន់មានចំណាយថ្ងៃនេះទេ");
+    : blankState(t("noExpenses"));
 }
 
 function renderProducts() {
@@ -280,16 +515,16 @@ function renderProducts() {
           <article class="product-row">
             <div>
               <strong>${safeText(product.name)}</strong>
-              <div class="meta-line">តម្លៃ ${money(product.price)} • ស្តុកនៅសល់ ${left}</div>
+              <div class="meta-line">${t("productMeta", { price: money(product.price), left })}</div>
             </div>
             <div>
-              <span class="tag ${isLow ? "tag--low" : ""}">${isLow ? "ជិតអស់" : "ធម្មតា"}</span>
-              <button class="delete-button" type="button" data-product-id="${product.id}">លុប</button>
+              <span class="tag ${isLow ? "tag--low" : ""}">${isLow ? t("lowStock") : t("normalStock")}</span>
+              <button class="delete-button" type="button" data-product-id="${product.id}">${t("deleteButton")}</button>
             </div>
           </article>
         `;
       }).join("")
-    : blankState("មិនទាន់មានទំនិញទេ");
+    : blankState(t("noProducts"));
 }
 
 function renderReports() {
@@ -305,32 +540,32 @@ function renderReports() {
         <article class="record-row">
           <div>
             <strong>${safeText(order.invoice_no || order.invoiceNo)}</strong>
-            <div class="meta-line">${safeText(order.buyer_name || order.buyerName || "ភ្ញៀវ")} • ${safeText(orderSummary(order))}</div>
+            <div class="meta-line">${safeText(t("orderMeta", { buyer: order.buyer_name || order.buyerName || t("guestBuyer"), summary: orderSummary(order) }))}</div>
           </div>
           <div>
             <strong>${money(order.total)}</strong>
-            <button class="delete-button" type="button" data-order-id="${order.id}">លុប</button>
+            <button class="delete-button" type="button" data-order-id="${order.id}">${t("deleteButton")}</button>
           </div>
         </article>
       `).join("")
-    : blankState("មិនទាន់មានការលក់ថ្ងៃនេះទេ");
+    : blankState(t("noSales"));
   elements.lowStockList.innerHTML = lowStock.length
     ? lowStock.map((product) => `
         <article class="record-row">
           <div>
             <strong>${safeText(product.name)}</strong>
-            <div class="meta-line">នៅសល់ ${effectiveStock(product)} • ព្រមាននៅ ${product.low_stock_at ?? product.lowStockAt}</div>
+            <div class="meta-line">${t("stockStatusMeta", { left: effectiveStock(product), lowAt: product.low_stock_at ?? product.lowStockAt })}</div>
           </div>
-          <span class="tag tag--low">ជិតអស់</span>
+          <span class="tag tag--low">${t("lowStock")}</span>
         </article>
       `).join("")
-    : blankState("ស្តុកមិនទាបទេ");
+    : blankState(t("stockStable"));
 }
 
 function renderUsers() {
   if (!state.profile || state.profile.role !== "admin") {
     elements.userCount.textContent = 0;
-    elements.userList.innerHTML = blankState("Admin ប៉ុណ្ណោះដែលអាចមើលបាន");
+    elements.userList.innerHTML = blankState(t("adminOnlyUsers"));
     return;
   }
   elements.userCount.textContent = state.users.length;
@@ -343,7 +578,7 @@ function renderUsers() {
           </div>
         </article>
       `).join("")
-    : blankState("មិនទាន់មានអ្នកប្រើទេ");
+    : blankState(t("noUsers"));
 }
 
 function formatDateTime(value) {
@@ -378,7 +613,7 @@ function renderReceipt() {
     return;
   }
   elements.receiptModal.classList.remove("hidden");
-  elements.receiptBuyer.textContent = `អ្នកទិញ: ${state.latestReceipt.buyerName || "ភ្ញៀវ"}`;
+  elements.receiptBuyer.textContent = t("buyerLine", { buyer: state.latestReceipt.buyerName || t("guestBuyer") });
   elements.receiptDate.textContent = state.latestReceipt.createdAtText;
   elements.receiptInvoice.textContent = state.latestReceipt.invoiceNo;
   elements.receiptItems.innerHTML = state.latestReceipt.items.map((item) => `
@@ -394,6 +629,7 @@ function renderReceipt() {
 }
 
 function renderAll() {
+  applyLanguage();
   renderAuth();
   if (!state.authUser || !state.profile) return;
   elements.buyerName.value = state.currentBuyer;
@@ -415,7 +651,7 @@ function makeDownload(data) {
   if (data.html) {
     const preview = window.open("", "_blank", "width=420,height=720");
     if (!preview) {
-      window.alert("សូមអនុញ្ញាត popup ដើម្បី print receipt");
+      window.alert(t("popupAlert"));
       return;
     }
     preview.document.open();
@@ -428,6 +664,10 @@ function makeDownload(data) {
   if (data.url) {
     window.open(data.url, "_blank", "noreferrer");
   }
+}
+
+function nextInvoiceNumber() {
+  return `#${Date.now().toString().slice(-8)}`;
 }
 
 function createMockBackend() {
@@ -456,7 +696,7 @@ function createMockBackend() {
     mode: "preview",
     async init() {
       if (!localStorage.getItem(MOCK_STORAGE_KEY)) save(seed());
-      showSetupBanner("Preview mode is active. Add Supabase URL and anon key, then run the SQL in supabase/schema.sql to move to real production.");
+      showSetupBanner(t("previewBanner"));
     },
     onAuthChange(callback) {
       listeners.add(callback);
@@ -688,26 +928,98 @@ function createSupabaseBackend() {
       if (error) throw error;
     },
     async checkout(shopId, payload, profile) {
-      const result = await callFunction("checkout-order", {
-        shopId,
-        buyerName: payload.buyerName,
+      const productIds = payload.items.map((item) => item.productId);
+      const { data: productRows, error: productError } = await supabase
+        .from("products")
+        .select("id, name, stock_qty")
+        .eq("shop_id", shopId)
+        .in("id", productIds);
+      if (productError) throw productError;
+
+      const productsById = new Map((productRows || []).map((row) => [row.id, row]));
+      for (const item of payload.items) {
+        const product = productsById.get(item.productId);
+        if (!product || Number(product.stock_qty || 0) < item.qty) {
+          throw new Error(`${t("insufficientStock")} ${item.name}`);
+        }
+      }
+
+      for (const item of payload.items) {
+        const product = productsById.get(item.productId);
+        const { error } = await supabase
+          .from("products")
+          .update({ stock_qty: Number(product.stock_qty || 0) - item.qty })
+          .eq("id", item.productId)
+          .eq("shop_id", shopId);
+        if (error) throw error;
+      }
+
+      const orderRecord = {
+        shop_id: shopId,
+        invoice_no: nextInvoiceNumber(),
+        buyer_name: payload.buyerName,
         items: payload.items,
         subtotal: payload.subtotal,
         fee: payload.fee,
         total: payload.total,
-        createdBy: profile.username,
+        status: "completed",
+        created_by: profile.username,
+        created_at: new Date().toISOString(),
         date: todayKey()
-      });
-      return result.order;
+      };
+
+      const { data, error } = await supabase.from("orders").insert(orderRecord).select("*").single();
+      if (error) throw error;
+      return data;
     },
     async deleteOrder(shopId, orderId) {
-      await callFunction("delete-order", { shopId, orderId });
+      const { data: order, error: orderError } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("id", orderId)
+        .eq("shop_id", shopId)
+        .single();
+      if (orderError) throw orderError;
+
+      for (const item of order.items || []) {
+        const { data: product, error: productError } = await supabase
+          .from("products")
+          .select("id, stock_qty")
+          .eq("id", item.productId)
+          .eq("shop_id", shopId)
+          .single();
+        if (productError) throw productError;
+        const { error: restoreError } = await supabase
+          .from("products")
+          .update({ stock_qty: Number(product.stock_qty || 0) + Number(item.qty || 0) })
+          .eq("id", item.productId)
+          .eq("shop_id", shopId);
+        if (restoreError) throw restoreError;
+      }
+
+      const { error } = await supabase.from("orders").delete().eq("id", orderId).eq("shop_id", shopId);
+      if (error) throw error;
     },
     async createUser(payload) {
       await callFunction("admin-create-user", payload);
     },
     async generateReceiptPdf(receipt) {
-      return await callFunction("generate-receipt-pdf", { receipt });
+      try {
+        return await callFunction("generate-receipt-pdf", { receipt });
+      } catch (_error) {
+        const html = `
+        <!DOCTYPE html><html lang="${state.language}"><head><meta charset="UTF-8"><style>
+        body{font-family:Arial,sans-serif;padding:20px;width:300px}h1{text-align:center;text-transform:uppercase;margin:0}
+        p{margin:4px 0;text-align:center}.divider{border-top:1px dashed #666;margin:12px 0}.row,.total{display:flex;justify-content:space-between;gap:8px;font-size:12px}.total{font-weight:700}
+        </style></head><body>
+        <h1>nilaa-os</h1><p>${safeText(t("receiptTitle"))}</p><p>${safeText(t("buyerLine", { buyer: receipt.buyerName || t("guestBuyer") }))}</p>
+        <div class="divider"></div><div class="row"><span>${safeText(receipt.createdAtText)}</span><span>${safeText(receipt.invoiceNo)}</span></div>
+        <div class="divider"></div>${receipt.items.map((item) => `<div class="row"><span>${item.qty}</span><span>${safeText(item.name)}</span><span>${money(item.qty * item.price)}</span></div>`).join("")}
+        <div class="divider"></div><div class="row"><span>${safeText(t("subtotalLabel"))}</span><span>${money(receipt.subtotal)}</span></div>
+        <div class="row"><span>${safeText(t("feeLabel"))}</span><span>${money(receipt.fee)}</span></div><div class="row total"><span>${safeText(t("totalLabel"))}</span><span>${money(receipt.total)}</span></div>
+        <div class="divider"></div><p>${safeText(t("receiptThanks"))}</p></body></html>`;
+        return { html };
+      }
     }
   };
 }
@@ -770,6 +1082,10 @@ function resetOrderInputs() {
   elements.productPrice.value = "";
 }
 
+elements.langKmButton?.addEventListener("click", () => setLanguage("km"));
+elements.langEnButton?.addEventListener("click", () => setLanguage("en"));
+elements.appLangKmButton?.addEventListener("click", () => setLanguage("km"));
+elements.appLangEnButton?.addEventListener("click", () => setLanguage("en"));
 elements.showLoginTab.addEventListener("click", () => switchAuthTab("login"));
 elements.showRequestTab.addEventListener("click", () => switchAuthTab("request"));
 elements.openDashboardButton.addEventListener("click", () => openDrawer(true));
@@ -817,11 +1133,11 @@ elements.orderForm.addEventListener("submit", (event) => {
   const qty = Number(elements.productQty.value);
   const enteredPrice = Number(elements.productPrice.value);
   if (!product || !qty || qty <= 0 || enteredPrice < 0) {
-    window.alert("សូមជ្រើសរើសទំនិញ និងបញ្ចូលតម្លៃអោយត្រឹមត្រូវ");
+    window.alert(t("invalidProduct"));
     return;
   }
   if (effectiveStock(product) < qty) {
-    window.alert("ស្តុកមិនគ្រប់");
+    window.alert(t("insufficientStock"));
     return;
   }
   const existing = state.cart.find((item) => item.productId === product.id && item.price === enteredPrice);
@@ -864,7 +1180,7 @@ elements.checkoutButton.addEventListener("click", async () => {
     elements.orderFee.value = "0";
     await afterMutation();
   } catch (error) {
-    window.alert(error.message || "បិទការលក់មិនបាន");
+    window.alert(error.message || t("checkoutFailed"));
   }
 });
 
@@ -874,10 +1190,15 @@ elements.expenseForm.addEventListener("submit", async (event) => {
   const note = elements.expenseNote.value.trim();
   const amount = Number(elements.expenseAmount.value);
   if (!note || amount < 0) {
-    window.alert("សូមបញ្ចូលចំណាយអោយត្រឹមត្រូវ");
+    window.alert(t("expenseInvalid"));
     return;
   }
-  await backend.createExpense(state.profile.shop_id || state.profile.shopId, { note, amount }, state.profile);
+  try {
+    await backend.createExpense(state.profile.shop_id || state.profile.shopId, { note, amount }, state.profile);
+  } catch (error) {
+    window.alert(error.message || t("saveExpenseFailed"));
+    return;
+  }
   elements.expenseForm.reset();
   await afterMutation();
 });
@@ -897,10 +1218,15 @@ elements.productForm.addEventListener("submit", async (event) => {
   const stock_qty = Number(elements.productStockInput.value);
   const low_stock_at = Number(elements.productLowStockInput.value);
   if (!name || price < 0 || stock_qty < 0 || low_stock_at < 0) {
-    window.alert("សូមបំពេញព័ត៌មានទំនិញអោយត្រឹមត្រូវ");
+    window.alert(t("productInvalid"));
     return;
   }
-  await backend.saveProduct(state.profile.shop_id || state.profile.shopId, { name, price, stock_qty, low_stock_at, active: true });
+  try {
+    await backend.saveProduct(state.profile.shop_id || state.profile.shopId, { name, price, stock_qty, low_stock_at, active: true });
+  } catch (error) {
+    window.alert(error.message || t("saveProductFailed"));
+    return;
+  }
   elements.productForm.reset();
   elements.productStockInput.value = "0";
   elements.productLowStockInput.value = "5";
@@ -934,7 +1260,7 @@ elements.adminCreateUserForm.addEventListener("submit", async (event) => {
     elements.adminCreateUserForm.reset();
     await afterMutation();
   } catch (error) {
-    window.alert(error.message || "បង្កើតអ្នកប្រើមិនបាន");
+    window.alert(error.message || t("createUserFailed"));
   }
 });
 
@@ -949,10 +1275,11 @@ elements.downloadReceiptButton.addEventListener("click", async () => {
     const file = await backend.generateReceiptPdf(state.latestReceipt);
     makeDownload(file);
   } catch (error) {
-    window.alert(error.message || "មិនអាចបង្កើត PDF បាន");
+    window.alert(error.message || t("createPdfFailed"));
   }
 });
 
+applyLanguage();
 await backend.init();
 backend.onAuthChange(async (user) => {
   await loadSignedInUser(user);
