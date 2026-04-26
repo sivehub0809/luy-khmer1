@@ -3,29 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>nilaa-os</title>
   <meta name="description" content="nilaa-os web application">
-
-  <!-- Favicon -->
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
-
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-
-  <!-- Styles -->
+  <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div id="setupBanner" class="setup-banner hidden"></div>
 
-  <section class="auth-shell" id="authShell">
+  <section id="startupSplash" class="startup-splash">
+    <div class="startup-splash__center">
+      <div id="startupOrbit" class="startup-orbit" aria-hidden="true">
+        <span class="startup-orbit__ring startup-orbit__ring--one"></span>
+        <span class="startup-orbit__ring startup-orbit__ring--two"></span>
+      </div>
+      <img class="startup-logo" src="assets/nilaa-logo.jpg" alt="Nilaa logo">
+      <p class="startup-title">nilaa-os</p>
+    </div>
+  </section>
+
+  <section class="auth-shell hidden" id="authShell">
     <div class="auth-shell__inner">
       <div class="language-switch auth-language-switch">
         <button id="langKmButton" class="tab-button tab-button--active" type="button">ខ្មែរ</button>
@@ -37,48 +41,57 @@
           <img class="brand-logo" src="assets/nilaa-logo.jpg" alt="nilaa-os logo">
           <p class="eyebrow">nilaa-os</p>
         </div>
-        <h1 data-i18n="authTitle">ប្រព័ន្ធ POS សម្រាប់ហាង និងភោជនីយដ្ឋាន</h1>
+        <h1 data-i18n="authTitle">POS system for shops and restaurants</h1>
         <p class="auth-copy" data-i18n="authCopy">
-          ស្នើសុំគណនីតាម Telegram មុនសិន។ បន្ទាប់ពី admin អនុម័ត អ្នកអាចចូលប្រើបាន ហើយប្រព័ន្ធនឹងរក្សា session លើឧបករណ៍នេះ។
+          Request your account on Telegram first. After the admin approves it, you can sign in and stay signed in on this device.
         </p>
         <a id="telegramLink" class="primary-button auth-link" href="#" target="_blank" rel="noreferrer">
-          <span data-i18n="requestTelegram">ស្នើសុំគណនីតាម Telegram</span>
+          <span data-i18n="requestTelegram">Request Account on Telegram</span>
         </a>
       </section>
 
-      <section class="auth-card">
+      <section class="auth-card auth-card--popup">
         <div class="auth-tabs">
-          <button id="showLoginTab" class="tab-button tab-button--active" type="button" data-i18n="loginTab">ចូលប្រើ</button>
-          <button id="showRequestTab" class="tab-button" type="button" data-i18n="requestTab">របៀបស្នើសុំគណនី</button>
+          <button id="showLoginTab" class="tab-button tab-button--active" type="button" data-i18n="loginTab">Login</button>
+          <button id="showRequestTab" class="tab-button" type="button" data-i18n="requestTab">How to request an account</button>
         </div>
 
         <div id="loginPanel">
-          <h2 data-i18n="loginHeading">ចូលប្រើគណនី</h2>
+          <h2 data-i18n="loginHeading">Sign in</h2>
           <form id="loginForm" class="form-stack">
             <label>
-              <span data-i18n="emailLabel">អ៊ីមែល ឬ លេខទូរស័ព្ទ</span>
-              <input id="loginUsername" type="text" autocomplete="username" inputmode="email" data-i18n-placeholder="loginEmailPlaceholder" placeholder="ឧទាហរណ៍: nilaademo@gmail.com ឬ 012345678">
+              <span data-i18n="emailLabel">Account email or phone</span>
+              <input id="loginUsername" type="text" autocomplete="username" inputmode="email" data-i18n-placeholder="loginEmailPlaceholder" placeholder="nilaademo@gmail.com or 012345678">
             </label>
             <label>
-              <span data-i18n="passwordLabel">ពាក្យសម្ងាត់</span>
+              <span data-i18n="passwordLabel">Password</span>
               <input id="loginPassword" type="password" autocomplete="current-password" placeholder="********">
             </label>
-            <button class="primary-button" type="submit" data-i18n="loginButton">ចូលប្រើ</button>
+            <button class="primary-button" type="submit" data-i18n="loginButton">Login</button>
           </form>
         </div>
 
         <div id="requestPanel" class="hidden">
-          <h2 data-i18n="requestHeading">ស្នើសុំគណនី</h2>
+          <h2 data-i18n="requestHeading">Request an account</h2>
           <ol class="simple-steps">
-            <li data-i18n="requestStep1">ផ្ញើសារ Telegram ទៅ admin</li>
-            <li data-i18n="requestStep2">ប្រាប់ឈ្មោះហាង និងលេខទូរស័ព្ទ</li>
-            <li data-i18n="requestStep3">រង់ចាំ admin បង្កើតគណនីអោយ</li>
-            <li data-i18n="requestStep4">ចូលប្រើម្តងហើយ app នឹងរក្សា session លើឧបករណ៍នេះ</li>
+            <li data-i18n="requestStep1">Send a Telegram message to the admin.</li>
+            <li data-i18n="requestStep2">Tell us your shop name and phone number.</li>
+            <li data-i18n="requestStep3">Wait for the admin to create your account.</li>
+            <li data-i18n="requestStep4">Sign in once and the app will keep your session on this device.</li>
           </ol>
         </div>
       </section>
     </div>
   </section>
+
+  <div id="asyncOverlay" class="async-overlay hidden" aria-live="polite">
+    <div class="async-overlay__card">
+      <div id="asyncSpinner" class="async-spinner"></div>
+      <div id="asyncSuccess" class="async-success hidden">✓</div>
+      <strong id="asyncTitle">Loading</strong>
+      <p id="asyncMessage">Please wait...</p>
+    </div>
+  </div>
 
   <div id="appShell" class="app-shell hidden">
     <header class="topbar">
@@ -86,7 +99,7 @@
         <img class="brand-logo" src="assets/nilaa-logo.jpg" alt="nilaa-os logo">
         <div>
           <p class="eyebrow">nilaa-os</p>
-          <h2 id="shopName">ការបញ្ជាទិញ</h2>
+          <h2 id="shopName">POS</h2>
         </div>
       </div>
       <div class="topbar__actions">
@@ -95,10 +108,10 @@
           <button id="appLangEnButton" class="tab-button" type="button">English</button>
         </div>
         <div class="user-chip">
-          <span id="welcomeLabel">សួស្តី</span>
+          <span id="welcomeLabel">Welcome</span>
         </div>
         <button id="openDashboardButton" class="secondary-button" type="button" data-i18n="dashboardButton">Dashboard</button>
-        <button id="logoutButton" class="secondary-button" type="button" data-i18n="logoutButton">ចាកចេញ</button>
+        <button id="logoutButton" class="secondary-button" type="button" data-i18n="logoutButton">Logout</button>
       </div>
     </header>
 
@@ -112,370 +125,460 @@
           </div>
         </div>
         <nav class="drawer__nav">
-          <button class="nav-button nav-button--active" data-route="orders" type="button" data-i18n="navOrders">ការបញ្ជាទិញ</button>
+          <button class="nav-button nav-button--active" data-route="pos" type="button" data-i18n="navPOS">POS</button>
           <button class="nav-button" data-route="reports" type="button" data-i18n="navDashboard">Dashboard</button>
-          <button class="nav-button" data-route="stock" type="button" data-i18n="navStock">ស្តុក</button>
-          <button class="nav-button" data-route="money" type="button" data-i18n="navMoney">លុយ</button>
-          <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">ការកំណត់</button>
-          <button class="nav-button" data-route="reports" type="button" data-i18n="navReports">របាយការណ៍</button>
-          <button class="nav-button hidden" data-admin-only="true" data-route="admin" type="button">Admin</button>
-          <button class="nav-button" id="sidebarLogoutButton" type="button" data-i18n="logoutButton">ចាកចេញ</button>
+          <button class="nav-button" data-route="orders" type="button" data-i18n="navOrdersShort">Orders</button>
+          <button class="nav-button" data-route="stock" type="button" data-i18n="navStock">Stock</button>
+          <button class="nav-button" data-route="money" type="button" data-i18n="navMoney">Money</button>
+          <button class="nav-button" data-route="expenses" type="button" data-i18n="navExpenses">Expenses</button>
+          <button class="nav-button" data-route="customers" type="button" data-i18n="navCustomers">Customers</button>
+          <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">Settings</button>
+          <button class="nav-button" data-route="reports" type="button" data-i18n="navReports">Reports</button>
+          <button class="nav-button hidden" data-admin-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
+          <button class="nav-button" data-route="help" type="button" data-i18n="navHelp">Help &amp; Support</button>
+          <button class="nav-button" id="sidebarLogoutButton" type="button" data-i18n="logoutButton">Logout</button>
         </nav>
       </aside>
 
-    <aside id="dashboardDrawer" class="drawer hidden">
-      <div class="drawer__card">
-        <div class="drawer__head">
-          <strong data-i18n="dashboardButton">Dashboard</strong>
-          <button id="closeDashboardButton" class="icon-button" type="button">&times;</button>
+      <aside id="dashboardDrawer" class="drawer hidden">
+        <div class="drawer__card">
+          <div class="drawer__head">
+            <strong data-i18n="dashboardButton">Dashboard</strong>
+            <button id="closeDashboardButton" class="icon-button" type="button">&times;</button>
+          </div>
+          <nav class="drawer__nav">
+            <button class="nav-button nav-button--active" data-route="pos" type="button" data-i18n="navPOS">POS</button>
+            <button class="nav-button" data-route="reports" type="button" data-i18n="navDashboard">Dashboard</button>
+            <button class="nav-button" data-route="orders" type="button" data-i18n="navOrdersShort">Orders</button>
+            <button class="nav-button" data-route="stock" type="button" data-i18n="navStock">Stock</button>
+            <button class="nav-button" data-route="money" type="button" data-i18n="navMoney">Money</button>
+            <button class="nav-button" data-route="expenses" type="button" data-i18n="navExpenses">Expenses</button>
+            <button class="nav-button" data-route="customers" type="button" data-i18n="navCustomers">Customers</button>
+            <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">Settings</button>
+            <button class="nav-button hidden" id="adminNavButton" data-admin-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
+            <button class="nav-button" data-route="help" type="button" data-i18n="navHelp">Help &amp; Support</button>
+          </nav>
         </div>
-        <nav class="drawer__nav">
-          <button class="nav-button nav-button--active" data-route="orders" type="button" data-i18n="navOrders">ការបញ្ជាទិញ</button>
-          <button class="nav-button" data-route="money" type="button" data-i18n="navMoney">លុយ</button>
-          <button class="nav-button" data-route="stock" type="button" data-i18n="navStock">ស្តុក</button>
-          <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">ការកំណត់</button>
-          <button class="nav-button" data-route="reports" type="button" data-i18n="navReports">របាយការណ៍</button>
-          <button class="nav-button hidden" id="adminNavButton" data-admin-only="true" data-route="admin" type="button">Admin</button>
-        </nav>
-      </div>
-    </aside>
+      </aside>
 
-    <main class="screen-stack">
-      <section id="ordersScreen" class="screen screen--active">
-        <article class="panel">
-          <div class="panel__head panel__head--stack">
-            <div>
-              <p class="eyebrow">Homepage</p>
-              <h3 data-i18n="navOrders">ការបញ្ជាទិញ</h3>
-            </div>
-            <button id="clearCartButton" class="ghost-button" type="button" data-i18n="clearCart">សម្អាតកន្ត្រក</button>
-          </div>
-
-          <form id="orderForm" class="grid-form">
-            <label class="grid-form__wide">
-              <span data-i18n="buyerNameLabel">ឈ្មោះអ្នកទិញ</span>
-              <input id="buyerName" type="text" data-i18n-placeholder="buyerNamePlaceholder" placeholder="ឧទាហរណ៍: បងវិសាល">
-            </label>
-            <label class="grid-form__wide">
-              <span data-i18n="buyerPhoneLabel">លេខទូរស័ព្ទអ្នកទិញ</span>
-              <input id="buyerPhone" type="tel" inputmode="tel" data-i18n-placeholder="buyerPhonePlaceholder" placeholder="ឧទាហរណ៍: 012 345 678">
-            </label>
-            <label class="grid-form__wide">
-              <span data-i18n="productLabel">មុខទំនិញ</span>
-              <input id="productSearch" list="productSuggestions" type="text" data-i18n-placeholder="productSearchPlaceholder" placeholder="ស្វែងរកឈ្មោះទំនិញ">
-              <datalist id="productSuggestions"></datalist>
-            </label>
-            <label>
-              <span data-i18n="qtyLabel">ចំនួន</span>
-              <input id="productQty" type="number" min="1" value="1">
-            </label>
-            <label>
-              <span data-i18n="priceLabel">តម្លៃ</span>
-              <input id="productPrice" type="number" min="0" step="0.01" placeholder="0.00">
-            </label>
-            <button class="primary-button primary-button--full" type="submit" data-i18n="addButton">បន្ថែម</button>
-          </form>
-
-          <div class="quick-products">
-            <div class="list-head">
-              <h4 data-i18n="quickProductsHeading">ចុចជ្រើសទំនិញ</h4>
-              <span data-i18n="quickProductsHint">POS quick menu</span>
-            </div>
-            <div class="category-chips">
-              <button class="category-chip category-chip--active" type="button" data-product-filter="all" data-i18n="filterAll">All</button>
-              <button class="category-chip" type="button" data-product-filter="popular" data-i18n="filterPopular">Popular</button>
-              <button class="category-chip" type="button" data-product-filter="low" data-i18n="filterLowStock">Low Stock</button>
-            </div>
-            <div id="quickProductList" class="quick-product-list"></div>
-          </div>
-
-          <div class="cart-box">
-            <div class="list-head">
-              <h4 data-i18n="cartHeading">កន្ត្រកលក់</h4>
-              <span id="cartCount">0 មុខ</span>
-            </div>
-            <div id="cartList" class="stack-list"></div>
-            <div class="cart-footer">
-              <label class="cart-footer__fee">
-                <span data-i18n="feeLabel">ថ្លៃបន្ថែម</span>
-                <input id="orderFee" type="number" min="0" step="0.01" value="0">
-              </label>
-              <div class="cart-footer__summary">
-                <p data-i18n="subtotalLabel">សរុបមុខទំនិញ</p>
-                <strong id="cartSubtotal">$0.00</strong>
-              </div>
-              <div class="cart-footer__summary">
-                <p data-i18n="totalLabel">សរុបត្រូវបង់</p>
-                <strong id="cartTotal">$0.00</strong>
-              </div>
-              <button id="checkoutButton" class="primary-button primary-button--full" type="button" data-i18n="checkoutButton">បិទការលក់</button>
-            </div>
-          </div>
-        </article>
-      </section>
-
-      <section id="moneyScreen" class="screen hidden">
-        <article class="panel">
-          <div class="panel__head">
-            <div>
-              <p class="eyebrow">Money</p>
-              <h3 data-i18n="moneyHeading">គ្រប់គ្រងលុយ</h3>
-            </div>
-          </div>
-          <div class="summary-grid">
-            <article class="summary-card summary-card--warm">
-              <p data-i18n="todaySales">លក់ថ្ងៃនេះ</p>
-              <strong id="todaySalesValue">$0.00</strong>
-            </article>
-            <article class="summary-card">
-              <p data-i18n="todayExpenses">ចំណាយថ្ងៃនេះ</p>
-              <strong id="todayExpenseValue">$0.00</strong>
-            </article>
-            <article class="summary-card">
-              <p data-i18n="todayNet">សាច់ប្រាក់សុទ្ធ</p>
-              <strong id="todayNetValue">$0.00</strong>
-            </article>
-          </div>
-
-          <form id="expenseForm" class="grid-form">
-            <label class="grid-form__wide">
-              <span data-i18n="expenseNoteLabel">កំណត់សម្គាល់ចំណាយ</span>
-              <input id="expenseNote" type="text" data-i18n-placeholder="expenseNotePlaceholder" placeholder="ឧទាហរណ៍: បង់ភ្លើង ឬ ទិញកញ្ចប់">
-            </label>
-            <label>
-              <span data-i18n="expenseAmountLabel">ចំនួនទឹកប្រាក់</span>
-              <input id="expenseAmount" type="number" min="0" step="0.01" placeholder="0.00">
-            </label>
-            <button class="primary-button primary-button--full" type="submit" data-i18n="addExpenseButton">បន្ថែមចំណាយ</button>
-          </form>
-
-          <div class="record-box">
-            <div class="list-head">
-              <h4 data-i18n="expenseListHeading">បញ្ជីចំណាយថ្ងៃនេះ</h4>
-              <span id="expenseCount">0</span>
-            </div>
-            <div id="expenseList" class="stack-list"></div>
-          </div>
-        </article>
-      </section>
-
-      <section id="stockScreen" class="screen hidden">
-        <article class="panel">
-          <div class="panel__head">
-            <div>
-              <p class="eyebrow">Stock</p>
-              <h3 data-i18n="stockHeading">គ្រប់គ្រងស្តុក</h3>
-            </div>
-          </div>
-
-          <form id="productForm" class="grid-form">
-            <label class="grid-form__wide">
-              <span data-i18n="productNameLabel">ឈ្មោះទំនិញ</span>
-              <input id="productNameInput" type="text" data-i18n-placeholder="productNamePlaceholder" placeholder="ឧទាហរណ៍: កាហ្វេទឹកកក">
-            </label>
-            <div class="grid-form__wide settings-media">
-              <img id="productImagePreview" class="settings-preview settings-preview--logo hidden" src="" alt="Product preview">
-              <label class="product-image-field">
-                <span data-i18n="productImageLabel">រូបភាពទំនិញ</span>
-                <input id="productImageInput" type="file" accept="image/*">
-              </label>
-            </div>
-            <label>
-              <span data-i18n="priceLabel">តម្លៃ</span>
-              <input id="productPriceInput" type="number" min="0" step="0.01" placeholder="0.00">
-            </label>
-            <label>
-              <span data-i18n="stockLeftLabel">ស្តុកនៅសល់</span>
-              <input id="productStockInput" type="number" min="0" value="0">
-            </label>
-            <label>
-              <span data-i18n="lowStockLabelText">ព្រមាននៅចំនួន</span>
-              <input id="productLowStockInput" type="number" min="0" value="5">
-            </label>
-            <button class="primary-button primary-button--full" type="submit" data-i18n="saveProductButton">រក្សាទុកទំនិញ</button>
-          </form>
-
-          <div class="record-box">
-            <div class="list-head">
-              <h4 data-i18n="productListHeading">បញ្ជីទំនិញ</h4>
-              <span id="productCount">0</span>
-            </div>
-            <div id="productList" class="stack-list"></div>
-          </div>
-        </article>
-      </section>
-
-      <section id="reportsScreen" class="screen hidden">
-        <article class="panel">
-          <div class="panel__head">
-            <div>
-              <p class="eyebrow">Reports</p>
-              <h3 data-i18n="reportsHeading">របាយការណ៍ប្រចាំថ្ងៃ</h3>
-            </div>
-          </div>
-          <div class="summary-grid">
-            <article class="summary-card">
-              <p data-i18n="orderCountLabel">ចំនួនវិក្កយបត្រ</p>
-              <strong id="reportOrderCount">0</strong>
-            </article>
-            <article class="summary-card">
-              <p data-i18n="itemsSoldLabel">ទំនិញលក់បាន</p>
-              <strong id="reportItemCount">0</strong>
-            </article>
-            <article class="summary-card">
-              <p data-i18n="lowStockSummaryLabel">ជិតអស់ស្តុក</p>
-              <strong id="reportLowStockCount">0</strong>
-            </article>
-          </div>
-          <div class="two-column">
-            <div class="record-box">
-              <div class="list-head">
-                <h4 data-i18n="salesListHeading">បញ្ជីការលក់</h4>
-                <span id="orderCount">0</span>
-              </div>
-              <div id="orderList" class="stack-list"></div>
-            </div>
-            <div class="record-box">
-              <div class="list-head">
-                <h4 data-i18n="lowStockHeading">ស្ថានភាពស្តុក</h4>
-                <span id="lowStockLabel">0</span>
-              </div>
-              <div id="lowStockList" class="stack-list"></div>
-            </div>
-          </div>
-        </article>
-      </section>
-
-      <section id="settingsScreen" class="screen hidden">
-        <article class="panel">
-          <div class="panel__head">
-            <div>
-              <p class="eyebrow">Settings</p>
-              <h3 data-i18n="settingsHeading">ការកំណត់ហាង</h3>
-            </div>
-          </div>
-
-          <form id="settingsForm" class="settings-layout">
-            <section class="record-box">
-              <div class="list-head">
-                <h4 data-i18n="profileSettingsHeading">រូបភាព និងព័ត៌មានអាជីវកម្ម</h4>
-              </div>
-              <div class="settings-stack">
-                <div class="settings-media">
-                  <img id="settingsProfilePreview" class="settings-preview settings-preview--logo" src="assets/nilaa-logo.jpg" alt="Shop profile preview">
-                  <label>
-                    <span data-i18n="profileImageLabel">រូបភាពប្រូហ្វាល់ហាង</span>
-                    <input id="settingsProfileImage" type="file" accept="image/*">
-                  </label>
+      <main class="screen-stack">
+        <section id="posScreen" class="screen screen--active">
+          <div class="pos-layout">
+            <article class="panel panel--pos-main">
+              <div class="pos-head">
+                <div>
+                  <p class="eyebrow">POS machine</p>
+                  <h3 data-i18n="navPOS">POS</h3>
                 </div>
-                <label>
-                  <span data-i18n="businessNameLabel">ឈ្មោះហាង</span>
-                  <input id="settingsBusinessName" type="text" placeholder="Nilaa Coffee">
-                </label>
-                <label>
-                  <span data-i18n="businessDescriptionLabel">ពិពណ៌នាអាជីវកម្ម</span>
-                  <textarea id="settingsBusinessDescription" rows="4" data-i18n-placeholder="businessDescriptionPlaceholder" placeholder="ណែនាំខ្លីៗអំពីហាង និងអ្វីដែលអ្នកលក់"></textarea>
-                </label>
+                <div class="pos-head__meta">
+                  <span class="tag" data-i18n="fixedPriceTag">Fixed prices</span>
+                  <button id="clearCartButton" class="ghost-button" type="button" data-i18n="clearCart">Clear cart</button>
+                </div>
               </div>
-            </section>
 
-            <section class="record-box">
-              <div class="list-head">
-                <h4 data-i18n="paymentSettingsHeading">ការទូទាត់ និង QR</h4>
-              </div>
-              <div class="settings-stack">
-                <label>
-                  <span data-i18n="paymentMethodSettingLabel">វិធីទូទាត់ដើម</span>
-                  <select id="settingsPaymentMethod">
-                    <option value="both" data-i18n="paymentOptionBoth">QR និង បង់ផ្ទាល់</option>
-                    <option value="bank" data-i18n="paymentBank">ផ្ទេរទៅធនាគារ</option>
-                    <option value="cash" data-i18n="paymentCash">ទទួលលុយផ្ទាល់</option>
-                  </select>
+              <div class="pos-search-row">
+                <label class="pos-search">
+                  <span class="hidden" data-i18n="productLabel">Product</span>
+                  <input id="productSearch" list="productSuggestions" type="text" data-i18n-placeholder="productSearchPlaceholder" placeholder="Search products">
+                  <datalist id="productSuggestions"></datalist>
                 </label>
-                <div class="settings-media">
-                  <img id="settingsQrPreview" class="settings-preview" alt="QR preview">
+              </div>
+
+              <div class="category-chips">
+                <button class="category-chip category-chip--active" type="button" data-product-filter="all" data-i18n="filterAll">All</button>
+                <button class="category-chip" type="button" data-product-filter="popular" data-i18n="filterPopular">Popular</button>
+                <button class="category-chip" type="button" data-product-filter="low" data-i18n="filterLowStock">Low Stock</button>
+              </div>
+
+              <div id="quickProductList" class="quick-product-list quick-product-list--desktop"></div>
+
+              <form id="orderForm" class="hidden">
+                <input id="productQty" type="number" min="1" value="1">
+                <input id="productPrice" type="number" min="0" step="0.01" value="">
+              </form>
+            </article>
+
+            <aside class="panel panel--checkout">
+              <div class="checkout-head">
+                <div>
+                  <p class="eyebrow">Checkout</p>
+                  <h3 data-i18n="cartHeading">Cart</h3>
+                </div>
+                <span id="cartCount">0 items</span>
+              </div>
+
+              <div class="customer-box">
+                <button id="customerToggleButton" class="ghost-button customer-box__toggle" type="button" data-i18n="customerToggle">Add customer info</button>
+                <div id="customerFields" class="customer-box__fields hidden">
                   <label>
-                    <span data-i18n="bankQrLabel">រូប QR ធនាគារ</span>
-                    <input id="settingsQrUpload" type="file" accept="image/*">
+                    <span data-i18n="buyerNameLabel">Buyer name</span>
+                    <input id="buyerName" type="text" data-i18n-placeholder="buyerNamePlaceholder" placeholder="Customer name">
+                  </label>
+                  <label>
+                    <span data-i18n="buyerPhoneLabel">Buyer phone</span>
+                    <input id="buyerPhone" type="tel" inputmode="tel" data-i18n-placeholder="buyerPhonePlaceholder" placeholder="012 345 678">
                   </label>
                 </div>
               </div>
-            </section>
 
-            <section class="record-box">
+              <div id="cartList" class="stack-list checkout-cart-list"></div>
+
+              <div class="checkout-totals">
+                <label class="cart-footer__fee">
+                  <span data-i18n="feeLabel">Fee</span>
+                  <input id="orderFee" type="number" min="0" step="0.01" value="0">
+                </label>
+                <div class="checkout-line">
+                  <span data-i18n="subtotalLabel">Subtotal</span>
+                  <strong id="cartSubtotal">$0.00</strong>
+                </div>
+                <div class="checkout-line checkout-line--muted">
+                  <span data-i18n="discountPlaceholder">Discount</span>
+                  <span>--</span>
+                </div>
+                <div class="checkout-line checkout-line--muted">
+                  <span data-i18n="taxPlaceholder">Tax</span>
+                  <span>--</span>
+                </div>
+                <div class="checkout-line checkout-line--grand">
+                  <span data-i18n="totalLabel">Total</span>
+                  <strong id="cartTotal">$0.00</strong>
+                </div>
+              </div>
+
+              <div class="checkout-actions">
+                <button id="checkoutButton" class="primary-button primary-button--full" type="button" data-i18n="checkoutButton">Close sale</button>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="ordersScreen" class="screen hidden">
+          <article class="panel">
+            <div class="panel__head">
+              <div>
+                <p class="eyebrow">Orders</p>
+                <h3 data-i18n="navOrdersShort">Orders</h3>
+              </div>
+            </div>
+            <div class="record-box">
               <div class="list-head">
-                <h4 data-i18n="receiptSettingsHeading">ការកំណត់វិក្កយបត្រ</h4>
+                <h4 data-i18n="salesListHeading">Today orders</h4>
+                <span id="ordersPageCount">0</span>
               </div>
-              <div class="settings-stack">
-                <label>
-                  <span data-i18n="receiptNameLabel">ចំណងជើងវិក្កយបត្រ</span>
-                  <input id="settingsReceiptTitle" type="text" placeholder="nilaa-os">
-                </label>
-                <label>
-                  <span data-i18n="receiptFooterLabel">សារខាងក្រោមវិក្កយបត្រ</span>
-                  <textarea id="settingsReceiptFooter" rows="3" data-i18n-placeholder="receiptFooterPlaceholder" placeholder="Thanks you bong! please come again."></textarea>
+              <div id="ordersHistoryList" class="stack-list"></div>
+            </div>
+          </article>
+        </section>
+
+        <section id="moneyScreen" class="screen hidden">
+          <article class="panel">
+            <div class="panel__head">
+              <div>
+                <p class="eyebrow">Money</p>
+                <h3 data-i18n="moneyHeading">Money</h3>
+              </div>
+            </div>
+            <div class="summary-grid">
+              <article class="summary-card summary-card--warm">
+                <p data-i18n="todaySales">Today sales</p>
+                <strong id="todaySalesValue">$0.00</strong>
+              </article>
+              <article class="summary-card">
+                <p data-i18n="todayExpenses">Today expenses</p>
+                <strong id="todayExpenseValue">$0.00</strong>
+              </article>
+              <article class="summary-card">
+                <p data-i18n="todayNet">Net cash</p>
+                <strong id="todayNetValue">$0.00</strong>
+              </article>
+            </div>
+          </article>
+        </section>
+
+        <section id="expensesScreen" class="screen hidden">
+          <article class="panel">
+            <div class="panel__head">
+              <div>
+                <p class="eyebrow">Expenses</p>
+                <h3 data-i18n="navExpenses">Expenses</h3>
+              </div>
+            </div>
+            <form id="expenseForm" class="grid-form">
+              <label class="grid-form__wide">
+                <span data-i18n="expenseNoteLabel">Expense note</span>
+                <input id="expenseNote" type="text" data-i18n-placeholder="expenseNotePlaceholder" placeholder="Electricity, packaging, transport">
+              </label>
+              <label>
+                <span data-i18n="expenseAmountLabel">Amount</span>
+                <input id="expenseAmount" type="number" min="0" step="0.01" placeholder="0.00">
+              </label>
+              <button class="primary-button primary-button--full" type="submit" data-i18n="addExpenseButton">Add expense</button>
+            </form>
+            <div class="record-box">
+              <div class="list-head">
+                <h4 data-i18n="expenseListHeading">Today expenses</h4>
+                <span id="expenseCount">0</span>
+              </div>
+              <div id="expenseList" class="stack-list"></div>
+            </div>
+          </article>
+        </section>
+
+        <section id="stockScreen" class="screen hidden">
+          <article class="panel">
+            <div class="panel__head">
+              <div>
+                <p class="eyebrow">Stock</p>
+                <h3 data-i18n="stockHeading">Stock</h3>
+              </div>
+            </div>
+
+            <form id="productForm" class="grid-form">
+              <label class="grid-form__wide">
+                <span data-i18n="productNameLabel">Product name</span>
+                <input id="productNameInput" type="text" data-i18n-placeholder="productNamePlaceholder" placeholder="Iced latte">
+              </label>
+              <div class="grid-form__wide settings-media">
+                <img id="productImagePreview" class="settings-preview settings-preview--logo hidden" src="" alt="Product preview">
+                <label class="product-image-field">
+                  <span data-i18n="productImageLabel">Product image</span>
+                  <input id="productImageInput" type="file" accept="image/*">
                 </label>
               </div>
-            </section>
+              <label data-non-staff="true">
+                <span data-i18n="priceLabel">Price</span>
+                <input id="productPriceInput" type="number" min="0" step="0.01" placeholder="0.00">
+              </label>
+              <label>
+                <span data-i18n="stockLeftLabel">Stock left</span>
+                <input id="productStockInput" type="number" min="0" value="0">
+              </label>
+              <label data-non-staff="true">
+                <span data-i18n="lowStockLabelText">Low stock warning</span>
+                <input id="productLowStockInput" type="number" min="0" value="5">
+              </label>
+              <button class="primary-button primary-button--full" type="submit" data-i18n="saveProductButton">Save product</button>
+            </form>
 
-            <button class="primary-button primary-button--full" type="submit" data-i18n="saveSettingsButton">រក្សាទុកការកំណត់</button>
-          </form>
-        </article>
-      </section>
-
-      <section id="adminScreen" class="screen hidden">
-        <article class="panel">
-          <div class="panel__head">
-            <div>
-              <p class="eyebrow">Admin</p>
-              <h3 data-i18n="adminHeading">បង្កើតអ្នកប្រើថ្មី</h3>
+            <div class="record-box">
+              <div class="list-head">
+                <h4 data-i18n="productListHeading">Products</h4>
+                <span id="productCount">0</span>
+              </div>
+              <div id="productList" class="stack-list"></div>
             </div>
-          </div>
-          <form id="adminCreateUserForm" class="grid-form">
-            <label>
-              <span data-i18n="newUsernameLabel">អ៊ីមែលអ្នកប្រើ</span>
-              <input id="newUsername" type="email" placeholder="owner@example.com">
-            </label>
-            <label>
-              <span data-i18n="newPhoneLabel">លេខទូរស័ព្ទអ្នកប្រើ</span>
-              <input id="newPhone" type="tel" inputmode="tel" placeholder="012 345 678">
-            </label>
-            <label>
-              <span data-i18n="passwordLabel">ពាក្យសម្ងាត់</span>
-              <input id="newPassword" type="password" placeholder="********">
-            </label>
-            <label>
-              <span data-i18n="shopNameLabel">ឈ្មោះហាង</span>
-              <input id="newShopName" type="text" placeholder="Nilaa Coffee">
-            </label>
-            <label>
-              <span data-i18n="roleLabel">តួនាទី</span>
-              <select id="newUserRole">
-                <option value="owner">owner</option>
-                <option value="staff">staff</option>
-                <option value="admin">admin</option>
-              </select>
-            </label>
-            <button class="primary-button primary-button--full" type="submit" data-i18n="createAccountButton">បង្កើតគណនី</button>
-          </form>
+          </article>
+        </section>
 
-          <div class="record-box">
-            <div class="list-head">
-              <h4 data-i18n="userListHeading">អ្នកប្រើក្នុងហាងនេះ</h4>
-              <span id="userCount">0</span>
+        <section id="customersScreen" class="screen hidden">
+          <article class="panel">
+            <div class="panel__head">
+              <div>
+                <p class="eyebrow">Customers</p>
+                <h3 data-i18n="navCustomers">Customers</h3>
+              </div>
             </div>
-            <div id="userList" class="stack-list"></div>
-          </div>
-        </article>
-      </section>
-    </main>
+            <div class="record-box">
+              <div class="list-head">
+                <h4 data-i18n="customerHistoryHeading">Recent buyers</h4>
+                <span id="customerCount">0</span>
+              </div>
+              <div id="customerList" class="stack-list"></div>
+            </div>
+          </article>
+        </section>
+
+        <section id="reportsScreen" class="screen hidden">
+          <article class="panel">
+            <div class="panel__head">
+              <div>
+                <p class="eyebrow">Reports</p>
+                <h3 data-i18n="reportsHeading">Daily reports</h3>
+              </div>
+            </div>
+            <div class="summary-grid">
+              <article class="summary-card">
+                <p data-i18n="orderCountLabel">Order count</p>
+                <strong id="reportOrderCount">0</strong>
+              </article>
+              <article class="summary-card">
+                <p data-i18n="itemsSoldLabel">Items sold</p>
+                <strong id="reportItemCount">0</strong>
+              </article>
+              <article class="summary-card">
+                <p data-i18n="lowStockSummaryLabel">Low stock</p>
+                <strong id="reportLowStockCount">0</strong>
+              </article>
+            </div>
+            <div class="two-column">
+              <div class="record-box">
+                <div class="list-head">
+                  <h4 data-i18n="salesListHeading">Order detail</h4>
+                  <span id="orderCount">0</span>
+                </div>
+                <div id="orderList" class="stack-list"></div>
+              </div>
+              <div class="record-box">
+                <div class="list-head">
+                  <h4 data-i18n="lowStockHeading">Low stock</h4>
+                  <span id="lowStockLabel">0</span>
+                </div>
+                <div id="lowStockList" class="stack-list"></div>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section id="settingsScreen" class="screen hidden">
+          <article class="panel">
+            <div class="panel__head">
+              <div>
+                <p class="eyebrow">Settings</p>
+                <h3 data-i18n="settingsHeading">Shop settings</h3>
+              </div>
+            </div>
+
+            <form id="settingsForm" class="settings-layout">
+              <section class="record-box">
+                <div class="list-head">
+                  <h4 data-i18n="profileSettingsHeading">Business profile</h4>
+                </div>
+                <div class="settings-stack">
+                  <div class="settings-media">
+                    <img id="settingsProfilePreview" class="settings-preview settings-preview--logo" src="assets/nilaa-logo.jpg" alt="Shop profile preview">
+                    <label>
+                      <span data-i18n="profileImageLabel">Business logo</span>
+                      <input id="settingsProfileImage" type="file" accept="image/*">
+                    </label>
+                  </div>
+                  <label>
+                    <span data-i18n="businessNameLabel">Business name</span>
+                    <input id="settingsBusinessName" type="text" placeholder="Nilaa Coffee">
+                  </label>
+                  <label>
+                    <span data-i18n="businessDescriptionLabel">Business description</span>
+                    <textarea id="settingsBusinessDescription" rows="4" data-i18n-placeholder="businessDescriptionPlaceholder" placeholder="Tell customers what your shop sells."></textarea>
+                  </label>
+                </div>
+              </section>
+
+              <section class="record-box">
+                <div class="list-head">
+                  <h4 data-i18n="paymentSettingsHeading">Payment and QR</h4>
+                </div>
+                <div class="settings-stack">
+                  <label>
+                    <span data-i18n="paymentMethodSettingLabel">Default payment method</span>
+                    <select id="settingsPaymentMethod">
+                      <option value="both" data-i18n="paymentOptionBoth">QR and manual</option>
+                      <option value="bank" data-i18n="paymentBank">Bank transfer</option>
+                      <option value="cash" data-i18n="paymentCash">Cash</option>
+                    </select>
+                  </label>
+                  <div class="settings-media">
+                    <img id="settingsQrPreview" class="settings-preview" alt="QR preview">
+                    <label>
+                      <span data-i18n="bankQrLabel">Bank QR image</span>
+                      <input id="settingsQrUpload" type="file" accept="image/*">
+                    </label>
+                  </div>
+                </div>
+              </section>
+
+              <section class="record-box">
+                <div class="list-head">
+                  <h4 data-i18n="receiptSettingsHeading">Receipt settings</h4>
+                </div>
+                <div class="settings-stack">
+                  <label>
+                    <span data-i18n="receiptNameLabel">Receipt title</span>
+                    <input id="settingsReceiptTitle" type="text" placeholder="nilaa-os">
+                  </label>
+                  <label>
+                    <span data-i18n="receiptFooterLabel">Receipt footer</span>
+                    <textarea id="settingsReceiptFooter" rows="3" data-i18n-placeholder="receiptFooterPlaceholder" placeholder="Thanks you bong! please come again."></textarea>
+                  </label>
+                </div>
+              </section>
+
+              <button class="primary-button primary-button--full" type="submit" data-i18n="saveSettingsButton">Save settings</button>
+            </form>
+          </article>
+        </section>
+
+        <section id="usersScreen" class="screen hidden">
+          <article class="panel">
+            <div class="panel__head">
+              <div>
+                <p class="eyebrow">Users &amp; Staff</p>
+                <h3 data-i18n="adminHeading">Create users and assign roles</h3>
+              </div>
+            </div>
+            <form id="adminCreateUserForm" class="grid-form">
+              <label>
+                <span data-i18n="newUsernameLabel">User email</span>
+                <input id="newUsername" type="email" placeholder="owner@example.com">
+              </label>
+              <label>
+                <span data-i18n="newPhoneLabel">User phone</span>
+                <input id="newPhone" type="tel" inputmode="tel" placeholder="012 345 678">
+              </label>
+              <label>
+                <span data-i18n="passwordLabel">Password</span>
+                <input id="newPassword" type="password" placeholder="********">
+              </label>
+              <label>
+                <span data-i18n="shopNameLabel">Shop name</span>
+                <input id="newShopName" type="text" placeholder="Nilaa Coffee">
+              </label>
+              <label>
+                <span data-i18n="roleLabel">Role</span>
+                <select id="newUserRole">
+                  <option value="owner">owner</option>
+                  <option value="staff">staff</option>
+                  <option value="cashier">cashier</option>
+                  <option value="admin">admin</option>
+                </select>
+              </label>
+              <button class="primary-button primary-button--full" type="submit" data-i18n="createAccountButton">Create account</button>
+            </form>
+
+            <div class="record-box">
+              <div class="list-head">
+                <h4 data-i18n="userListHeading">Shop users</h4>
+                <span id="userCount">0</span>
+              </div>
+              <div id="userList" class="stack-list"></div>
+            </div>
+          </article>
+        </section>
+
+        <section id="helpScreen" class="screen hidden">
+          <article class="panel">
+            <div class="panel__head">
+              <div>
+                <p class="eyebrow">Help</p>
+                <h3 data-i18n="navHelp">Help &amp; Support</h3>
+              </div>
+            </div>
+            <div class="record-box help-box">
+              <h4 data-i18n="helpHeading">Need support?</h4>
+              <p data-i18n="helpCopy">Use Telegram support for account approval, shop setup, and login help.</p>
+              <a id="helpTelegramLink" class="primary-button auth-link" href="#" target="_blank" rel="noreferrer">
+                <span data-i18n="requestTelegram">Request Account on Telegram</span>
+              </a>
+            </div>
+          </article>
+        </section>
+      </main>
     </div>
 
     <nav class="bottom-nav">
-      <button class="nav-button nav-button--active" data-route="orders" type="button" data-i18n="navPOS">POS</button>
-      <button class="nav-button" data-route="reports" type="button" data-i18n="navOrdersShort">Orders</button>
-      <button class="nav-button" data-route="stock" type="button" data-i18n="navStock">ស្តុក</button>
-      <button class="nav-button" data-route="money" type="button" data-i18n="navMoney">លុយ</button>
+      <button class="nav-button nav-button--active" data-route="pos" type="button" data-i18n="navPOS">POS</button>
+      <button class="nav-button" data-route="orders" type="button" data-i18n="navOrdersShort">Orders</button>
+      <button class="nav-button" data-route="stock" type="button" data-i18n="navStock">Stock</button>
+      <button class="nav-button" data-route="money" type="button" data-i18n="navMoney">Money</button>
       <button class="nav-button" data-route="settings" type="button" id="bottomMoreButton" data-i18n="navSettingsShort">Settings</button>
     </nav>
   </div>
@@ -484,14 +587,14 @@
     <div class="payment-card">
       <div class="receipt-card__top">
         <div>
-          <h3 data-i18n="paymentHeading">ការទូទាត់</h3>
-          <p data-i18n="paymentSubheading">ស្កេន QR ដើម្បីបង់ប្រាក់</p>
+          <h3 data-i18n="paymentHeading">Payment</h3>
+          <p data-i18n="paymentSubheading">Choose QR or manual payment to continue.</p>
         </div>
         <button id="closePaymentButton" class="icon-button" type="button">&times;</button>
       </div>
 
       <div class="payment-total">
-        <span data-i18n="totalLabel">សរុបត្រូវបង់</span>
+        <span data-i18n="totalLabel">Total</span>
         <strong id="paymentTotal">$0.00</strong>
       </div>
 
@@ -503,7 +606,7 @@
       </div>
 
       <div class="payment-methods">
-        <p class="eyebrow" data-i18n="paymentMethodLabel">វិធីបង់ប្រាក់</p>
+        <p class="eyebrow" data-i18n="paymentMethodLabel">Payment method</p>
         <div class="payment-choice-grid">
           <button id="payQrButton" class="primary-button" type="button" data-i18n="payQrButton">Pay with QR</button>
           <button id="payManualButton" class="secondary-button" type="button" data-i18n="payManualButton">Pay manual</button>
@@ -513,8 +616,8 @@
 
       <div class="receipt-actions">
         <button id="paymentBackButton" class="secondary-button" type="button" data-i18n="backButton">Back</button>
-        <button id="markPaidButton" class="primary-button hidden" type="button" data-i18n="markPaidButton">បានទូទាត់រួច</button>
-        <button id="cancelPaymentButton" class="secondary-button" type="button" data-i18n="cancelButton">បោះបង់</button>
+        <button id="markPaidButton" class="primary-button hidden" type="button" data-i18n="markPaidButton">Payment received</button>
+        <button id="cancelPaymentButton" class="secondary-button" type="button" data-i18n="cancelButton">Cancel</button>
       </div>
     </div>
   </section>
@@ -524,7 +627,7 @@
       <div class="receipt-card__top">
         <div>
           <h3 id="receiptHeaderTitle">nilaa-os</h3>
-          <p data-i18n="receiptTitle">វិក្កយបត្រលក់</p>
+          <p data-i18n="receiptTitle">Receipt</p>
         </div>
         <button id="closeReceiptButton" class="icon-button" type="button">&times;</button>
       </div>
@@ -532,8 +635,8 @@
         <div class="receipt-brand">
           <img id="receiptBrandLogo" class="receipt-brand__logo hidden" src="assets/nilaa-logo.jpg" alt="Receipt logo">
           <h1 id="receiptBrandName">nilaa-os</h1>
-          <p data-i18n="receiptTitle">វិក្កយបត្រលក់</p>
-          <p id="receiptBuyer">អ្នកទិញ:</p>
+          <p data-i18n="receiptTitle">Receipt</p>
+          <p id="receiptBuyer">Buyer:</p>
           <p id="receiptPhone"></p>
           <p id="receiptBusinessDescription"></p>
         </div>
@@ -544,16 +647,16 @@
         </div>
         <div class="receipt-table">
           <div class="receipt-row receipt-row--head">
-            <span data-i18n="qtyLabel">ចំនួន</span>
-            <span data-i18n="productLabel">មុខទំនិញ</span>
-            <span data-i18n="priceLabel">តម្លៃ</span>
+            <span data-i18n="qtyLabel">Qty</span>
+            <span data-i18n="productLabel">Product</span>
+            <span data-i18n="priceLabel">Price</span>
           </div>
           <div id="receiptItems"></div>
         </div>
         <div class="receipt-divider"></div>
-        <div class="receipt-total"><span data-i18n="subtotalLabel">សរុបមុខទំនិញ</span><strong id="receiptSubtotal"></strong></div>
-        <div class="receipt-total"><span data-i18n="feeLabel">ថ្លៃបន្ថែម</span><strong id="receiptFee"></strong></div>
-        <div class="receipt-total receipt-total--grand"><span data-i18n="totalLabel">សរុបត្រូវបង់</span><strong id="receiptTotal"></strong></div>
+        <div class="receipt-total"><span data-i18n="subtotalLabel">Subtotal</span><strong id="receiptSubtotal"></strong></div>
+        <div class="receipt-total"><span data-i18n="feeLabel">Fee</span><strong id="receiptFee"></strong></div>
+        <div class="receipt-total receipt-total--grand"><span data-i18n="totalLabel">Total</span><strong id="receiptTotal"></strong></div>
         <div class="receipt-divider"></div>
         <p id="receiptFooterText" class="receipt-thanks" data-i18n="receiptThanks">Thanks you bong! please come again.</p>
       </div>

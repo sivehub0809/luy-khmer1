@@ -5,7 +5,7 @@ const MOCK_STORAGE_KEY = "nilaa-os-preview-store-v2";
 const LANGUAGE_STORAGE_KEY = "nilaa-os-language";
 
 const state = {
-  route: "orders",
+  route: "pos",
   language: localStorage.getItem(LANGUAGE_STORAGE_KEY) || "km",
   productFilter: "all",
   authUser: null,
@@ -26,14 +26,24 @@ const state = {
   currentPhone: "",
   pendingPaymentOrder: null,
   latestReceipt: null,
-  backendMode: "setup"
+  backendMode: "setup",
+  splashDone: false,
+  customerExpanded: false
 };
 
 const elements = {
+  startupSplash: document.getElementById("startupSplash"),
+  startupOrbit: document.getElementById("startupOrbit"),
   authShell: document.getElementById("authShell"),
   appShell: document.getElementById("appShell"),
+  asyncOverlay: document.getElementById("asyncOverlay"),
+  asyncSpinner: document.getElementById("asyncSpinner"),
+  asyncSuccess: document.getElementById("asyncSuccess"),
+  asyncTitle: document.getElementById("asyncTitle"),
+  asyncMessage: document.getElementById("asyncMessage"),
   setupBanner: document.getElementById("setupBanner"),
   telegramLink: document.getElementById("telegramLink"),
+  helpTelegramLink: document.getElementById("helpTelegramLink"),
   langKmButton: document.getElementById("langKmButton"),
   langEnButton: document.getElementById("langEnButton"),
   appLangKmButton: document.getElementById("appLangKmButton"),
@@ -55,6 +65,8 @@ const elements = {
   dashboardDrawer: document.getElementById("dashboardDrawer"),
   adminNavButton: document.getElementById("adminNavButton"),
   navButtons: [...document.querySelectorAll(".nav-button")],
+  customerToggleButton: document.getElementById("customerToggleButton"),
+  customerFields: document.getElementById("customerFields"),
   orderForm: document.getElementById("orderForm"),
   buyerName: document.getElementById("buyerName"),
   buyerPhone: document.getElementById("buyerPhone"),
@@ -79,6 +91,10 @@ const elements = {
   todaySalesValue: document.getElementById("todaySalesValue"),
   todayExpenseValue: document.getElementById("todayExpenseValue"),
   todayNetValue: document.getElementById("todayNetValue"),
+  ordersHistoryList: document.getElementById("ordersHistoryList"),
+  ordersPageCount: document.getElementById("ordersPageCount"),
+  customerList: document.getElementById("customerList"),
+  customerCount: document.getElementById("customerCount"),
   productForm: document.getElementById("productForm"),
   productNameInput: document.getElementById("productNameInput"),
   productImageInput: document.getElementById("productImageInput"),
@@ -113,6 +129,7 @@ const elements = {
   settingsQrPreview: document.getElementById("settingsQrPreview"),
   settingsReceiptTitle: document.getElementById("settingsReceiptTitle"),
   settingsReceiptFooter: document.getElementById("settingsReceiptFooter"),
+  nonStaffFields: [...document.querySelectorAll("[data-non-staff='true']")],
   paymentQrImage: document.getElementById("paymentQrImage"),
   receiptHeaderTitle: document.getElementById("receiptHeaderTitle"),
   receiptBrandLogo: document.getElementById("receiptBrandLogo"),
@@ -120,12 +137,16 @@ const elements = {
   receiptBusinessDescription: document.getElementById("receiptBusinessDescription"),
   receiptFooterText: document.getElementById("receiptFooterText"),
   screens: {
+    pos: document.getElementById("posScreen"),
     orders: document.getElementById("ordersScreen"),
     money: document.getElementById("moneyScreen"),
+    expenses: document.getElementById("expensesScreen"),
     stock: document.getElementById("stockScreen"),
+    customers: document.getElementById("customersScreen"),
     reports: document.getElementById("reportsScreen"),
     settings: document.getElementById("settingsScreen"),
-    admin: document.getElementById("adminScreen")
+    users: document.getElementById("usersScreen"),
+    help: document.getElementById("helpScreen")
   },
   receiptModal: document.getElementById("receiptModal"),
   paymentModal: document.getElementById("paymentModal"),
@@ -155,6 +176,7 @@ const elements = {
 };
 
 elements.telegramLink.href = appSettings.telegramRequestUrl;
+if (elements.helpTelegramLink) elements.helpTelegramLink.href = appSettings.telegramRequestUrl;
 
 const translations = {
   km: {
@@ -441,6 +463,34 @@ const translations = {
   }
 };
 
+Object.assign(translations.km, {
+  navExpenses: "Expenses",
+  navCustomers: "Customers",
+  navUsers: "Users & Staff",
+  navHelp: "Help & Support",
+  fixedPriceTag: "Fixed prices",
+  customerToggle: "Add customer info",
+  discountPlaceholder: "Discount",
+  taxPlaceholder: "Tax",
+  customerHistoryHeading: "Recent buyers",
+  helpHeading: "Need support?",
+  helpCopy: "Use Telegram support for account approval, shop setup, and login help."
+});
+
+Object.assign(translations.en, {
+  navExpenses: "Expenses",
+  navCustomers: "Customers",
+  navUsers: "Users & Staff",
+  navHelp: "Help & Support",
+  fixedPriceTag: "Fixed prices",
+  customerToggle: "Add customer info",
+  discountPlaceholder: "Discount",
+  taxPlaceholder: "Tax",
+  customerHistoryHeading: "Recent buyers",
+  helpHeading: "Need support?",
+  helpCopy: "Use Telegram support for account approval, shop setup, and login help."
+});
+
 function t(key, vars = {}) {
   const pack = translations[state.language] || translations.km;
   let text = pack[key] || translations.km[key] || key;
@@ -601,6 +651,51 @@ function refreshSetupBanner() {
   hideSetupBanner();
 }
 
+function showAsyncStatus({ title, message, success = false } = {}) {
+  if (!elements.asyncOverlay) return;
+  elements.asyncTitle.textContent = title || (success ? "Success" : "Loading");
+  elements.asyncMessage.textContent = message || "";
+  elements.asyncSpinner.classList.toggle("hidden", success);
+  elements.asyncSuccess.classList.toggle("hidden", !success);
+  elements.asyncOverlay.classList.remove("hidden");
+}
+
+function hideAsyncStatus() {
+  elements.asyncOverlay?.classList.add("hidden");
+}
+
+async function runWithStatus(config, task) {
+  showAsyncStatus(config);
+  try {
+    const result = await task();
+    showAsyncStatus({
+      title: config.successTitle || "Done",
+      message: config.successMessage || "",
+      success: true
+    });
+    await new Promise((resolve) => window.setTimeout(resolve, 700));
+    hideAsyncStatus();
+    return result;
+  } catch (error) {
+    hideAsyncStatus();
+    throw error;
+  }
+}
+
+function initializeSplash() {
+  if (sessionStorage.getItem("nilaa-os-splash-done")) {
+    state.splashDone = true;
+    elements.startupSplash?.classList.add("hidden");
+    return;
+  }
+  window.setTimeout(() => {
+    state.splashDone = true;
+    sessionStorage.setItem("nilaa-os-splash-done", "1");
+    elements.startupSplash?.classList.add("hidden");
+    renderAuth();
+  }, 4300);
+}
+
 function defaultSettings() {
   return {
     business_name: state.shop?.name || "nilaa-os",
@@ -635,8 +730,8 @@ function syncBrandVisuals() {
     elements.receiptBusinessDescription.classList.toggle("hidden", !settings.business_description);
   }
   if (elements.receiptFooterText) elements.receiptFooterText.textContent = settings.receipt_footer || t("receiptThanks");
-  if (elements.shopName && state.route === "orders") {
-    elements.shopName.textContent = t("navOrders");
+  if (elements.shopName && state.route === "pos") {
+    elements.shopName.textContent = t("navPOS");
   }
 }
 
@@ -673,14 +768,35 @@ function switchAuthTab(mode) {
   elements.showRequestTab.classList.toggle("tab-button--active", !showLogin);
 }
 
+function currentRole() {
+  const role = state.profile?.role || "";
+  return role === "business_owner" ? "owner" : role;
+}
+
+function canManageSettings() {
+  return ["admin", "owner"].includes(currentRole());
+}
+
+function canManageUsers() {
+  return ["admin", "owner"].includes(currentRole());
+}
+
+function canEditProductMeta() {
+  return ["admin", "owner"].includes(currentRole());
+}
+
 function buttonLabel(route) {
   return {
-    orders: t("navOrders"),
+    pos: t("navPOS"),
+    orders: t("navOrdersShort"),
     money: t("navMoney"),
+    expenses: t("navExpenses"),
     stock: t("navStock"),
+    customers: t("navCustomers"),
     settings: t("navSettings"),
     reports: t("navReports"),
-    admin: "Admin"
+    users: t("navUsers"),
+    help: t("navHelp")
   }[route] || "nilaa-os";
 }
 
@@ -692,7 +808,7 @@ function setRoute(route) {
   elements.navButtons.forEach((button) => {
     button.classList.toggle("nav-button--active", button.dataset.route === route);
   });
-  elements.shopName.textContent = route === "orders" ? t("navOrders") : buttonLabel(route);
+  elements.shopName.textContent = buttonLabel(route);
 }
 
 function openDrawer(open) {
@@ -701,22 +817,28 @@ function openDrawer(open) {
 
 function renderAuth() {
   const loggedIn = Boolean(state.authUser && state.profile);
-  elements.authShell.classList.toggle("hidden", loggedIn);
+  elements.authShell.classList.toggle("hidden", loggedIn || !state.splashDone);
   elements.appShell.classList.toggle("hidden", !loggedIn);
   if (!loggedIn) return;
   elements.welcomeLabel.textContent = `${state.language === "en" ? "Hello" : "សួស្តី"} ${state.profile.username}`;
   document.querySelectorAll("[data-admin-only]").forEach((node) => {
-    node.classList.toggle("hidden", state.profile.role !== "admin");
+    node.classList.toggle("hidden", !canManageUsers());
   });
-  if (state.profile.role !== "admin" && state.route === "admin") {
-    setRoute("orders");
+  elements.nonStaffFields.forEach((node) => {
+    node.classList.toggle("hidden", !canEditProductMeta());
+  });
+  document.querySelectorAll("[data-route='settings']").forEach((node) => {
+    node.classList.toggle("hidden", !canManageSettings());
+  });
+  if (!canManageUsers() && state.route === "users") {
+    setRoute("pos");
   }
 }
 
 function renderCart() {
   const subtotal = state.cart.reduce((sum, item) => sum + item.qty * item.price, 0);
   const fee = Number(elements.orderFee.value || 0);
-  elements.cartCount.textContent = `${state.cart.length} ${t("itemUnit")}`;
+  elements.cartCount.textContent = `${state.cart.reduce((sum, item) => sum + item.qty, 0)} ${t("itemUnit")}`;
   elements.cartSubtotal.textContent = money(subtotal);
   elements.cartTotal.textContent = money(subtotal + fee);
 
@@ -727,12 +849,17 @@ function renderCart() {
             ${productImageMarkup(item, "small")}
             <div>
               <strong>${safeText(item.name)}</strong>
-              <div class="meta-line">${item.qty} x ${money(item.price)}</div>
+              <div class="meta-line">${money(item.price)}</div>
             </div>
           </div>
-          <div>
+          <div class="cart-row__side">
+            <div class="qty-stepper">
+              <button class="icon-button qty-stepper__button" type="button" data-cart-action="decrease" data-cart-id="${item.id}">-</button>
+              <span>${item.qty}</span>
+              <button class="icon-button qty-stepper__button" type="button" data-cart-action="increase" data-cart-id="${item.id}">+</button>
+            </div>
             <strong>${money(item.qty * item.price)}</strong>
-            <button class="delete-button" type="button" data-cart-id="${item.id}">${t("deleteButton")}</button>
+            <button class="delete-button" type="button" data-cart-action="remove" data-cart-id="${item.id}">${t("deleteButton")}</button>
           </div>
         </article>
       `).join("")
@@ -784,10 +911,8 @@ function renderProducts() {
         const left = effectiveStock(product);
         return `
           <button class="quick-product" type="button" data-quick-product-id="${product.id}" ${left <= 0 ? "disabled" : ""}>
-            <div class="quick-product__media">
-              ${productImageMarkup(product, "small")}
+              ${productImageMarkup(product)}
               <strong>${safeText(product.name)}</strong>
-            </div>
             <span>${money(product.price)} • ${left}</span>
           </button>
         `;
@@ -810,12 +935,35 @@ function renderProducts() {
             </div>
             <div>
               <span class="tag ${isLow ? "tag--low" : ""}">${isLow ? t("lowStock") : t("normalStock")}</span>
-              <button class="delete-button" type="button" data-product-id="${product.id}">${t("deleteButton")}</button>
+              ${canEditProductMeta() ? `<button class="delete-button" type="button" data-product-id="${product.id}">${t("deleteButton")}</button>` : ""}
             </div>
           </article>
         `;
       }).join("")
     : blankState(t("noProducts"));
+}
+
+function renderOrdersHistory() {
+  if (!elements.ordersHistoryList) return;
+  elements.ordersPageCount.textContent = state.orders.length;
+  elements.ordersHistoryList.innerHTML = state.orders.length
+    ? state.orders.map((order) => `
+        <article class="record-row">
+          <div>
+            <strong>${safeText(order.invoice_no || order.invoiceNo)}</strong>
+            <div class="meta-line">${safeText(order.buyer_name || order.buyerName || t("guestBuyer"))}</div>
+            <div class="meta-line">${safeText(order.payment_method || "cash")} • ${safeText(formatDateTime(order.created_at || order.createdAt))}</div>
+          </div>
+          <div class="record-actions">
+            <strong>${money(order.total)}</strong>
+            <div class="record-actions__buttons">
+              <button class="secondary-button" type="button" data-open-receipt-id="${order.id}">${t("receiptTitle")}</button>
+              <button class="delete-button" type="button" data-order-id="${order.id}">${t("deleteButton")}</button>
+            </div>
+          </div>
+        </article>
+      `).join("")
+    : blankState(t("noSales"));
 }
 
 function renderReports() {
@@ -839,9 +987,12 @@ function renderReports() {
               <div class="meta-line">${safeText(t("orderMeta", { buyer: order.buyer_name || order.buyerName || t("guestBuyer"), summary: orderSummary(order) }))}</div>
             </div>
           </div>
-          <div>
+          <div class="record-actions">
             <strong>${money(order.total)}</strong>
-            <button class="delete-button" type="button" data-order-id="${order.id}">${t("deleteButton")}</button>
+            <div class="record-actions__buttons">
+              <button class="secondary-button" type="button" data-open-receipt-id="${order.id}">${t("receiptTitle")}</button>
+              <button class="delete-button" type="button" data-order-id="${order.id}">${t("deleteButton")}</button>
+            </div>
           </div>
         </article>
       `;
@@ -863,8 +1014,28 @@ function renderReports() {
     : blankState(t("stockStable"));
 }
 
+function renderCustomers() {
+  if (!elements.customerList) return;
+  const buyers = state.orders.filter((order) => order.buyer_name || order.buyerName || order.buyer_phone || order.buyerPhone);
+  elements.customerCount.textContent = buyers.length;
+  elements.customerList.innerHTML = buyers.length
+    ? buyers.map((order) => `
+        <article class="record-row">
+          <div>
+            <strong>${safeText(order.buyer_name || order.buyerName || t("guestBuyer"))}</strong>
+            <div class="meta-line">${safeText(order.buyer_phone || order.buyerPhone || "-")}</div>
+          </div>
+          <div>
+            <strong>${money(order.total)}</strong>
+            <div class="meta-line">${safeText(formatDateTime(order.created_at || order.createdAt))}</div>
+          </div>
+        </article>
+      `).join("")
+    : blankState(t("noSales"));
+}
+
 function renderUsers() {
-  if (!state.profile || state.profile.role !== "admin") {
+  if (!state.profile || !canManageUsers()) {
     elements.userCount.textContent = 0;
     elements.userList.innerHTML = blankState(t("adminOnlyUsers"));
     return;
@@ -950,10 +1121,13 @@ function renderAll() {
   if (!state.authUser || !state.profile) return;
   elements.buyerName.value = state.currentBuyer;
   elements.buyerPhone.value = state.currentPhone;
+  elements.customerFields?.classList.toggle("hidden", !state.customerExpanded);
   renderCart();
   renderMoney();
   renderProducts();
+  renderOrdersHistory();
   renderReports();
+  renderCustomers();
   renderUsers();
   renderSettings();
   renderReceipt();
@@ -1002,11 +1176,15 @@ async function completePayment() {
   if (!state.pendingPaymentOrder) return;
   const method = elements.paymentMethod.value;
   try {
-    const savedOrder = await backend.checkout(
+    const savedOrder = await runWithStatus({
+      title: state.language === "en" ? "Saving sale" : "កំពុងរក្សាទុកការលក់",
+      message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
+      successTitle: state.language === "en" ? "Payment confirmed" : "ទូទាត់បានជោគជ័យ"
+    }, () => backend.checkout(
       state.pendingPaymentOrder.shopId,
       { ...state.pendingPaymentOrder, paymentMethod: method },
       state.profile
-    );
+    ));
     const receiptOrder = {
       ...savedOrder,
       buyer_phone: state.pendingPaymentOrder.buyerPhone,
@@ -1269,7 +1447,7 @@ function createMockBackend() {
       save(store);
     },
     async createUser(payload, profile) {
-      if (profile.role !== "admin") throw new Error("មានតែ admin ប៉ុណ្ណោះ");
+      if (!["admin", "owner", "business_owner"].includes(profile.role)) throw new Error("Only admin or owner can create users.");
       const store = load();
       const shopId = crypto.randomUUID();
       store.shops.push({ id: shopId, name: payload.shopName, status: "active", created_at: new Date().toISOString() });
@@ -1563,7 +1741,7 @@ function createSupabaseBackend() {
       if (error) throw error;
     },
     async createUser(payload, profile) {
-      if (profile.role !== "admin") throw new Error("Admin only");
+      if (!["admin", "owner", "business_owner"].includes(profile.role)) throw new Error("Only admin or owner can create users.");
       const email = normalizeLoginIdentifier(payload.username);
       const phone = normalizePhone(payload.phone);
       const authClient = createClient(supabaseConfig.url, supabaseConfig.anonKey, {
@@ -1730,6 +1908,7 @@ async function loadSignedInUser(user) {
     state.cart = [];
     state.pendingPaymentOrder = null;
     state.latestReceipt = null;
+    state.customerExpanded = false;
     elements.paymentModal.classList.add("hidden");
     renderAll();
     return;
@@ -1779,7 +1958,11 @@ elements.loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const identifier = elements.loginUsername.value.trim();
   try {
-    await backend.signIn(identifier, elements.loginPassword.value.trim());
+    await runWithStatus({
+      title: state.language === "en" ? "Signing in" : "កំពុងចូល",
+      message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
+      successTitle: state.language === "en" ? "Signed in" : "ចូលបានហើយ"
+    }, () => backend.signIn(identifier, elements.loginPassword.value.trim()));
   } catch (error) {
     window.alert(loginErrorMessage(error, identifier));
   }
@@ -1790,6 +1973,10 @@ elements.logoutButton.addEventListener("click", async () => {
 });
 elements.sidebarLogoutButton?.addEventListener("click", async () => {
   await backend.signOut();
+});
+elements.customerToggleButton?.addEventListener("click", () => {
+  state.customerExpanded = !state.customerExpanded;
+  renderAll();
 });
 elements.buyerName.addEventListener("input", (event) => {
   state.currentBuyer = event.target.value.trim();
@@ -1831,9 +2018,17 @@ elements.quickProductList.addEventListener("click", (event) => {
   if (!target) return;
   const product = state.products.find((item) => item.id === target.dataset.quickProductId);
   if (!product || effectiveStock(product) <= 0) return;
-  elements.productSearch.value = product.name;
-  elements.productPrice.value = product.price;
-  elements.productQty.value = 1;
+  const existing = state.cart.find((item) => item.productId === product.id);
+  if (existing) existing.qty += 1;
+  else state.cart.push({
+    id: crypto.randomUUID(),
+    productId: product.id,
+    name: product.name,
+    image_url: product.image_url || "",
+    qty: 1,
+    price: Number(product.price || 0)
+  });
+  renderAll();
 });
 
 elements.orderFee.addEventListener("input", renderCart);
@@ -1842,7 +2037,7 @@ elements.orderForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const product = currentProductByName(elements.productSearch.value);
   const qty = Number(elements.productQty.value);
-  const enteredPrice = Number(elements.productPrice.value);
+  const enteredPrice = Number(product?.price || 0);
   if (!product || !qty || qty <= 0 || enteredPrice < 0) {
     window.alert(t("invalidProduct"));
     return;
@@ -1862,7 +2057,20 @@ elements.orderForm.addEventListener("submit", (event) => {
 elements.cartList.addEventListener("click", (event) => {
   const target = event.target.closest("[data-cart-id]");
   if (!target) return;
-  state.cart = state.cart.filter((item) => item.id !== target.dataset.cartId);
+  const item = state.cart.find((entry) => entry.id === target.dataset.cartId);
+  if (!item) return;
+  const action = target.dataset.cartAction || "remove";
+  if (action === "increase") {
+    const product = state.products.find((entry) => entry.id === item.productId);
+    if (product && effectiveStock(product) > 0) item.qty += 1;
+  } else if (action === "decrease") {
+    item.qty -= 1;
+    if (item.qty <= 0) {
+      state.cart = state.cart.filter((entry) => entry.id !== item.id);
+    }
+  } else {
+    state.cart = state.cart.filter((entry) => entry.id !== item.id);
+  }
   renderAll();
 });
 
@@ -1898,7 +2106,11 @@ elements.expenseForm.addEventListener("submit", async (event) => {
     return;
   }
   try {
-    await backend.createExpense(state.profile.shop_id || state.profile.shopId, { note, amount }, state.profile);
+    await runWithStatus({
+      title: state.language === "en" ? "Saving expense" : "កំពុងរក្សាទុកចំណាយ",
+      message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
+      successTitle: state.language === "en" ? "Expense saved" : "រក្សាទុកបាន"
+    }, () => backend.createExpense(state.profile.shop_id || state.profile.shopId, { note, amount }, state.profile));
   } catch (error) {
     window.alert(error.message || t("saveExpenseFailed"));
     return;
@@ -1910,7 +2122,11 @@ elements.expenseForm.addEventListener("submit", async (event) => {
 elements.expenseList.addEventListener("click", async (event) => {
   const target = event.target.closest("[data-expense-id]");
   if (!target || !state.profile) return;
-  await backend.deleteExpense(state.profile.shop_id || state.profile.shopId, target.dataset.expenseId);
+  await runWithStatus({
+    title: state.language === "en" ? "Removing expense" : "កំពុងលុបចំណាយ",
+    message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
+    successTitle: state.language === "en" ? "Expense removed" : "លុបបាន"
+  }, () => backend.deleteExpense(state.profile.shop_id || state.profile.shopId, target.dataset.expenseId));
   await afterMutation();
 });
 
@@ -1926,11 +2142,19 @@ elements.productForm.addEventListener("submit", async (event) => {
     window.alert(t("productInvalid"));
     return;
   }
+  if (!canEditProductMeta() && !existing) {
+    window.alert("Staff can update stock only for existing products.");
+    return;
+  }
   try {
     const image_url = elements.productImageInput.files?.[0]
       ? await readFileAsDataUrl(elements.productImageInput.files[0])
       : existing?.image_url || "";
-    await backend.saveProduct(state.profile.shop_id || state.profile.shopId, { name, image_url, price, stock_qty, low_stock_at, active: true });
+    await runWithStatus({
+      title: state.language === "en" ? "Saving product" : "កំពុងរក្សាទុកទំនិញ",
+      message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
+      successTitle: state.language === "en" ? "Product saved" : "រក្សាទុកបាន"
+    }, () => backend.saveProduct(state.profile.shop_id || state.profile.shopId, { name, image_url, price, stock_qty, low_stock_at, active: true }));
   } catch (error) {
     window.alert(error.message || t("saveProductFailed"));
     return;
@@ -1945,28 +2169,52 @@ elements.productForm.addEventListener("submit", async (event) => {
 elements.productList.addEventListener("click", async (event) => {
   const target = event.target.closest("[data-product-id]");
   if (!target || !state.profile) return;
-  await backend.deleteProduct(state.profile.shop_id || state.profile.shopId, target.dataset.productId);
+  await runWithStatus({
+    title: state.language === "en" ? "Removing product" : "កំពុងលុបទំនិញ",
+    message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
+    successTitle: state.language === "en" ? "Product removed" : "លុបបាន"
+  }, () => backend.deleteProduct(state.profile.shop_id || state.profile.shopId, target.dataset.productId));
   await afterMutation();
 });
 
-elements.orderList.addEventListener("click", async (event) => {
-  const target = event.target.closest("[data-order-id]");
-  if (!target || !state.profile) return;
-  await backend.deleteOrder(state.profile.shop_id || state.profile.shopId, target.dataset.orderId);
+const handleOrderAction = async (event) => {
+  const receiptTarget = event.target.closest("[data-open-receipt-id]");
+  if (receiptTarget) {
+    const order = state.orders.find((item) => item.id === receiptTarget.dataset.openReceiptId);
+    if (order) {
+      state.latestReceipt = buildReceipt(order);
+      renderReceipt();
+    }
+    return;
+  }
+  const deleteTarget = event.target.closest("[data-order-id]");
+  if (!deleteTarget || !state.profile) return;
+  await runWithStatus({
+    title: state.language === "en" ? "Removing order" : "កំពុងលុបការបញ្ជាទិញ",
+    message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
+    successTitle: state.language === "en" ? "Order removed" : "លុបបាន"
+  }, () => backend.deleteOrder(state.profile.shop_id || state.profile.shopId, deleteTarget.dataset.orderId));
   await afterMutation();
-});
+};
+
+elements.orderList.addEventListener("click", handleOrderAction);
+elements.ordersHistoryList?.addEventListener("click", handleOrderAction);
 
 elements.adminCreateUserForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!state.profile) return;
   try {
-    await backend.createUser({
+    await runWithStatus({
+      title: state.language === "en" ? "Creating user" : "កំពុងបង្កើតអ្នកប្រើ",
+      message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
+      successTitle: state.language === "en" ? "User created" : "បង្កើតបាន"
+    }, () => backend.createUser({
       username: elements.newUsername.value.trim(),
       phone: elements.newPhone.value.trim(),
       password: elements.newPassword.value.trim(),
       shopName: elements.newShopName.value.trim(),
       role: elements.newUserRole.value
-    }, state.profile);
+    }, state.profile));
     elements.adminCreateUserForm.reset();
     await afterMutation();
   } catch (error) {
@@ -2002,7 +2250,11 @@ elements.settingsForm?.addEventListener("submit", async (event) => {
       receipt_footer: elements.settingsReceiptFooter.value.trim() || t("receiptThanks"),
       shop_logo_url: profileImage
     };
-    await backend.saveSettings(state.profile.shop_id || state.profile.shopId, payload, state.profile);
+    await runWithStatus({
+      title: state.language === "en" ? "Saving settings" : "កំពុងរក្សាទុកការកំណត់",
+      message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
+      successTitle: state.language === "en" ? "Settings saved" : "រក្សាទុកបាន"
+    }, () => backend.saveSettings(state.profile.shop_id || state.profile.shopId, payload, state.profile));
     state.shop = { ...(state.shop || {}), name: payload.business_name };
     state.settings = { ...current, ...payload };
     elements.settingsProfileImage.value = "";
@@ -2042,6 +2294,7 @@ elements.downloadReceiptButton.addEventListener("click", async () => {
   }
 });
 
+initializeSplash();
 applyLanguage();
 await backend.init();
 backend.onAuthChange(async (user) => {
