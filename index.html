@@ -273,6 +273,13 @@
               <span data-i18n="productNameLabel">ឈ្មោះទំនិញ</span>
               <input id="productNameInput" type="text" data-i18n-placeholder="productNamePlaceholder" placeholder="ឧទាហរណ៍: កាហ្វេទឹកកក">
             </label>
+            <div class="grid-form__wide settings-media">
+              <img id="productImagePreview" class="settings-preview settings-preview--logo hidden" src="" alt="Product preview">
+              <label class="product-image-field">
+                <span data-i18n="productImageLabel">រូបភាពទំនិញ</span>
+                <input id="productImageInput" type="file" accept="image/*">
+              </label>
+            </div>
             <label>
               <span data-i18n="priceLabel">តម្លៃ</span>
               <input id="productPriceInput" type="number" min="0" step="0.01" placeholder="0.00">
@@ -558,6 +565,8 @@
     </div>
   </section>
 
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>

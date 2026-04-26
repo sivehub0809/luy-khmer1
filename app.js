@@ -12,6 +12,11 @@ const state = {
   profile: null,
   shop: null,
   settings: null,
+  capabilities: {
+    settings: true,
+    payments: true,
+    customers: true
+  },
   products: [],
   expenses: [],
   orders: [],
@@ -76,6 +81,8 @@ const elements = {
   todayNetValue: document.getElementById("todayNetValue"),
   productForm: document.getElementById("productForm"),
   productNameInput: document.getElementById("productNameInput"),
+  productImageInput: document.getElementById("productImageInput"),
+  productImagePreview: document.getElementById("productImagePreview"),
   productPriceInput: document.getElementById("productPriceInput"),
   productStockInput: document.getElementById("productStockInput"),
   productLowStockInput: document.getElementById("productLowStockInput"),
@@ -211,6 +218,7 @@ const translations = {
     stockHeading: "គ្រប់គ្រងស្តុក",
     productNameLabel: "ឈ្មោះទំនិញ",
     productNamePlaceholder: "ឧទាហរណ៍: កាហ្វេទឹកកក",
+    productImageLabel: "រូបភាពទំនិញ",
     stockLeftLabel: "ស្តុកនៅសល់",
     lowStockLabelText: "ព្រមាននៅចំនួន",
     saveProductButton: "រក្សាទុកទំនិញ",
@@ -275,6 +283,7 @@ const translations = {
     markPaidButton: "បានទូទាត់រួច",
     cancelButton: "បោះបង់",
     previewBanner: "Preview mode is active. Add Supabase URL and anon key, then run the SQL in supabase/schema.sql to move to real production.",
+    schemaBanner: "ការកំណត់ database មិនទាន់ពេញលេញទេ។ សូម run SQL ចុងក្រោយនៅ supabase/schema.sql ដើម្បីអោយ Settings, Payments និង Customers ដំណើរការ។",
     popupAlert: "សូមអនុញ្ញាត popup ដើម្បី print receipt",
     loginFailed: "មិនអាចចូលប្រើបានទេ។ សូមពិនិត្យអ៊ីមែល/លេខទូរស័ព្ទ និងពាក្យសម្ងាត់ម្តងទៀត។",
     loginEmailOnly: "សូមប្រើអ៊ីមែល ឬលេខទូរស័ព្ទដែល admin បានបង្កើតអោយ។",
@@ -350,6 +359,7 @@ const translations = {
     stockHeading: "Stock management",
     productNameLabel: "Product name",
     productNamePlaceholder: "Example: Iced coffee",
+    productImageLabel: "Product image",
     stockLeftLabel: "Stock left",
     lowStockLabelText: "Low stock alert at",
     saveProductButton: "Save product",
@@ -414,6 +424,7 @@ const translations = {
     markPaidButton: "Payment received",
     cancelButton: "Cancel",
     previewBanner: "Preview mode is active. Add Supabase URL and anon key, then run the SQL in supabase/schema.sql to move to real production.",
+    schemaBanner: "Database setup is incomplete. Please run the latest SQL in supabase/schema.sql so Settings, Payments, and Customers work correctly.",
     popupAlert: "Please allow popups to print the receipt.",
     loginFailed: "Could not sign in. Please check your email/phone and password.",
     loginEmailOnly: "Please use the email or phone number created by the admin.",
@@ -559,6 +570,13 @@ function blankState(message) {
   return `<p class="meta-line">${safeText(message)}</p>`;
 }
 
+function productImageMarkup(product, variant = "large") {
+  const imageUrl = product?.image_url || product?.imageUrl;
+  if (!imageUrl) return "";
+  const thumbClass = variant === "small" ? "product-thumb product-thumb--small" : "product-thumb";
+  return `<img class="${thumbClass}" src="${safeText(imageUrl)}" alt="${safeText(product.name || "product")}">`;
+}
+
 function showSetupBanner(message) {
   elements.setupBanner.textContent = message;
   elements.setupBanner.classList.remove("hidden");
@@ -566,6 +584,21 @@ function showSetupBanner(message) {
 
 function hideSetupBanner() {
   elements.setupBanner.classList.add("hidden");
+}
+
+function refreshSetupBanner() {
+  if (state.backendMode === "preview") {
+    showSetupBanner(t("previewBanner"));
+    return;
+  }
+  const missing = Object.entries(state.capabilities || {})
+    .filter(([, enabled]) => !enabled)
+    .map(([name]) => name);
+  if (missing.length) {
+    showSetupBanner(`${t("schemaBanner")} Missing: ${missing.join(", ")}`);
+    return;
+  }
+  hideSetupBanner();
 }
 
 function defaultSettings() {
@@ -690,9 +723,12 @@ function renderCart() {
   elements.cartList.innerHTML = state.cart.length
     ? state.cart.map((item) => `
         <article class="cart-row">
-          <div>
-            <strong>${safeText(item.name)}</strong>
-            <div class="meta-line">${item.qty} x ${money(item.price)}</div>
+          <div class="cart-row__media">
+            ${productImageMarkup(item, "small")}
+            <div>
+              <strong>${safeText(item.name)}</strong>
+              <div class="meta-line">${item.qty} x ${money(item.price)}</div>
+            </div>
           </div>
           <div>
             <strong>${money(item.qty * item.price)}</strong>
@@ -748,7 +784,10 @@ function renderProducts() {
         const left = effectiveStock(product);
         return `
           <button class="quick-product" type="button" data-quick-product-id="${product.id}" ${left <= 0 ? "disabled" : ""}>
-            <strong>${safeText(product.name)}</strong>
+            <div class="quick-product__media">
+              ${productImageMarkup(product, "small")}
+              <strong>${safeText(product.name)}</strong>
+            </div>
             <span>${money(product.price)} • ${left}</span>
           </button>
         `;
@@ -762,9 +801,12 @@ function renderProducts() {
         const isLow = left <= lowAt;
         return `
           <article class="product-row">
-            <div>
-              <strong>${safeText(product.name)}</strong>
-              <div class="meta-line">${t("productMeta", { price: money(product.price), left })}</div>
+            <div class="product-row__media">
+              ${productImageMarkup(product)}
+              <div>
+                <strong>${safeText(product.name)}</strong>
+                <div class="meta-line">${t("productMeta", { price: money(product.price), left })}</div>
+              </div>
             </div>
             <div>
               <span class="tag ${isLow ? "tag--low" : ""}">${isLow ? t("lowStock") : t("normalStock")}</span>
@@ -785,25 +827,35 @@ function renderReports() {
   elements.orderCount.textContent = state.orders.length;
   elements.lowStockLabel.textContent = lowStock.length;
   elements.orderList.innerHTML = state.orders.length
-    ? state.orders.map((order) => `
+    ? state.orders.map((order) => {
+        const firstItem = order.items?.[0];
+        const previewProduct = firstItem ? state.products.find((item) => item.id === firstItem.productId) : null;
+        return `
         <article class="record-row">
-          <div>
-            <strong>${safeText(order.invoice_no || order.invoiceNo)}</strong>
-            <div class="meta-line">${safeText(t("orderMeta", { buyer: order.buyer_name || order.buyerName || t("guestBuyer"), summary: orderSummary(order) }))}</div>
+          <div class="product-row__media">
+            ${productImageMarkup(previewProduct, "small")}
+            <div>
+              <strong>${safeText(order.invoice_no || order.invoiceNo)}</strong>
+              <div class="meta-line">${safeText(t("orderMeta", { buyer: order.buyer_name || order.buyerName || t("guestBuyer"), summary: orderSummary(order) }))}</div>
+            </div>
           </div>
           <div>
             <strong>${money(order.total)}</strong>
             <button class="delete-button" type="button" data-order-id="${order.id}">${t("deleteButton")}</button>
           </div>
         </article>
-      `).join("")
+      `;
+      }).join("")
     : blankState(t("noSales"));
   elements.lowStockList.innerHTML = lowStock.length
     ? lowStock.map((product) => `
         <article class="record-row">
-          <div>
-            <strong>${safeText(product.name)}</strong>
-            <div class="meta-line">${t("stockStatusMeta", { left: effectiveStock(product), lowAt: product.low_stock_at ?? product.lowStockAt })}</div>
+          <div class="product-row__media">
+            ${productImageMarkup(product, "small")}
+            <div>
+              <strong>${safeText(product.name)}</strong>
+              <div class="meta-line">${t("stockStatusMeta", { left: effectiveStock(product), lowAt: product.low_stock_at ?? product.lowStockAt })}</div>
+            </div>
           </div>
           <span class="tag tag--low">${t("lowStock")}</span>
         </article>
@@ -1020,6 +1072,44 @@ function makeDownload(data) {
   }
 }
 
+async function downloadReceiptAsPdf() {
+  const receiptNode = document.getElementById("receiptPaper");
+  const jsPdfCtor = window.jspdf?.jsPDF;
+  const html2canvasLib = window.html2canvas;
+  if (!receiptNode || !jsPdfCtor || !html2canvasLib) {
+    throw new Error(t("createPdfFailed"));
+  }
+  const canvas = await html2canvasLib(receiptNode, {
+    scale: Math.min(window.devicePixelRatio || 2, 3),
+    backgroundColor: "#ffffff",
+    useCORS: true
+  });
+  const imageData = canvas.toDataURL("image/png");
+  const pdfWidth = 80;
+  const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+  const pdf = new jsPdfCtor({
+    orientation: "portrait",
+    unit: "mm",
+    format: [pdfWidth, pdfHeight]
+  });
+  pdf.addImage(imageData, "PNG", 0, 0, pdfWidth, pdfHeight);
+  const blob = pdf.output("blob");
+  const fileName = `receipt-${state.latestReceipt?.invoiceNo || Date.now()}.pdf`;
+  const file = new File([blob], fileName, { type: "application/pdf" });
+  if (navigator.canShare?.({ files: [file] })) {
+    await navigator.share({ files: [file], title: fileName });
+    return;
+  }
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
 function nextInvoiceNumber() {
   return `#${Date.now().toString().slice(-8)}`;
 }
@@ -1110,7 +1200,8 @@ function createMockBackend() {
         expenses: store.expenses.filter((item) => item.shop_id === shopId && item.date === todayKey()).reverse(),
         orders: store.orders.filter((item) => item.shop_id === shopId && item.date === todayKey()).reverse(),
         users: role === "admin" ? store.users : store.users.filter((item) => item.shop_id === shopId),
-        settings: store.settings.find((item) => item.shop_id === shopId) || null
+        settings: store.settings.find((item) => item.shop_id === shopId) || null,
+        capabilities: { settings: true, payments: true, customers: true }
       };
     },
     async saveProduct(shopId, payload) {
@@ -1240,6 +1331,14 @@ function createSupabaseBackend() {
   };
 
   const columnMissing = (error) => String(error?.message || "").toLowerCase().includes("column");
+  const relationMissing = (error) => {
+    const message = String(error?.message || "").toLowerCase();
+    return message.includes("schema cache") || message.includes("could not find the table") || message.includes("relation");
+  };
+  const detectTable = async (name) => {
+    const { error } = await supabase.from(name).select("id").limit(1);
+    return !error;
+  };
   const resolveLoginEmail = async (identifier) => {
     const input = String(identifier || "").trim();
     if (!isPhoneLogin(input)) return normalizeLoginIdentifier(input);
@@ -1285,6 +1384,11 @@ function createSupabaseBackend() {
       return data;
     },
     async fetchDashboard(shopId, role) {
+      const capabilities = {
+        settings: await detectTable("settings"),
+        payments: await detectTable("payments"),
+        customers: await detectTable("customers")
+      };
       const [productsRes, expensesRes, ordersRes, usersRes, settingsRes] = await Promise.all([
         supabase.from("products").select("*").eq("shop_id", shopId).order("name"),
         supabase.from("expenses").select("*").eq("shop_id", shopId).eq("date", todayKey()).order("created_at", { ascending: false }),
@@ -1292,7 +1396,9 @@ function createSupabaseBackend() {
         role === "admin"
           ? supabase.from("users").select("*").order("created_at", { ascending: false })
           : supabase.from("users").select("*").eq("shop_id", shopId).order("created_at", { ascending: false }),
-        supabase.from("settings").select("*").eq("shop_id", shopId).maybeSingle()
+        capabilities.settings
+          ? supabase.from("settings").select("*").eq("shop_id", shopId).maybeSingle()
+          : Promise.resolve({ data: null, error: null })
       ]);
 
       for (const result of [productsRes, expensesRes, ordersRes, usersRes]) {
@@ -1304,7 +1410,8 @@ function createSupabaseBackend() {
         expenses: expensesRes.data || [],
         orders: (ordersRes.data || []).map((row) => ({ ...row, items: row.items || [] })),
         users: usersRes.data || [],
-        settings: settingsRes.error ? null : settingsRes.data || null
+        settings: settingsRes.error ? null : settingsRes.data || null,
+        capabilities
       };
     },
     async saveProduct(shopId, payload) {
@@ -1394,12 +1501,15 @@ function createSupabaseBackend() {
       }
       if (error) throw error;
       if (payload.buyerName || payload.buyerPhone) {
-        await supabase.from("customers").insert({
+        const customerInsert = await supabase.from("customers").insert({
           shop_id: shopId,
           name: payload.buyerName,
           phone: payload.buyerPhone,
           last_order_at: new Date().toISOString()
-        }).then(() => null).catch(() => null);
+        });
+        if (customerInsert.error && !relationMissing(customerInsert.error)) {
+          console.warn(customerInsert.error);
+        }
       }
       const paymentInsert = await supabase.from("payments").insert({
         order_id: data.id,
@@ -1409,7 +1519,7 @@ function createSupabaseBackend() {
         status: "paid",
         paid_at: new Date().toISOString()
       });
-      if (paymentInsert.error && !String(paymentInsert.error.message || "").toLowerCase().includes("relation")) {
+      if (paymentInsert.error && !relationMissing(paymentInsert.error)) {
         console.warn(paymentInsert.error);
       }
       return { ...data, buyer_phone: payload.buyerPhone };
@@ -1525,6 +1635,9 @@ function createSupabaseBackend() {
         const fallback = await supabase.from("settings").upsert(legacySettings, { onConflict: "shop_id" });
         error = fallback.error;
       }
+      if (error && relationMissing(error)) {
+        throw new Error(t("schemaBanner"));
+      }
       if (error) throw error;
       if (payload.business_name) {
         const shopUpdate = await supabase.from("shops").update({ name: payload.business_name }).eq("id", shopId);
@@ -1585,6 +1698,8 @@ async function loadDashboardData() {
   }));
   state.users = data.users;
   state.settings = data.settings ? { ...defaultSettings(), ...data.settings } : defaultSettings();
+  state.capabilities = { settings: true, payments: true, customers: true, ...(data.capabilities || {}) };
+  refreshSetupBanner();
 }
 
 async function afterMutation() {
@@ -1623,6 +1738,12 @@ function resetOrderInputs() {
   elements.productSearch.value = "";
   elements.productQty.value = 1;
   elements.productPrice.value = "";
+}
+
+function syncProductFormPreview(product = null) {
+  const imageUrl = product?.image_url || "";
+  elements.productImagePreview.src = imageUrl || "";
+  elements.productImagePreview.classList.toggle("hidden", !imageUrl);
 }
 
 elements.langKmButton?.addEventListener("click", () => setLanguage("km"));
@@ -1675,6 +1796,19 @@ elements.productSearch.addEventListener("input", () => {
   elements.productQty.value = 1;
 });
 
+elements.productNameInput?.addEventListener("input", () => {
+  const existing = currentProductByName(elements.productNameInput.value);
+  if (!existing) return;
+  elements.productPriceInput.value = existing.price ?? "";
+  elements.productStockInput.value = existing.stock_qty ?? 0;
+  elements.productLowStockInput.value = existing.low_stock_at ?? 5;
+  syncProductFormPreview(existing);
+});
+
+elements.productImageInput?.addEventListener("change", () => {
+  previewImage(elements.productImageInput, elements.productImagePreview);
+});
+
 elements.categoryChips.forEach((button) => {
   button.addEventListener("click", () => {
     state.productFilter = button.dataset.productFilter;
@@ -1709,7 +1843,7 @@ elements.orderForm.addEventListener("submit", (event) => {
   }
   const existing = state.cart.find((item) => item.productId === product.id && item.price === enteredPrice);
   if (existing) existing.qty += qty;
-  else state.cart.push({ id: crypto.randomUUID(), productId: product.id, name: product.name, qty, price: enteredPrice });
+  else state.cart.push({ id: crypto.randomUUID(), productId: product.id, name: product.name, image_url: product.image_url || "", qty, price: enteredPrice });
   state.currentBuyer = elements.buyerName.value.trim();
   renderAll();
   resetOrderInputs();
@@ -1777,12 +1911,16 @@ elements.productForm.addEventListener("submit", async (event) => {
   const price = Number(elements.productPriceInput.value);
   const stock_qty = Number(elements.productStockInput.value);
   const low_stock_at = Number(elements.productLowStockInput.value);
+  const existing = currentProductByName(name);
   if (!name || price < 0 || stock_qty < 0 || low_stock_at < 0) {
     window.alert(t("productInvalid"));
     return;
   }
   try {
-    await backend.saveProduct(state.profile.shop_id || state.profile.shopId, { name, price, stock_qty, low_stock_at, active: true });
+    const image_url = elements.productImageInput.files?.[0]
+      ? await readFileAsDataUrl(elements.productImageInput.files[0])
+      : existing?.image_url || "";
+    await backend.saveProduct(state.profile.shop_id || state.profile.shopId, { name, image_url, price, stock_qty, low_stock_at, active: true });
   } catch (error) {
     window.alert(error.message || t("saveProductFailed"));
     return;
@@ -1790,6 +1928,7 @@ elements.productForm.addEventListener("submit", async (event) => {
   elements.productForm.reset();
   elements.productStockInput.value = "0";
   elements.productLowStockInput.value = "5";
+  syncProductFormPreview();
   await afterMutation();
 });
 
@@ -1882,10 +2021,14 @@ elements.printReceiptButton.addEventListener("click", () => window.print());
 elements.downloadReceiptButton.addEventListener("click", async () => {
   if (!state.latestReceipt) return;
   try {
-    const file = await backend.generateReceiptPdf(state.latestReceipt);
-    makeDownload(file);
+    await downloadReceiptAsPdf();
   } catch (error) {
-    window.alert(error.message || t("createPdfFailed"));
+    try {
+      const file = await backend.generateReceiptPdf(state.latestReceipt);
+      makeDownload(file);
+    } catch (fallbackError) {
+      window.alert(fallbackError.message || error.message || t("createPdfFailed"));
+    }
   }
 });
 
