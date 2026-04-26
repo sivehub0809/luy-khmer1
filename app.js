@@ -1423,10 +1423,20 @@ function createSupabaseBackend() {
         .maybeSingle();
       if (checkError) throw checkError;
       if (existing) {
-        const { error } = await supabase.from("products").update(payload).eq("id", existing.id);
+        let { error } = await supabase.from("products").update(payload).eq("id", existing.id);
+        if (error && columnMissing(error)) {
+          const { image_url: _imageUrl, category_id: _categoryId, sort_order: _sortOrder, is_popular: _isPopular, ...legacyPayload } = payload;
+          const fallback = await supabase.from("products").update(legacyPayload).eq("id", existing.id);
+          error = fallback.error;
+        }
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("products").insert({ shop_id: shopId, ...payload });
+        let { error } = await supabase.from("products").insert({ shop_id: shopId, ...payload });
+        if (error && columnMissing(error)) {
+          const { image_url: _imageUrl, category_id: _categoryId, sort_order: _sortOrder, is_popular: _isPopular, ...legacyPayload } = payload;
+          const fallback = await supabase.from("products").insert({ shop_id: shopId, ...legacyPayload });
+          error = fallback.error;
+        }
         if (error) throw error;
       }
     },
