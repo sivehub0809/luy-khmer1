@@ -714,7 +714,7 @@ function currentSettings() {
 
 function syncBrandVisuals() {
   const settings = currentSettings();
-  const logoUrl = settings.shop_logo_url || "assets/nilaa-logo.jpg";
+  const logoUrl = settings.shop_logo_url || "assets/nilaa-logo.png";
   document.querySelectorAll(".brand-logo").forEach((node) => {
     node.src = logoUrl;
   });
@@ -744,7 +744,7 @@ function renderSettings() {
   if (elements.settingsReceiptFooter) elements.settingsReceiptFooter.value = settings.receipt_footer || t("receiptThanks");
   if (elements.settingsQrPreview) {
     const qrUrl = settings.qr_image_url || "";
-    elements.settingsQrPreview.src = qrUrl || "assets/nilaa-logo.jpg";
+    elements.settingsQrPreview.src = qrUrl || "assets/nilaa-logo.png";
     elements.settingsQrPreview.classList.toggle("hidden", !qrUrl);
   }
   syncBrandVisuals();
@@ -1094,7 +1094,7 @@ function renderReceipt() {
   elements.receiptModal.classList.remove("hidden");
   elements.receiptHeaderTitle.textContent = state.latestReceipt.receiptName || "nilaa-os";
   elements.receiptBrandName.textContent = state.latestReceipt.receiptName || "nilaa-os";
-  elements.receiptBrandLogo.src = state.latestReceipt.logoUrl || "assets/nilaa-logo.jpg";
+  elements.receiptBrandLogo.src = state.latestReceipt.logoUrl || "assets/nilaa-logo.png";
   elements.receiptBrandLogo.classList.toggle("hidden", !state.latestReceipt.logoUrl);
   elements.receiptBuyer.textContent = t("buyerLine", { buyer: state.latestReceipt.buyerName || t("guestBuyer") });
   elements.receiptPhone.textContent = state.latestReceipt.buyerPhone ? t("phoneLine", { phone: state.latestReceipt.buyerPhone }) : "";
