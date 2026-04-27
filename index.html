@@ -20,12 +20,22 @@
 
   <section id="startupSplash" class="startup-splash">
     <div class="startup-splash__center">
-      <div id="startupOrbit" class="startup-orbit" aria-hidden="true">
-        <span class="startup-orbit__ring startup-orbit__ring--one"></span>
-        <span class="startup-orbit__ring startup-orbit__ring--two"></span>
-      </div>
       <img class="startup-logo" src="assets/nilaa-logo.png" alt="Nilaa logo">
       <p class="startup-title">nilaa-os</p>
+      <div class="startup-loader" aria-hidden="true">
+        <span class="startup-loader__dot"></span>
+        <span class="startup-loader__dot"></span>
+        <span class="startup-loader__dot"></span>
+        <span class="startup-loader__dot"></span>
+        <span class="startup-loader__dot"></span>
+        <span class="startup-loader__dot"></span>
+        <span class="startup-loader__dot"></span>
+        <span class="startup-loader__dot"></span>
+        <span class="startup-loader__dot"></span>
+        <span class="startup-loader__dot"></span>
+        <span class="startup-loader__dot"></span>
+        <span class="startup-loader__dot"></span>
+      </div>
     </div>
   </section>
 
@@ -43,7 +53,7 @@
         </div>
         <h1 data-i18n="authTitle">POS system for shops and restaurants</h1>
         <p class="auth-copy" data-i18n="authCopy">
-          Request your account on Telegram first. After the admin approves it, you can sign in and stay signed in on this device.
+          Request your account on Telegram first. After the owner approves it, you can sign in and stay signed in on this device.
         </p>
         <a id="telegramLink" class="primary-button auth-link" href="#" target="_blank" rel="noreferrer">
           <span data-i18n="requestTelegram">Request Account on Telegram</span>
@@ -74,9 +84,9 @@
         <div id="requestPanel" class="hidden">
           <h2 data-i18n="requestHeading">Request an account</h2>
           <ol class="simple-steps">
-            <li data-i18n="requestStep1">Send a Telegram message to the admin.</li>
+            <li data-i18n="requestStep1">Send a Telegram message to the owner.</li>
             <li data-i18n="requestStep2">Tell us your shop name and phone number.</li>
-            <li data-i18n="requestStep3">Wait for the admin to create your account.</li>
+            <li data-i18n="requestStep3">Wait for the owner to create your account.</li>
             <li data-i18n="requestStep4">Sign in once and the app will keep your session on this device.</li>
           </ol>
         </div>
@@ -134,7 +144,7 @@
           <button class="nav-button" data-route="customers" type="button" data-i18n="navCustomers">Customers</button>
           <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">Settings</button>
           <button class="nav-button" data-route="reports" type="button" data-i18n="navReports">Reports</button>
-          <button class="nav-button hidden" data-admin-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
+          <button class="nav-button hidden" data-owner-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
           <button class="nav-button" data-route="help" type="button" data-i18n="navHelp">Help &amp; Support</button>
           <button class="nav-button" id="sidebarLogoutButton" type="button" data-i18n="logoutButton">Logout</button>
         </nav>
@@ -155,7 +165,7 @@
             <button class="nav-button" data-route="expenses" type="button" data-i18n="navExpenses">Expenses</button>
             <button class="nav-button" data-route="customers" type="button" data-i18n="navCustomers">Customers</button>
             <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">Settings</button>
-            <button class="nav-button hidden" id="adminNavButton" data-admin-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
+            <button class="nav-button hidden" id="adminNavButton" data-owner-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
             <button class="nav-button" data-route="help" type="button" data-i18n="navHelp">Help &amp; Support</button>
           </nav>
         </div>
@@ -538,7 +548,6 @@
                   <option value="owner">owner</option>
                   <option value="staff">staff</option>
                   <option value="cashier">cashier</option>
-                  <option value="admin">admin</option>
                 </select>
               </label>
               <button class="primary-button primary-button--full" type="submit" data-i18n="createAccountButton">Create account</button>

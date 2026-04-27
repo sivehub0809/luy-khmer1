@@ -12,7 +12,7 @@ create table if not exists users (
   username text not null unique,
   email text,
   phone text,
-  role text not null check (role in ('admin', 'owner', 'staff')),
+  role text not null check (role in ('owner', 'staff', 'cashier')),
   shop_id uuid not null references shops(id) on delete cascade,
   status text not null default 'active',
   created_at timestamptz not null default now()
@@ -234,3 +234,8 @@ create policy "shop members manage settings"
 on settings for all
 using (shop_id = public.current_user_shop_id() or public.current_user_role() = 'admin')
 with check (shop_id = public.current_user_shop_id() or public.current_user_role() = 'admin');
+
+-- Existing production projects should also run this migration block once:
+-- update users set role = 'owner' where role = 'admin';
+-- alter table users drop constraint if exists users_role_check;
+-- alter table users add constraint users_role_check check (role in ('owner', 'staff', 'cashier'));

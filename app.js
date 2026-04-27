@@ -474,7 +474,11 @@ Object.assign(translations.km, {
   taxPlaceholder: "Tax",
   customerHistoryHeading: "Recent buyers",
   helpHeading: "Need support?",
-  helpCopy: "Use Telegram support for account approval, shop setup, and login help."
+  helpCopy: "Use Telegram support for account approval, shop setup, and login help.",
+  authCopy: "Request your account on Telegram first. After the owner approves it, you can sign in and stay signed in on this device.",
+  requestStep1: "Send a Telegram message to the owner",
+  requestStep3: "Wait for the owner to create your account",
+  adminHeading: "Create shop members"
 });
 
 Object.assign(translations.en, {
@@ -488,7 +492,11 @@ Object.assign(translations.en, {
   taxPlaceholder: "Tax",
   customerHistoryHeading: "Recent buyers",
   helpHeading: "Need support?",
-  helpCopy: "Use Telegram support for account approval, shop setup, and login help."
+  helpCopy: "Use Telegram support for account approval, shop setup, and login help.",
+  authCopy: "Request your account on Telegram first. After the owner approves it, you can sign in and stay signed in on this device.",
+  requestStep1: "Send a Telegram message to the owner",
+  requestStep3: "Wait for the owner to create your account",
+  adminHeading: "Create shop members"
 });
 
 function t(key, vars = {}) {
@@ -714,13 +722,13 @@ function currentSettings() {
 
 function syncBrandVisuals() {
   const settings = currentSettings();
-  const logoUrl = settings.shop_logo_url || "assets/nilaa-logo.png";
+  const logoUrl = "assets/nilaa-logo.png";
   document.querySelectorAll(".brand-logo").forEach((node) => {
     node.src = logoUrl;
   });
-  if (elements.settingsProfilePreview) elements.settingsProfilePreview.src = logoUrl;
+  if (elements.settingsProfilePreview) elements.settingsProfilePreview.src = settings.shop_logo_url || "assets/nilaa-logo.png";
   if (elements.receiptBrandLogo) {
-    elements.receiptBrandLogo.src = logoUrl;
+    elements.receiptBrandLogo.src = settings.shop_logo_url || "assets/nilaa-logo.png";
     elements.receiptBrandLogo.classList.toggle("hidden", !settings.shop_logo_url);
   }
   if (elements.receiptBrandName) elements.receiptBrandName.textContent = settings.receipt_name || settings.business_name || "nilaa-os";
@@ -770,19 +778,19 @@ function switchAuthTab(mode) {
 
 function currentRole() {
   const role = state.profile?.role || "";
-  return role === "business_owner" ? "owner" : role;
+  return role === "business_owner" || role === "admin" ? "owner" : role;
 }
 
 function canManageSettings() {
-  return ["admin", "owner"].includes(currentRole());
+  return currentRole() === "owner";
 }
 
 function canManageUsers() {
-  return ["admin", "owner"].includes(currentRole());
+  return currentRole() === "owner";
 }
 
 function canEditProductMeta() {
-  return ["admin", "owner"].includes(currentRole());
+  return currentRole() === "owner";
 }
 
 function buttonLabel(route) {
@@ -821,7 +829,7 @@ function renderAuth() {
   elements.appShell.classList.toggle("hidden", !loggedIn);
   if (!loggedIn) return;
   elements.welcomeLabel.textContent = `${state.language === "en" ? "Hello" : "សួស្តី"} ${state.profile.username}`;
-  document.querySelectorAll("[data-admin-only]").forEach((node) => {
+  document.querySelectorAll("[data-owner-only]").forEach((node) => {
     node.classList.toggle("hidden", !canManageUsers());
   });
   elements.nonStaffFields.forEach((node) => {
@@ -1447,7 +1455,7 @@ function createMockBackend() {
       save(store);
     },
     async createUser(payload, profile) {
-      if (!["admin", "owner", "business_owner"].includes(profile.role)) throw new Error("Only admin or owner can create users.");
+      if (!["owner", "business_owner", "admin"].includes(profile.role)) throw new Error("Only owner can create users.");
       const store = load();
       const shopId = crypto.randomUUID();
       store.shops.push({ id: shopId, name: payload.shopName, status: "active", created_at: new Date().toISOString() });
@@ -1741,7 +1749,7 @@ function createSupabaseBackend() {
       if (error) throw error;
     },
     async createUser(payload, profile) {
-      if (!["admin", "owner", "business_owner"].includes(profile.role)) throw new Error("Only admin or owner can create users.");
+      if (!["owner", "business_owner", "admin"].includes(profile.role)) throw new Error("Only owner can create users.");
       const email = normalizeLoginIdentifier(payload.username);
       const phone = normalizePhone(payload.phone);
       const authClient = createClient(supabaseConfig.url, supabaseConfig.anonKey, {
