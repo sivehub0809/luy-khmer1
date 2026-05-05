@@ -206,6 +206,7 @@
                   <h3 data-i18n="navPOS">POS</h3>
                 </div>
                 <div class="pos-head__meta">
+                  <span id="currentSystemBadge" class="tag tag--system">F&amp;B POS</span>
                   <span class="tag" data-i18n="fixedPriceTag">Fixed prices</span>
                   <button id="clearCartButton" class="ghost-button" type="button" data-i18n="clearCart">Clear cart</button>
                 </div>
@@ -928,6 +929,10 @@
 
             <form id="adminPlatformForm" class="grid-form">
               <p class="meta-line admin-form-note" data-i18n="adminIndexHint">Create shops, assign shop type, and manage business accounts.</p>
+              <div class="shop-type-picker">
+                <button id="adminShopTypeFnb" class="secondary-button shop-type-picker__button shop-type-picker__button--active" type="button" data-admin-shop-type="fnb" data-i18n="shopTypeFnb">F&amp;B shop</button>
+                <button id="adminShopTypeRetail" class="secondary-button shop-type-picker__button" type="button" data-admin-shop-type="retail" data-i18n="shopTypeRetail">Retail shop</button>
+              </div>
               <label>
                 <span data-i18n="shopNameLabel">Shop name</span>
                 <input id="adminShopName" type="text" data-i18n-placeholder="businessNamePlaceholder" placeholder="Nilaa Coffee">

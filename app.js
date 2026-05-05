@@ -173,6 +173,8 @@ const elements = {
   adminPlatformForm: document.getElementById("adminPlatformForm"),
   adminShopName: document.getElementById("adminShopName"),
   adminShopType: document.getElementById("adminShopType"),
+  adminShopTypeFnb: document.getElementById("adminShopTypeFnb"),
+  adminShopTypeRetail: document.getElementById("adminShopTypeRetail"),
   adminUsername: document.getElementById("adminUsername"),
   adminPhone: document.getElementById("adminPhone"),
   adminPassword: document.getElementById("adminPassword"),
@@ -220,6 +222,7 @@ const elements = {
   posShopProfileImage: document.getElementById("posShopProfileImage"),
   posShopBusinessName: document.getElementById("posShopBusinessName"),
   posShopBusinessDescription: document.getElementById("posShopBusinessDescription"),
+  currentSystemBadge: document.getElementById("currentSystemBadge"),
   nonStaffFields: [...document.querySelectorAll("[data-non-staff='true']")],
   paymentQrImage: document.getElementById("paymentQrImage"),
   receiptHeaderTitle: document.getElementById("receiptHeaderTitle"),
@@ -1391,6 +1394,9 @@ function syncBrandVisuals() {
     elements.posShopBusinessDescription.textContent = settings.business_description || t("settingsPageHint");
     elements.posShopBusinessDescription.classList.remove("hidden");
   }
+  if (elements.currentSystemBadge) {
+    elements.currentSystemBadge.textContent = currentShopType() === "retail" ? t("adminGoRetail") : t("adminGoFnb");
+  }
   if (elements.shopName && state.route === "pos") {
     elements.shopName.textContent = t("navPOS");
   }
@@ -1679,6 +1685,11 @@ function updateShellVisibility() {
     const targetRoute = isRetailShop() ? "stock" : "reports";
     elements.openDashboardButton.dataset.route = targetRoute;
     elements.openDashboardButton.classList.toggle("hidden", isPlatformAdminProfile() || !canAccessRoute(targetRoute));
+  }
+  if (elements.adminShopType) {
+    const shopType = elements.adminShopType.value || "fnb";
+    elements.adminShopTypeFnb?.classList.toggle("shop-type-picker__button--active", shopType === "fnb");
+    elements.adminShopTypeRetail?.classList.toggle("shop-type-picker__button--active", shopType === "retail");
   }
 }
 
@@ -3508,6 +3519,16 @@ elements.adminSystemButtons.forEach((button) => {
     state.platformAdminView = target === "admin" ? "admin" : target;
     setRoute(target === "admin" ? "admin" : target === "fnb" || target === "retail" ? "pos" : "adminChooser");
     openDrawer(false);
+  });
+});
+[
+  elements.adminShopTypeFnb,
+  elements.adminShopTypeRetail
+].forEach((button) => {
+  button?.addEventListener("click", () => {
+    const shopType = button.dataset.adminShopType || "fnb";
+    if (elements.adminShopType) elements.adminShopType.value = shopType;
+    updateShellVisibility();
   });
 });
 elements.navButtons.forEach((button) => {

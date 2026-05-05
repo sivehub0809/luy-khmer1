@@ -2236,6 +2236,30 @@ body.shop-type-retail .record-box {
   background: #f7faff;
 }
 
+.shop-type-picker {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.shop-type-picker__button {
+  min-height: 54px;
+  justify-content: center;
+  text-align: center;
+}
+
+.shop-type-picker__button--active {
+  background: rgba(0, 93, 253, 0.12);
+  border-color: rgba(0, 93, 253, 0.4);
+  color: #005dfd;
+}
+
+.tag--system {
+  background: rgba(0, 93, 253, 0.12);
+  color: #005dfd;
+}
+
 .route-admin-chooser .sidebar,
 .route-admin-chooser .bottom-nav,
 .route-admin-chooser #openDashboardButton {
