@@ -1527,13 +1527,10 @@ function isRetailShop() {
 }
 
 function adminRoutesForCurrentShell() {
-  if (state.platformAdminView === "fnb") {
-    return ["adminChooser", "admin", "pos", "orders", "money", "expenses", "stock", "customers", "reports", "settings", "help"];
+  if (state.platformAdminView === "fnb" || state.platformAdminView === "retail") {
+    return ["adminChooser", "admin", "pos", "help"];
   }
-  if (state.platformAdminView === "retail") {
-    return ["adminChooser", "admin", "pos", "stock", "customers", "settings", "help"];
-  }
-  return ["adminChooser", "admin"];
+  return ["adminChooser", "admin", "help"];
 }
 
 function ownerRoutesForCurrentShell() {
@@ -1670,10 +1667,14 @@ function updateShellVisibility() {
   });
   elements.navButtons.forEach((node) => {
     if (!node.dataset.route) return;
-    const disallowedForAdmin = isPlatformAdminProfile() && node.dataset.route === "users";
+    const disallowedForAdmin = isPlatformAdminProfile()
+      && !["admin", "help"].includes(node.dataset.route);
     node.classList.toggle("hidden", disallowedForAdmin || !canAccessRoute(node.dataset.route));
   });
   configureBottomNav();
+  if (isPlatformAdminProfile()) {
+    elements.bottomNavButtons?.forEach((button) => button?.classList.add("hidden"));
+  }
   if (elements.openDashboardButton) {
     const targetRoute = isRetailShop() ? "stock" : "reports";
     elements.openDashboardButton.dataset.route = targetRoute;
