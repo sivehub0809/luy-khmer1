@@ -131,18 +131,31 @@
           </div>
         </div>
         <nav class="drawer__nav">
-          <button class="nav-button nav-button--active" data-route="pos" type="button" data-i18n="navPOS">POS</button>
-          <button class="nav-button" data-shell="fnb" data-route="reports" type="button" data-i18n="navDashboard">Dashboard</button>
-          <button class="nav-button" data-shell="fnb" data-route="orders" type="button" data-i18n="navOrdersShort">Orders</button>
-          <button class="nav-button" data-route="stock" type="button" data-i18n="navStock">Stock</button>
-          <button class="nav-button" data-shell="fnb" data-route="money" type="button" data-i18n="navMoney">Money</button>
-          <button class="nav-button" data-shell="fnb" data-route="expenses" type="button" data-i18n="navExpenses">Expenses</button>
-          <button class="nav-button" data-route="customers" type="button" data-i18n="navCustomers">Customers</button>
-          <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">Settings</button>
-          <button class="nav-button" data-shell="fnb" data-route="reports" type="button" data-i18n="navReports">Reports</button>
-          <button class="nav-button hidden" data-owner-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
-          <button class="nav-button hidden" data-platform-admin="true" data-route="admin" type="button" data-i18n="navAdmin">Admin index</button>
-          <button class="nav-button" data-route="help" type="button" data-i18n="navHelp">Help &amp; Support</button>
+          <div data-shell-nav="fnb" class="nav-group">
+            <button class="nav-button nav-button--active" data-route="pos" type="button" data-i18n="navPOS">POS</button>
+            <button class="nav-button" data-route="orders" type="button" data-i18n="navOrdersShort">Orders</button>
+            <button class="nav-button" data-route="customers" type="button" data-i18n="navCustomers">Customers</button>
+            <button class="nav-button" data-route="stock" type="button" data-i18n="navStock">Stock</button>
+            <button class="nav-button" data-route="money" type="button" data-i18n="navMoney">Money</button>
+            <button class="nav-button" data-route="expenses" type="button" data-i18n="navExpenses">Expenses</button>
+            <button class="nav-button" data-route="reports" type="button" data-i18n="navReports">Reports</button>
+            <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">Settings</button>
+            <button class="nav-button hidden" data-owner-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
+            <button class="nav-button" data-route="help" type="button" data-i18n="navHelp">Help &amp; Support</button>
+          </div>
+          <div data-shell-nav="retail" class="nav-group hidden">
+            <button class="nav-button nav-button--active" data-route="pos" type="button" data-i18n="navPOS">POS</button>
+            <button class="nav-button" data-route="stock" type="button" data-i18n="navStock">Stock</button>
+            <button class="nav-button" data-route="orders" type="button" data-i18n="navOrdersShort">Orders</button>
+            <button class="nav-button" data-route="customers" type="button" data-i18n="navCustomers">Customers</button>
+            <button class="nav-button" data-route="expenses" type="button" data-i18n="navExpenses">Expenses</button>
+            <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">Settings</button>
+            <button class="nav-button hidden" data-owner-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
+            <button class="nav-button" data-route="help" type="button" data-i18n="navHelp">Help &amp; Support</button>
+          </div>
+          <div data-admin-nav="true" class="nav-group hidden">
+            <button class="nav-button" data-route="admin" type="button" data-i18n="navAdmin">Admin index</button>
+          </div>
           <button class="nav-button" id="sidebarLogoutButton" type="button" data-i18n="logoutButton">Logout</button>
         </nav>
       </aside>
@@ -154,17 +167,31 @@
             <button id="closeDashboardButton" class="icon-button" type="button">&times;</button>
           </div>
           <nav class="drawer__nav">
-            <button class="nav-button nav-button--active" data-route="pos" type="button" data-i18n="navPOS">POS</button>
-            <button class="nav-button" data-shell="fnb" data-route="reports" type="button" data-i18n="navDashboard">Dashboard</button>
-            <button class="nav-button" data-shell="fnb" data-route="orders" type="button" data-i18n="navOrdersShort">Orders</button>
-            <button class="nav-button" data-route="stock" type="button" data-i18n="navStock">Stock</button>
-            <button class="nav-button" data-shell="fnb" data-route="money" type="button" data-i18n="navMoney">Money</button>
-            <button class="nav-button" data-shell="fnb" data-route="expenses" type="button" data-i18n="navExpenses">Expenses</button>
-            <button class="nav-button" data-route="customers" type="button" data-i18n="navCustomers">Customers</button>
-            <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">Settings</button>
-            <button class="nav-button hidden" id="adminNavButton" data-owner-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
-            <button class="nav-button hidden" data-platform-admin="true" data-route="admin" type="button" data-i18n="navAdmin">Admin index</button>
-            <button class="nav-button" data-route="help" type="button" data-i18n="navHelp">Help &amp; Support</button>
+            <div data-shell-nav="fnb" class="nav-group">
+              <button class="nav-button nav-button--active" data-route="pos" type="button" data-i18n="navPOS">POS</button>
+              <button class="nav-button" data-route="orders" type="button" data-i18n="navOrdersShort">Orders</button>
+              <button class="nav-button" data-route="customers" type="button" data-i18n="navCustomers">Customers</button>
+              <button class="nav-button" data-route="stock" type="button" data-i18n="navStock">Stock</button>
+              <button class="nav-button" data-route="money" type="button" data-i18n="navMoney">Money</button>
+              <button class="nav-button" data-route="expenses" type="button" data-i18n="navExpenses">Expenses</button>
+              <button class="nav-button" data-route="reports" type="button" data-i18n="navReports">Reports</button>
+              <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">Settings</button>
+              <button class="nav-button hidden" id="adminNavButton" data-owner-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
+              <button class="nav-button" data-route="help" type="button" data-i18n="navHelp">Help &amp; Support</button>
+            </div>
+            <div data-shell-nav="retail" class="nav-group hidden">
+              <button class="nav-button nav-button--active" data-route="pos" type="button" data-i18n="navPOS">POS</button>
+              <button class="nav-button" data-route="stock" type="button" data-i18n="navStock">Stock</button>
+              <button class="nav-button" data-route="orders" type="button" data-i18n="navOrdersShort">Orders</button>
+              <button class="nav-button" data-route="customers" type="button" data-i18n="navCustomers">Customers</button>
+              <button class="nav-button" data-route="expenses" type="button" data-i18n="navExpenses">Expenses</button>
+              <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">Settings</button>
+              <button class="nav-button hidden" data-owner-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
+              <button class="nav-button" data-route="help" type="button" data-i18n="navHelp">Help &amp; Support</button>
+            </div>
+            <div data-admin-nav="true" class="nav-group hidden">
+              <button class="nav-button" data-route="admin" type="button" data-i18n="navAdmin">Admin index</button>
+            </div>
           </nav>
         </div>
       </aside>
@@ -197,140 +224,9 @@
             </div>
           </article>
         </section>
-        <section id="posScreen" class="screen screen--active">
-          <div class="pos-layout">
-            <article class="panel panel--pos-main">
-              <div class="pos-head">
-                <div>
-                  <p class="eyebrow">POS machine</p>
-                  <h3 data-i18n="navPOS">POS</h3>
-                </div>
-                <div class="pos-head__meta">
-                  <span id="currentSystemBadge" class="tag tag--system">F&amp;B POS</span>
-                  <span class="tag" data-i18n="fixedPriceTag">Fixed prices</span>
-                  <button id="clearCartButton" class="ghost-button" type="button" data-i18n="clearCart">Clear cart</button>
-                </div>
-              </div>
+        <section id="posScreen" class="screen hidden"></section>
 
-              <div class="pos-home-identity">
-                <img id="posShopProfileImage" class="pos-home-identity__image hidden" src="assets/nilaa-logo.png" alt="Shop profile">
-                <div class="pos-home-identity__copy">
-                  <strong id="posShopBusinessName">Nilaa POS</strong>
-                  <p id="posShopBusinessDescription" class="hidden"></p>
-                </div>
-              </div>
-
-              <div class="pos-search-row">
-                <label class="pos-search">
-                  <span class="hidden" data-i18n="productLabel">Product</span>
-                  <input id="productSearch" list="productSuggestions" type="text" data-i18n-placeholder="productSearchPlaceholder" placeholder="Search products">
-                  <datalist id="productSuggestions"></datalist>
-                </label>
-              </div>
-
-              <div class="category-chips">
-                <button class="category-chip category-chip--active" type="button" data-product-filter="all" data-i18n="filterAll">All</button>
-                <button class="category-chip" type="button" data-product-filter="popular" data-i18n="filterPopular">Popular</button>
-                <button class="category-chip" type="button" data-product-filter="low" data-i18n="filterLowStock">Low Stock</button>
-              </div>
-
-              <div id="quickProductList" class="quick-product-list quick-product-list--desktop"></div>
-              <button id="mobileCheckoutButton" class="primary-button mobile-checkout-button" type="button" data-i18n="scrollToCheckoutButton">View checkout</button>
-
-              <form id="orderForm" class="hidden">
-                <input id="productQty" type="number" min="1" value="1">
-                <input id="productPrice" type="number" min="0" step="0.01" value="">
-              </form>
-            </article>
-
-            <aside class="panel panel--checkout">
-              <div class="checkout-head">
-                <div>
-                  <p class="eyebrow">Checkout</p>
-                  <h3 data-i18n="cartHeading">Cart</h3>
-                </div>
-                <span id="cartCount">0 items</span>
-              </div>
-
-              <div class="customer-box">
-                <button id="customerToggleButton" class="ghost-button customer-box__toggle" type="button" data-i18n="customerToggle">Add customer info</button>
-                <div id="customerFields" class="customer-box__fields hidden">
-                  <label>
-                    <span data-i18n="buyerNameLabel">Buyer name</span>
-                    <input id="buyerName" type="text" data-i18n-placeholder="buyerNamePlaceholder" placeholder="Customer name">
-                  </label>
-                  <label>
-                    <span data-i18n="buyerPhoneLabel">Buyer phone</span>
-                    <input id="buyerPhone" type="tel" inputmode="tel" data-i18n-placeholder="buyerPhonePlaceholder" placeholder="012 345 678">
-                  </label>
-                </div>
-                <div id="retailMemberCard" class="member-card hidden retail-only">
-                  <div>
-                    <strong id="retailMemberName">Guest</strong>
-                    <div id="retailMemberPhone" class="meta-line">-</div>
-                  </div>
-                  <div class="member-card__meta">
-                    <span id="retailMemberPoints" class="tag">0 pts</span>
-                    <span id="retailMemberCredit" class="tag">$0.00</span>
-                  </div>
-                </div>
-              </div>
-
-              <div id="cartList" class="stack-list checkout-cart-list"></div>
-
-              <div class="checkout-totals">
-                <label class="cart-footer__fee fnb-only">
-                  <span data-i18n="feeLabel">Fee</span>
-                  <input id="orderFee" type="number" min="0" step="0.01" value="0">
-                </label>
-                <div class="retail-checkout-fields retail-only">
-                  <label>
-                    <span data-i18n="subtotalDiscountLabel">Subtotal discount</span>
-                    <input id="retailSubtotalDiscountInput" type="number" min="0" step="0.01" value="0">
-                  </label>
-                  <label>
-                    <span data-i18n="taxRateLabel">Tax rate (%)</span>
-                    <input id="retailTaxRateInput" type="number" min="0" step="0.01" value="0">
-                  </label>
-                  <label>
-                    <span data-i18n="storeCreditApplyLabel">Store credit</span>
-                    <input id="retailStoreCreditInput" type="number" min="0" step="0.01" value="0">
-                  </label>
-                </div>
-                <div class="checkout-line">
-                  <span data-i18n="subtotalLabel">Subtotal</span>
-                  <strong id="cartSubtotal">$0.00</strong>
-                </div>
-                <div class="checkout-line checkout-line--muted retail-only">
-                  <span data-i18n="itemDiscountLabel">Item discount</span>
-                  <span id="cartItemDiscount">$0.00</span>
-                </div>
-                <div class="checkout-line checkout-line--muted retail-only">
-                  <span data-i18n="subtotalDiscountLabel">Subtotal discount</span>
-                  <span id="cartSubtotalDiscount">$0.00</span>
-                </div>
-                <div class="checkout-line checkout-line--muted retail-only">
-                  <span data-i18n="taxLabel">Tax</span>
-                  <span id="cartTax">$0.00</span>
-                </div>
-                <div class="checkout-line checkout-line--muted retail-only">
-                  <span data-i18n="storeCreditApplyLabel">Store credit</span>
-                  <span id="cartStoreCredit">$0.00</span>
-                </div>
-                <div class="checkout-line checkout-line--grand">
-                  <span data-i18n="totalLabel">Total</span>
-                  <strong id="cartTotal">$0.00</strong>
-                </div>
-              </div>
-
-              <div class="checkout-actions">
-                <button id="checkoutButton" class="primary-button primary-button--full" type="button" data-i18n="checkoutButton">Close sale</button>
-              </div>
-            </aside>
-          </div>
-        </section>
-
-        <section id="ordersScreen" data-shell="fnb" class="screen hidden">
+        <section id="ordersScreen" class="screen hidden">
           <article class="panel">
             <div class="panel__head">
               <div>
@@ -396,7 +292,7 @@
           </article>
         </section>
 
-        <section id="expensesScreen" data-shell="fnb" class="screen hidden">
+        <section id="expensesScreen" class="screen hidden">
           <article class="panel">
             <div class="panel__head">
               <div>

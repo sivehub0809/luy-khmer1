@@ -36,7 +36,8 @@ const state = {
   customerSearchQuery: "",
   pendingCustomizerProduct: null,
   platformData: { shops: [], users: [] },
-  platformAdminView: "adminChooser"
+  platformAdminView: "adminChooser",
+  posMarkupType: ""
 };
 
 const elements = {
@@ -1533,15 +1534,14 @@ function isRetailShop() {
 }
 
 function adminRoutesForCurrentShell() {
-  if (state.platformAdminView === "fnb" || state.platformAdminView === "retail") {
-    return ["adminChooser", "admin", "pos", "help"];
-  }
+  if (state.platformAdminView === "fnb") return ["adminChooser", "admin", ...ownerRoutesForCurrentShell()];
+  if (state.platformAdminView === "retail") return ["adminChooser", "admin", ...ownerRoutesForCurrentShell()];
   return ["adminChooser", "admin", "help"];
 }
 
 function ownerRoutesForCurrentShell() {
   return isRetailShop()
-    ? ["pos", "stock", "customers", "settings", "users", "help"]
+    ? ["pos", "stock", "orders", "customers", "expenses", "settings", "users", "help"]
     : ["pos", "orders", "money", "expenses", "stock", "customers", "reports", "settings", "users", "help"];
 }
 
@@ -1590,6 +1590,379 @@ function defaultRouteForCurrentUser() {
   return "pos";
 }
 
+function posSearchPlaceholderKey() {
+  return isRetailShop() ? "retailPosHint" : "productSearchPlaceholder";
+}
+
+function posCategoryMarkup() {
+  return `
+    <div class="category-chips">
+      <button class="category-chip category-chip--active" type="button" data-product-filter="all" data-i18n="filterAll">All</button>
+      <button class="category-chip" type="button" data-product-filter="popular" data-i18n="filterPopular">Popular</button>
+      <button class="category-chip" type="button" data-product-filter="low" data-i18n="filterLowStock">Low Stock</button>
+    </div>
+  `;
+}
+
+function fnbPosMarkup() {
+  return `
+    <div class="pos-layout pos-layout--fnb">
+      <article class="panel panel--pos-main">
+        <div class="pos-head">
+          <div>
+            <p class="eyebrow">POS machine</p>
+            <h3 data-i18n="navPOS">POS</h3>
+          </div>
+          <div class="pos-head__meta">
+            <span id="currentSystemBadge" class="tag tag--system">F&amp;B POS</span>
+            <span class="tag" data-i18n="fixedPriceTag">Fixed prices</span>
+            <button id="clearCartButton" class="ghost-button" type="button" data-i18n="clearCart">Clear cart</button>
+          </div>
+        </div>
+
+        <div class="pos-home-identity">
+          <img id="posShopProfileImage" class="pos-home-identity__image hidden" src="assets/nilaa-logo.png" alt="Shop profile">
+          <div class="pos-home-identity__copy">
+            <strong id="posShopBusinessName">Nilaa POS</strong>
+            <p id="posShopBusinessDescription" class="hidden"></p>
+          </div>
+        </div>
+
+        <div class="pos-search-row">
+          <label class="pos-search">
+            <span class="hidden" data-i18n="productLabel">Product</span>
+            <input id="productSearch" list="productSuggestions" type="text" data-i18n-placeholder="${posSearchPlaceholderKey()}" placeholder="Search products">
+            <datalist id="productSuggestions"></datalist>
+          </label>
+        </div>
+
+        ${posCategoryMarkup()}
+
+        <div id="quickProductList" class="quick-product-list quick-product-list--desktop"></div>
+        <button id="mobileCheckoutButton" class="primary-button mobile-checkout-button" type="button" data-i18n="scrollToCheckoutButton">View checkout</button>
+
+        <form id="orderForm" class="hidden">
+          <input id="productQty" type="number" min="1" value="1">
+          <input id="productPrice" type="number" min="0" step="0.01" value="">
+        </form>
+      </article>
+
+      <aside class="panel panel--checkout">
+        <div class="checkout-head">
+          <div>
+            <p class="eyebrow">Checkout</p>
+            <h3 data-i18n="cartHeading">Cart</h3>
+          </div>
+          <span id="cartCount">0 items</span>
+        </div>
+
+        <div class="customer-box">
+          <button id="customerToggleButton" class="ghost-button customer-box__toggle" type="button" data-i18n="customerToggle">Add customer info</button>
+          <div id="customerFields" class="customer-box__fields hidden">
+            <label>
+              <span data-i18n="buyerNameLabel">Buyer name</span>
+              <input id="buyerName" type="text" data-i18n-placeholder="buyerNamePlaceholder" placeholder="Customer name">
+            </label>
+            <label>
+              <span data-i18n="buyerPhoneLabel">Buyer phone</span>
+              <input id="buyerPhone" type="tel" inputmode="tel" data-i18n-placeholder="buyerPhonePlaceholder" placeholder="012 345 678">
+            </label>
+          </div>
+        </div>
+
+        <div id="cartList" class="stack-list checkout-cart-list"></div>
+
+        <div class="checkout-totals">
+          <label class="cart-footer__fee">
+            <span data-i18n="feeLabel">Fee</span>
+            <input id="orderFee" type="number" min="0" step="0.01" value="0">
+          </label>
+          <div class="checkout-line">
+            <span data-i18n="subtotalLabel">Subtotal</span>
+            <strong id="cartSubtotal">$0.00</strong>
+          </div>
+          <div class="checkout-line checkout-line--grand">
+            <span data-i18n="totalLabel">Total</span>
+            <strong id="cartTotal">$0.00</strong>
+          </div>
+        </div>
+
+        <div class="checkout-actions">
+          <button id="checkoutButton" class="primary-button primary-button--full" type="button" data-i18n="checkoutButton">Close sale</button>
+        </div>
+      </aside>
+    </div>
+  `;
+}
+
+function retailPosMarkup() {
+  return `
+    <div class="pos-layout pos-layout--retail">
+      <article class="panel panel--pos-main">
+        <div class="pos-head">
+          <div>
+            <p class="eyebrow">Retail POS</p>
+            <h3 data-i18n="navPOS">POS</h3>
+          </div>
+          <div class="pos-head__meta">
+            <span id="currentSystemBadge" class="tag tag--system">Retail POS</span>
+            <span class="tag">Barcode / SKU</span>
+            <button id="clearCartButton" class="ghost-button" type="button" data-i18n="clearCart">Clear cart</button>
+          </div>
+        </div>
+
+        <div class="pos-home-identity">
+          <img id="posShopProfileImage" class="pos-home-identity__image hidden" src="assets/nilaa-logo.png" alt="Shop profile">
+          <div class="pos-home-identity__copy">
+            <strong id="posShopBusinessName">Nilaa POS</strong>
+            <p id="posShopBusinessDescription" class="hidden"></p>
+          </div>
+        </div>
+
+        <div class="pos-search-row">
+          <label class="pos-search">
+            <span class="hidden" data-i18n="productLabel">Product</span>
+            <input id="productSearch" list="productSuggestions" type="text" data-i18n-placeholder="${posSearchPlaceholderKey()}" placeholder="Search products">
+            <datalist id="productSuggestions"></datalist>
+          </label>
+        </div>
+
+        ${posCategoryMarkup()}
+
+        <div id="quickProductList" class="quick-product-list quick-product-list--desktop"></div>
+        <button id="mobileCheckoutButton" class="primary-button mobile-checkout-button" type="button" data-i18n="scrollToCheckoutButton">View checkout</button>
+
+        <form id="orderForm" class="hidden">
+          <input id="productQty" type="number" min="1" value="1">
+          <input id="productPrice" type="number" min="0" step="0.01" value="">
+        </form>
+      </article>
+
+      <aside class="panel panel--checkout">
+        <div class="checkout-head">
+          <div>
+            <p class="eyebrow">Checkout</p>
+            <h3 data-i18n="cartHeading">Cart</h3>
+          </div>
+          <span id="cartCount">0 items</span>
+        </div>
+
+        <div class="customer-box">
+          <button id="customerToggleButton" class="ghost-button customer-box__toggle" type="button" data-i18n="customerToggle">Add customer info</button>
+          <div id="customerFields" class="customer-box__fields hidden">
+            <label>
+              <span data-i18n="buyerNameLabel">Buyer name</span>
+              <input id="buyerName" type="text" data-i18n-placeholder="buyerNamePlaceholder" placeholder="Customer name">
+            </label>
+            <label>
+              <span data-i18n="buyerPhoneLabel">Buyer phone</span>
+              <input id="buyerPhone" type="tel" inputmode="tel" data-i18n-placeholder="buyerPhonePlaceholder" placeholder="012 345 678">
+            </label>
+          </div>
+          <div id="retailMemberCard" class="member-card hidden">
+            <div>
+              <strong id="retailMemberName">Guest</strong>
+              <div id="retailMemberPhone" class="meta-line">-</div>
+            </div>
+            <div class="member-card__meta">
+              <span id="retailMemberPoints" class="tag">0 pts</span>
+              <span id="retailMemberCredit" class="tag">$0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="cartList" class="stack-list checkout-cart-list"></div>
+
+        <div class="checkout-totals">
+          <div class="retail-checkout-fields">
+            <label>
+              <span data-i18n="subtotalDiscountLabel">Subtotal discount</span>
+              <input id="retailSubtotalDiscountInput" type="number" min="0" step="0.01" value="0">
+            </label>
+            <label>
+              <span data-i18n="taxRateLabel">Tax rate (%)</span>
+              <input id="retailTaxRateInput" type="number" min="0" step="0.01" value="0">
+            </label>
+            <label>
+              <span data-i18n="storeCreditApplyLabel">Store credit</span>
+              <input id="retailStoreCreditInput" type="number" min="0" step="0.01" value="0">
+            </label>
+          </div>
+          <div class="checkout-line">
+            <span data-i18n="subtotalLabel">Subtotal</span>
+            <strong id="cartSubtotal">$0.00</strong>
+          </div>
+          <div class="checkout-line checkout-line--muted">
+            <span data-i18n="itemDiscountLabel">Item discount</span>
+            <span id="cartItemDiscount">$0.00</span>
+          </div>
+          <div class="checkout-line checkout-line--muted">
+            <span data-i18n="subtotalDiscountLabel">Subtotal discount</span>
+            <span id="cartSubtotalDiscount">$0.00</span>
+          </div>
+          <div class="checkout-line checkout-line--muted">
+            <span data-i18n="taxLabel">Tax</span>
+            <span id="cartTax">$0.00</span>
+          </div>
+          <div class="checkout-line checkout-line--muted">
+            <span data-i18n="storeCreditApplyLabel">Store credit</span>
+            <span id="cartStoreCredit">$0.00</span>
+          </div>
+          <div class="checkout-line checkout-line--grand">
+            <span data-i18n="totalLabel">Total</span>
+            <strong id="cartTotal">$0.00</strong>
+          </div>
+        </div>
+
+        <div class="checkout-actions">
+          <button id="checkoutButton" class="primary-button primary-button--full" type="button" data-i18n="checkoutButton">Close sale</button>
+        </div>
+      </aside>
+    </div>
+  `;
+}
+
+function syncPosElementReferences() {
+  elements.customerToggleButton = document.getElementById("customerToggleButton");
+  elements.customerFields = document.getElementById("customerFields");
+  elements.orderForm = document.getElementById("orderForm");
+  elements.buyerName = document.getElementById("buyerName");
+  elements.buyerPhone = document.getElementById("buyerPhone");
+  elements.retailMemberCard = document.getElementById("retailMemberCard");
+  elements.retailMemberName = document.getElementById("retailMemberName");
+  elements.retailMemberPhone = document.getElementById("retailMemberPhone");
+  elements.retailMemberPoints = document.getElementById("retailMemberPoints");
+  elements.retailMemberCredit = document.getElementById("retailMemberCredit");
+  elements.productSearch = document.getElementById("productSearch");
+  elements.productSuggestions = document.getElementById("productSuggestions");
+  elements.quickProductList = document.getElementById("quickProductList");
+  elements.categoryChips = [...document.querySelectorAll("[data-product-filter]")];
+  elements.productQty = document.getElementById("productQty");
+  elements.productPrice = document.getElementById("productPrice");
+  elements.clearCartButton = document.getElementById("clearCartButton");
+  elements.cartList = document.getElementById("cartList");
+  elements.cartCount = document.getElementById("cartCount");
+  elements.orderFee = document.getElementById("orderFee");
+  elements.retailSubtotalDiscountInput = document.getElementById("retailSubtotalDiscountInput");
+  elements.retailTaxRateInput = document.getElementById("retailTaxRateInput");
+  elements.retailStoreCreditInput = document.getElementById("retailStoreCreditInput");
+  elements.cartSubtotal = document.getElementById("cartSubtotal");
+  elements.cartItemDiscount = document.getElementById("cartItemDiscount");
+  elements.cartSubtotalDiscount = document.getElementById("cartSubtotalDiscount");
+  elements.cartTax = document.getElementById("cartTax");
+  elements.cartStoreCredit = document.getElementById("cartStoreCredit");
+  elements.cartTotal = document.getElementById("cartTotal");
+  elements.checkoutButton = document.getElementById("checkoutButton");
+  elements.mobileCheckoutButton = document.getElementById("mobileCheckoutButton");
+  elements.posShopProfileImage = document.getElementById("posShopProfileImage");
+  elements.posShopBusinessName = document.getElementById("posShopBusinessName");
+  elements.posShopBusinessDescription = document.getElementById("posShopBusinessDescription");
+  elements.currentSystemBadge = document.getElementById("currentSystemBadge");
+}
+
+function bindPosEvents() {
+  elements.customerToggleButton?.addEventListener("click", () => {
+    state.customerExpanded = !state.customerExpanded;
+    renderAll();
+  });
+  elements.buyerName?.addEventListener("input", (event) => {
+    state.currentBuyer = event.target.value.trim();
+    renderCart();
+  });
+  elements.buyerPhone?.addEventListener("input", (event) => {
+    state.currentPhone = event.target.value.trim();
+    renderCart();
+  });
+  elements.productSearch?.addEventListener("input", () => {
+    state.productSearchQuery = elements.productSearch.value.trim();
+    const product = currentProductBySearch(elements.productSearch.value);
+    if (product) {
+      if (elements.productPrice) elements.productPrice.value = product.price;
+      if (elements.productQty) elements.productQty.value = 1;
+    }
+    renderProducts();
+  });
+  elements.productSearch?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    const product = currentProductBySearch(elements.productSearch.value);
+    if (!product) return;
+    event.preventDefault();
+    openItemCustomizer(product);
+  });
+  [elements.retailSubtotalDiscountInput, elements.retailTaxRateInput, elements.retailStoreCreditInput, elements.orderFee].forEach((input) => {
+    input?.addEventListener("input", () => renderCart());
+  });
+  elements.categoryChips.forEach((button) => {
+    button.addEventListener("click", () => {
+      state.productFilter = button.dataset.productFilter;
+      renderProducts();
+    });
+  });
+  elements.quickProductList?.addEventListener("click", (event) => {
+    const target = event.target.closest("[data-quick-product-id]");
+    if (!target) return;
+    const product = state.products.find((item) => item.id === target.dataset.quickProductId);
+    if (!product) return;
+    openItemCustomizer(product);
+  });
+  elements.mobileCheckoutButton?.addEventListener("click", () => {
+    document.querySelector(".panel--checkout")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  elements.cartList?.addEventListener("click", (event) => {
+    const target = event.target.closest("[data-cart-id]");
+    if (!target) return;
+    const item = state.cart.find((entry) => entry.id === target.dataset.cartId);
+    if (!item) return;
+    if (target.dataset.cartAction === "increase") item.qty += 1;
+    if (target.dataset.cartAction === "decrease") item.qty = Math.max(1, item.qty - 1);
+    if (target.dataset.cartAction === "remove") {
+      state.cart = state.cart.filter((entry) => entry.id !== item.id);
+    }
+    renderAll();
+  });
+  elements.clearCartButton?.addEventListener("click", () => {
+    state.cart = [];
+    renderAll();
+  });
+  elements.checkoutButton?.addEventListener("click", async () => {
+    if (!state.cart.length || !state.profile) return;
+    const pricing = retailPricingSummary();
+    const payload = {
+      shopId: state.profile.shop_id || state.profile.shopId,
+      invoiceNo: nextInvoiceNumber(),
+      buyerName: state.currentBuyer,
+      buyerPhone: state.currentPhone,
+      items: state.cart.map((item) => ({
+        productId: item.productId,
+        name: item.name,
+        qty: item.qty,
+        price: item.price,
+        options: item.options || {},
+        discount: item.discount || 0,
+        sku: item.sku || "",
+        barcode: item.barcode || ""
+      })),
+      subtotal: pricing.subtotal,
+      fee: pricing.fee,
+      total: pricing.total,
+      subtotalDiscount: pricing.subtotalDiscount,
+      tax: pricing.tax,
+      storeCreditUsed: pricing.storeCreditUsed
+    };
+    openPayment(payload);
+  });
+}
+
+function ensurePosScreenMarkup() {
+  const targetType = currentShopType();
+  if (!elements.screens.pos) return;
+  if (state.posMarkupType === targetType && elements.productSearch) return;
+  elements.screens.pos.innerHTML = targetType === "retail" ? retailPosMarkup() : fnbPosMarkup();
+  state.posMarkupType = targetType;
+  syncPosElementReferences();
+  bindPosEvents();
+}
+
 function canAccessRoute(route) {
   if (isPlatformAdminProfile()) return adminRoutesForCurrentShell().includes(route);
   const role = currentRole();
@@ -1622,9 +1995,9 @@ function configureBottomNav() {
     ? [
         { route: "pos", label: t("navPOS") },
         { route: "stock", label: t("navStock") },
+        { route: "orders", label: t("navOrdersShort") },
         { route: "customers", label: t("navCustomers") },
-        { route: "settings", label: t("navSettingsShort") },
-        { route: "help", label: t("navHelp") }
+        { route: "settings", label: t("navSettingsShort") }
       ]
     : [
         { route: "pos", label: t("navPOS") },
@@ -1651,7 +2024,14 @@ function updateShellVisibility() {
   document.querySelectorAll("[data-platform-admin='true']").forEach((node) => {
     node.classList.toggle("hidden", !isPlatformAdminProfile());
   });
+  document.querySelectorAll("[data-shell-nav]").forEach((node) => {
+    node.classList.toggle("hidden", node.dataset.shellNav !== shellType);
+  });
+  document.querySelectorAll("[data-admin-nav]").forEach((node) => {
+    node.classList.toggle("hidden", !isPlatformAdminProfile() || state.platformAdminView === "adminChooser");
+  });
   document.querySelectorAll("[data-shell]").forEach((node) => {
+    if (node.classList.contains("screen")) return;
     const shell = node.dataset.shell;
     const hidden = shell === "retail" ? shellType !== "retail" : shell === "fnb" ? shellType !== "fnb" : false;
     node.classList.toggle("hidden", hidden);
@@ -1673,9 +2053,7 @@ function updateShellVisibility() {
   });
   elements.navButtons.forEach((node) => {
     if (!node.dataset.route) return;
-    const disallowedForAdmin = isPlatformAdminProfile()
-      && !["admin", "help"].includes(node.dataset.route);
-    node.classList.toggle("hidden", disallowedForAdmin || !canAccessRoute(node.dataset.route));
+    node.classList.toggle("hidden", !canAccessRoute(node.dataset.route));
   });
   configureBottomNav();
   if (isPlatformAdminProfile()) {
@@ -2170,6 +2548,7 @@ function renderReceipt() {
 }
 
 function renderAll() {
+  ensurePosScreenMarkup();
   applyLanguage();
   renderAuth();
   if (!state.authUser || !state.profile) return;
@@ -3474,9 +3853,9 @@ function currentProductBySearch(query) {
 }
 
 function resetOrderInputs() {
-  elements.productSearch.value = "";
-  elements.productQty.value = 1;
-  elements.productPrice.value = "";
+  if (elements.productSearch) elements.productSearch.value = "";
+  if (elements.productQty) elements.productQty.value = 1;
+  if (elements.productPrice) elements.productPrice.value = "";
 }
 
 function syncProductFormPreview(product = null) {
@@ -3559,30 +3938,6 @@ elements.logoutButton.addEventListener("click", async () => {
 elements.sidebarLogoutButton?.addEventListener("click", async () => {
   await backend.signOut();
 });
-elements.customerToggleButton?.addEventListener("click", () => {
-  state.customerExpanded = !state.customerExpanded;
-  renderAll();
-});
-elements.buyerName.addEventListener("input", (event) => {
-  state.currentBuyer = event.target.value.trim();
-  renderCart();
-});
-
-elements.buyerPhone.addEventListener("input", (event) => {
-  state.currentPhone = event.target.value.trim();
-  renderCart();
-});
-
-elements.productSearch.addEventListener("input", () => {
-  state.productSearchQuery = elements.productSearch.value.trim();
-  const product = currentProductBySearch(elements.productSearch.value);
-  if (product) {
-    elements.productPrice.value = product.price;
-    elements.productQty.value = 1;
-  }
-  renderProducts();
-});
-
 elements.ordersSearchInput?.addEventListener("input", () => {
   state.ordersSearchQuery = elements.ordersSearchInput.value.trim();
   renderOrdersHistory();
@@ -3591,18 +3946,6 @@ elements.ordersSearchInput?.addEventListener("input", () => {
 elements.customerSearchInput?.addEventListener("input", () => {
   state.customerSearchQuery = elements.customerSearchInput.value.trim();
   renderCustomers();
-});
-
-[elements.retailSubtotalDiscountInput, elements.retailTaxRateInput, elements.retailStoreCreditInput, elements.orderFee].forEach((input) => {
-  input?.addEventListener("input", () => renderCart());
-});
-
-elements.productSearch.addEventListener("keydown", (event) => {
-  if (event.key !== "Enter") return;
-  const product = currentProductBySearch(elements.productSearch.value);
-  if (!product) return;
-  event.preventDefault();
-  openItemCustomizer(product);
 });
 
 elements.productNameInput?.addEventListener("input", () => {
@@ -3634,93 +3977,6 @@ elements.productCategorySelect?.addEventListener("change", () => {
 
 elements.productImageInput?.addEventListener("change", () => {
   previewImage(elements.productImageInput, elements.productImagePreview);
-});
-
-elements.categoryChips.forEach((button) => {
-  button.addEventListener("click", () => {
-    state.productFilter = button.dataset.productFilter;
-    renderProducts();
-  });
-});
-
-elements.quickProductList.addEventListener("click", (event) => {
-  const target = event.target.closest("[data-quick-product-id]");
-  if (!target) return;
-  const product = state.products.find((item) => item.id === target.dataset.quickProductId);
-  if (!product || effectiveStock(product) <= 0) return;
-  openItemCustomizer(product);
-});
-
-elements.mobileCheckoutButton?.addEventListener("click", () => {
-  document.querySelector(".panel--checkout")?.scrollIntoView({ behavior: "smooth", block: "start" });
-});
-
-elements.orderFee.addEventListener("input", renderCart);
-
-elements.orderForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const product = currentProductBySearch(elements.productSearch.value);
-  const qty = Number(elements.productQty.value);
-  const enteredPrice = Number(product?.price || 0);
-  if (!product || !qty || qty <= 0 || enteredPrice < 0) {
-    window.alert(t("invalidProduct"));
-    return;
-  }
-  if (effectiveStock(product) < qty) {
-    window.alert(t("insufficientStock"));
-    return;
-  }
-  const existing = state.cart.find((item) => item.productId === product.id && item.price === enteredPrice);
-  if (existing) existing.qty += qty;
-  else state.cart.push({ id: crypto.randomUUID(), productId: product.id, name: product.name, image_url: product.image_url || "", qty, price: enteredPrice });
-  state.currentBuyer = elements.buyerName.value.trim();
-  renderAll();
-  resetOrderInputs();
-});
-
-elements.cartList.addEventListener("click", (event) => {
-  const target = event.target.closest("[data-cart-id]");
-  if (!target) return;
-  const item = state.cart.find((entry) => entry.id === target.dataset.cartId);
-  if (!item) return;
-  const action = target.dataset.cartAction || "remove";
-  if (action === "increase") {
-    const product = state.products.find((entry) => entry.id === item.productId);
-    if (product && effectiveStock(product) > 0) item.qty += 1;
-  } else if (action === "decrease") {
-    item.qty -= 1;
-    if (item.qty <= 0) {
-      state.cart = state.cart.filter((entry) => entry.id !== item.id);
-    }
-  } else {
-    state.cart = state.cart.filter((entry) => entry.id !== item.id);
-  }
-  renderAll();
-});
-
-elements.clearCartButton.addEventListener("click", () => {
-  state.cart = [];
-  renderAll();
-});
-
-elements.checkoutButton.addEventListener("click", async () => {
-  if (!state.cart.length || !state.profile) return;
-  const pricing = retailPricingSummary();
-  const payload = {
-    shopId: state.profile.shop_id || state.profile.shopId,
-    invoiceNo: nextInvoiceNumber(),
-    buyerName: elements.buyerName.value.trim() || t("guestBuyer"),
-    buyerPhone: elements.buyerPhone.value.trim(),
-    items: state.cart.map((item) => ({ productId: item.productId, name: item.name, qty: item.qty, price: item.price, options: item.options || {}, sku: item.sku || "", discount: Number(item.discount || 0) })),
-    subtotal: pricing.subtotal,
-    subtotalDiscount: pricing.subtotalDiscount,
-    tax: pricing.tax,
-    taxRate: pricing.taxRate,
-    storeCreditUsed: pricing.storeCreditUsed,
-    fee: pricing.fee,
-    total: pricing.total
-  };
-  openPayment(payload);
 });
 
 elements.expenseForm.addEventListener("submit", async (event) => {

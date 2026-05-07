@@ -146,6 +146,11 @@ h1 {
   align-items: center;
 }
 
+.nav-group {
+  display: grid;
+  gap: 10px;
+}
+
 .brand-logo {
   width: 44px;
   height: 44px;
