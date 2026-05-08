@@ -37,7 +37,11 @@ const state = {
   pendingCustomizerProduct: null,
   platformData: { shops: [], users: [] },
   platformAdminView: "adminChooser",
-  posMarkupType: ""
+  adminShopFilterType: "all",
+  adminWorkspaceShop: null,
+  posMarkupType: "",
+  customersMarkupType: "",
+  settingsMarkupType: ""
 };
 
 const elements = {
@@ -1389,18 +1393,466 @@ function syncBrandVisuals() {
     elements.posShopProfileImage.classList.toggle("hidden", !settings.shop_logo_url);
   }
   if (elements.posShopBusinessName) {
-    elements.posShopBusinessName.textContent = settings.business_name || state.shop?.name || t("homepageBusinessFallback");
+    elements.posShopBusinessName.textContent = settings.business_name || activeShop()?.name || t("homepageBusinessFallback");
   }
   if (elements.posShopBusinessDescription) {
     elements.posShopBusinessDescription.textContent = settings.business_description || t("settingsPageHint");
     elements.posShopBusinessDescription.classList.remove("hidden");
   }
   if (elements.currentSystemBadge) {
-    elements.currentSystemBadge.textContent = currentShopType() === "retail" ? t("adminGoRetail") : t("adminGoFnb");
+    if (currentShellType() === "admin") {
+      elements.currentSystemBadge.classList.add("hidden");
+    } else {
+      const systemLabel = currentShopType() === "retail" ? t("adminGoRetail") : t("adminGoFnb");
+      const shopLabel = activeShop()?.name ? ` • ${activeShop().name}` : "";
+      elements.currentSystemBadge.textContent = `${systemLabel}${shopLabel}`;
+      elements.currentSystemBadge.classList.remove("hidden");
+    }
   }
   if (elements.shopName && state.route === "pos") {
     elements.shopName.textContent = t("navPOS");
   }
+}
+
+function fnbCustomersMarkup() {
+  return `
+    <article class="panel panel--fnb">
+      <div class="panel__head">
+        <div>
+          <p class="eyebrow">F&B</p>
+          <h3 data-i18n="navCustomers">Customers</h3>
+        </div>
+      </div>
+      <div class="record-box">
+        <div class="list-head">
+          <h4 data-i18n="customerLookupHeading">Customer lookup</h4>
+        </div>
+        <label class="search-field">
+          <span class="hidden" data-i18n="customerLookupHeading">Customer lookup</span>
+          <input id="customerSearchInput" type="text" data-i18n-placeholder="customerSearchPlaceholder" placeholder="Search name or phone">
+        </label>
+      </div>
+      <div class="record-box">
+        <div class="list-head">
+          <h4 data-i18n="customerHistoryHeading">Recent buyers</h4>
+          <span id="customerCount">0</span>
+        </div>
+        <div id="customerList" class="stack-list"></div>
+      </div>
+    </article>
+  `;
+}
+
+function retailCustomersMarkup() {
+  return `
+    <article class="panel panel--retail">
+      <div class="panel__head">
+        <div>
+          <p class="eyebrow">Retail</p>
+          <h3 data-i18n="navCustomers">Customers</h3>
+        </div>
+      </div>
+      <div class="summary-grid">
+        <article class="summary-card">
+          <p data-i18n="customerMemberCountLabel">Members</p>
+          <strong id="customerMemberCount">0</strong>
+        </article>
+        <article class="summary-card">
+          <p data-i18n="customerSpendSummaryLabel">Total spend</p>
+          <strong id="customerSpendSummary">$0.00</strong>
+        </article>
+      </div>
+      <div class="record-box">
+        <div class="list-head">
+          <h4 data-i18n="customerLookupHeading">Customer lookup</h4>
+        </div>
+        <label class="search-field">
+          <span class="hidden" data-i18n="customerLookupHeading">Customer lookup</span>
+          <input id="customerSearchInput" type="text" data-i18n-placeholder="customerSearchPlaceholder" placeholder="Search name or phone">
+        </label>
+      </div>
+      <div class="record-box">
+        <div class="list-head">
+          <h4 data-i18n="customerMemberEditorHeading">Member profile</h4>
+        </div>
+        <form id="customerForm" class="grid-form">
+          <label>
+            <span data-i18n="buyerNameLabel">Buyer name</span>
+            <input id="customerNameInput" type="text" data-i18n-placeholder="buyerNamePlaceholder" placeholder="Customer name">
+          </label>
+          <label>
+            <span data-i18n="buyerPhoneLabel">Buyer phone</span>
+            <input id="customerPhoneInput" type="tel" inputmode="tel" data-i18n-placeholder="buyerPhonePlaceholder" placeholder="012 345 678">
+          </label>
+          <label>
+            <span data-i18n="memberCodeLabel">Member code</span>
+            <input id="customerMemberCodeInput" type="text" placeholder="MBR-001">
+          </label>
+          <label>
+            <span data-i18n="storeCreditBalanceLabel">Store credit balance</span>
+            <input id="customerStoreCreditInput" type="number" min="0" step="0.01" value="0">
+          </label>
+          <label>
+            <span data-i18n="loyaltyPointsLabel">Loyalty points</span>
+            <input id="customerLoyaltyPointsInput" type="number" min="0" step="1" value="0">
+          </label>
+          <button class="primary-button primary-button--full" type="submit" data-i18n="saveCustomerButton">Save member</button>
+        </form>
+      </div>
+      <div class="record-box">
+        <div class="list-head">
+          <h4 data-i18n="customerHistoryHeading">Recent buyers</h4>
+          <span id="customerCount">0</span>
+        </div>
+        <div id="customerList" class="stack-list"></div>
+      </div>
+    </article>
+  `;
+}
+
+function settingsSharedProfileAndPaymentMarkup(includeRetailSettings = false) {
+  return `
+    <section class="record-box">
+      <div class="list-head">
+        <h4 data-i18n="profileSettingsHeading">Business profile</h4>
+      </div>
+      <div class="settings-stack">
+        <div class="settings-media">
+          <img id="settingsProfilePreview" class="settings-preview settings-preview--logo" src="assets/nilaa-logo.png" alt="Shop profile preview">
+          <label>
+            <span data-i18n="profileImageLabel">Business logo</span>
+            <input id="settingsProfileImage" type="file" accept="image/*">
+          </label>
+        </div>
+        <label>
+          <span data-i18n="businessNameLabel">Business name</span>
+          <input id="settingsBusinessName" type="text" data-i18n-placeholder="businessNamePlaceholder" placeholder="Nilaa Coffee">
+        </label>
+        <label>
+          <span data-i18n="businessDescriptionLabel">Business description</span>
+          <textarea id="settingsBusinessDescription" rows="4" data-i18n-placeholder="businessDescriptionPlaceholder" placeholder="Tell customers what your shop sells."></textarea>
+        </label>
+      </div>
+    </section>
+
+    <section class="record-box">
+      <div class="list-head">
+        <h4 data-i18n="paymentSettingsHeading">Payment and QR</h4>
+      </div>
+      <div class="settings-stack">
+        <label>
+          <span data-i18n="paymentMethodSettingLabel">Default payment method</span>
+          <select id="settingsPaymentMethod">
+            <option value="both" data-i18n="paymentOptionBoth">QR and manual</option>
+            <option value="bank" data-i18n="paymentBank">Bank transfer</option>
+            <option value="cash" data-i18n="paymentCash">Cash</option>
+          </select>
+        </label>
+        <div class="settings-media">
+          <img id="settingsQrPreview" class="settings-preview" alt="QR preview">
+          <label>
+            <span data-i18n="bankQrLabel">Bank QR image</span>
+            <input id="settingsQrUpload" type="file" accept="image/*">
+          </label>
+        </div>
+      </div>
+    </section>
+
+    ${includeRetailSettings ? `
+      <section class="record-box">
+        <div class="list-head">
+          <h4 data-i18n="retailSettingsHeading">Retail settings</h4>
+        </div>
+        <div class="settings-stack">
+          <label>
+            <span data-i18n="taxRateLabel">Tax rate (%)</span>
+            <input id="settingsRetailTaxRate" type="number" min="0" step="0.01" value="0">
+          </label>
+          <label>
+            <span data-i18n="barcodeModeLabel">Barcode mode</span>
+            <select id="settingsRetailBarcodeMode">
+              <option value="camera" data-i18n="barcodeModeCamera">Camera and keyboard</option>
+              <option value="keyboard" data-i18n="barcodeModeKeyboard">Keyboard scanner only</option>
+            </select>
+          </label>
+          <label>
+            <span data-i18n="storeCreditLabel">Store credit label</span>
+            <input id="settingsRetailStoreCreditLabel" type="text" data-i18n-placeholder="storeCreditLabelPlaceholder" placeholder="Store credit">
+          </label>
+          <label>
+            <span data-i18n="loyaltyProgramLabel">Loyalty label</span>
+            <input id="settingsRetailLoyaltyLabel" type="text" data-i18n-placeholder="loyaltyProgramPlaceholder" placeholder="Loyalty points">
+          </label>
+        </div>
+      </section>
+    ` : ""}
+
+    <section class="record-box">
+      <div class="list-head">
+        <h4 data-i18n="receiptSettingsHeading">Receipt settings</h4>
+      </div>
+      <div class="settings-stack">
+        <label>
+          <span data-i18n="receiptNameLabel">Receipt title</span>
+          <input id="settingsReceiptTitle" type="text" data-i18n-placeholder="receiptNamePlaceholder" placeholder="nilaa-os">
+        </label>
+        <label>
+          <span data-i18n="receiptFooterLabel">Receipt footer</span>
+          <textarea id="settingsReceiptFooter" rows="3" data-i18n-placeholder="receiptFooterPlaceholder" placeholder="Thanks you bong! please come again."></textarea>
+        </label>
+      </div>
+    </section>
+
+    <section class="record-box">
+      <div class="list-head">
+        <h4 data-i18n="receiptDesignHeading">Receipt designing</h4>
+      </div>
+      <div class="settings-stack">
+        <label>
+          <span data-i18n="receiptAddressLabel">Business address</span>
+          <textarea id="settingsReceiptAddress" rows="2" data-i18n-placeholder="receiptAddressPlaceholder" placeholder="Street, city, landmark"></textarea>
+        </label>
+        <label>
+          <span data-i18n="receiptContactLabel">Receipt contact</span>
+          <input id="settingsReceiptContact" type="text" data-i18n-placeholder="receiptContactPlaceholder" placeholder="Phone / Telegram / social">
+        </label>
+        <label>
+          <span data-i18n="receiptManagerLabel">Manager / cashier line</span>
+          <input id="settingsReceiptManager" type="text" data-i18n-placeholder="receiptManagerPlaceholder" placeholder="Manager: Srey Leak">
+        </label>
+        <label>
+          <span data-i18n="receiptExtraNoteLabel">Extra note</span>
+          <textarea id="settingsReceiptNote" rows="2" data-i18n-placeholder="receiptExtraNotePlaceholder" placeholder="Return policy or thank-you note"></textarea>
+        </label>
+      </div>
+    </section>
+  `;
+}
+
+function fnbSettingsMarkup() {
+  return `
+    <article class="panel panel--fnb">
+      <div class="panel__head">
+        <div>
+          <p class="eyebrow">F&B</p>
+          <h3 data-i18n="settingsHeading">Shop settings</h3>
+        </div>
+      </div>
+      <form id="settingsForm" class="settings-layout">
+        ${settingsSharedProfileAndPaymentMarkup(false)}
+        <section class="record-box">
+          <div class="list-head">
+            <h4 data-i18n="productOptionHeading">Product option designing</h4>
+          </div>
+          <div class="settings-stack">
+            <label>
+              <span data-i18n="productOptionSizesLabel">Sizes (one per line)</span>
+              <textarea id="settingsOptionSizes" rows="3" data-i18n-placeholder="productOptionSizesPlaceholder" placeholder="Small&#10;Medium&#10;Large"></textarea>
+            </label>
+            <label>
+              <span data-i18n="productOptionSugarLabel">Sugar levels</span>
+              <textarea id="settingsOptionSugar" rows="3" data-i18n-placeholder="productOptionSugarPlaceholder" placeholder="0%&#10;50%&#10;100%"></textarea>
+            </label>
+            <label>
+              <span data-i18n="productOptionIceLabel">Ice levels</span>
+              <textarea id="settingsOptionIce" rows="3" data-i18n-placeholder="productOptionIcePlaceholder" placeholder="No ice&#10;Less ice&#10;Normal ice"></textarea>
+            </label>
+            <label>
+              <span data-i18n="productOptionCoffeeLabel">Coffee levels</span>
+              <textarea id="settingsOptionCoffee" rows="3" data-i18n-placeholder="productOptionCoffeePlaceholder" placeholder="Light&#10;Normal&#10;Strong"></textarea>
+            </label>
+            <label>
+              <span data-i18n="productOptionToppingsLabel">Toppings</span>
+              <textarea id="settingsOptionToppings" rows="3" data-i18n-placeholder="productOptionToppingsPlaceholder" placeholder="Pearl&#10;Jelly&#10;Cream"></textarea>
+            </label>
+          </div>
+        </section>
+        <section class="record-box">
+          <div class="list-head">
+            <h4 data-i18n="categoryOptionHeading">Category option defaults</h4>
+          </div>
+          <form id="categoryForm" class="settings-stack">
+            <label>
+              <span data-i18n="categoryNameLabel">Category name</span>
+              <input id="categoryNameInput" type="text" data-i18n-placeholder="categoryNamePlaceholder" placeholder="Coffee">
+            </label>
+            <fieldset class="option-fieldset">
+              <legend data-i18n="categoryOptionLegend">Default options for this category</legend>
+              <div class="option-toggle-grid">
+                <label class="option-check"><input id="categoryEnableSize" type="checkbox" checked><span data-i18n="productEnableSize">Size</span></label>
+                <label class="option-check"><input id="categoryEnableSugar" type="checkbox" checked><span data-i18n="productEnableSugar">Sugar</span></label>
+                <label class="option-check"><input id="categoryEnableIce" type="checkbox" checked><span data-i18n="productEnableIce">Ice</span></label>
+                <label class="option-check"><input id="categoryEnableCoffee" type="checkbox" checked><span data-i18n="productEnableCoffee">Coffee</span></label>
+                <label class="option-check"><input id="categoryEnableToppings" type="checkbox"><span data-i18n="productEnableToppings">Toppings</span></label>
+              </div>
+            </fieldset>
+            <button class="secondary-button" type="submit" data-i18n="saveCategoryButton">Save category</button>
+          </form>
+          <div class="record-box record-box--nested">
+            <div class="list-head">
+              <h4 data-i18n="categoryListHeading">Saved categories</h4>
+              <span id="categoryCount">0</span>
+            </div>
+            <div id="categoryList" class="stack-list"></div>
+          </div>
+        </section>
+        <section class="record-box">
+          <div class="list-head">
+            <h4 data-i18n="businessControlsHeading">Business controls</h4>
+          </div>
+          <div class="settings-stack">
+            <label>
+              <span data-i18n="orderCounterLabel">Next invoice code</span>
+              <input id="settingsOrderCounter" type="number" min="1" value="1">
+            </label>
+            <button id="resetOrderCounterButton" class="secondary-button" type="button" data-i18n="resetOrderCounterButton">Reset to 1</button>
+          </div>
+        </section>
+        <button class="primary-button primary-button--full" type="submit" data-i18n="saveSettingsButton">Save settings</button>
+      </form>
+    </article>
+  `;
+}
+
+function retailSettingsMarkup() {
+  return `
+    <article class="panel panel--retail">
+      <div class="panel__head">
+        <div>
+          <p class="eyebrow">Retail</p>
+          <h3 data-i18n="settingsHeading">Shop settings</h3>
+        </div>
+      </div>
+      <form id="settingsForm" class="settings-layout">
+        ${settingsSharedProfileAndPaymentMarkup(true)}
+        <section class="record-box">
+          <div class="list-head">
+            <h4 data-i18n="productOptionHeading">Product option designing</h4>
+          </div>
+          <div class="settings-stack">
+            <label>
+              <span data-i18n="productOptionSizesLabel">Sizes (one per line)</span>
+              <textarea id="settingsOptionSizes" rows="3" data-i18n-placeholder="productOptionSizesPlaceholder" placeholder="Small&#10;Medium&#10;Large"></textarea>
+            </label>
+            <label>
+              <span data-i18n="productOptionToppingsLabel">Toppings</span>
+              <textarea id="settingsOptionToppings" rows="3" data-i18n-placeholder="productOptionToppingsPlaceholder" placeholder="Gift wrap&#10;Case&#10;Accessory"></textarea>
+            </label>
+          </div>
+        </section>
+        <section class="record-box">
+          <div class="list-head">
+            <h4 data-i18n="categoryOptionHeading">Category option defaults</h4>
+          </div>
+          <form id="categoryForm" class="settings-stack">
+            <label>
+              <span data-i18n="categoryNameLabel">Category name</span>
+              <input id="categoryNameInput" type="text" data-i18n-placeholder="categoryNamePlaceholder" placeholder="Homeware">
+            </label>
+            <fieldset class="option-fieldset">
+              <legend data-i18n="categoryOptionLegend">Default options for this category</legend>
+              <div class="option-toggle-grid">
+                <label class="option-check"><input id="categoryEnableSize" type="checkbox" checked><span data-i18n="productEnableSize">Size</span></label>
+                <label class="option-check"><input id="categoryEnableToppings" type="checkbox"><span data-i18n="productEnableToppings">Toppings</span></label>
+              </div>
+            </fieldset>
+            <button class="secondary-button" type="submit" data-i18n="saveCategoryButton">Save category</button>
+          </form>
+          <div class="record-box record-box--nested">
+            <div class="list-head">
+              <h4 data-i18n="categoryListHeading">Saved categories</h4>
+              <span id="categoryCount">0</span>
+            </div>
+            <div id="categoryList" class="stack-list"></div>
+          </div>
+        </section>
+        <section class="record-box">
+          <div class="list-head">
+            <h4 data-i18n="businessControlsHeading">Business controls</h4>
+          </div>
+          <div class="settings-stack">
+            <label>
+              <span data-i18n="orderCounterLabel">Next invoice code</span>
+              <input id="settingsOrderCounter" type="number" min="1" value="1">
+            </label>
+            <button id="resetOrderCounterButton" class="secondary-button" type="button" data-i18n="resetOrderCounterButton">Reset to 1</button>
+          </div>
+        </section>
+        <button class="primary-button primary-button--full" type="submit" data-i18n="saveSettingsButton">Save settings</button>
+      </form>
+    </article>
+  `;
+}
+
+function syncCustomersScreenElementReferences() {
+  elements.customerList = document.getElementById("customerList");
+  elements.customerCount = document.getElementById("customerCount");
+  elements.customerMemberCount = document.getElementById("customerMemberCount");
+  elements.customerSpendSummary = document.getElementById("customerSpendSummary");
+  elements.customerSearchInput = document.getElementById("customerSearchInput");
+  elements.customerForm = document.getElementById("customerForm");
+  elements.customerNameInput = document.getElementById("customerNameInput");
+  elements.customerPhoneInput = document.getElementById("customerPhoneInput");
+  elements.customerMemberCodeInput = document.getElementById("customerMemberCodeInput");
+  elements.customerStoreCreditInput = document.getElementById("customerStoreCreditInput");
+  elements.customerLoyaltyPointsInput = document.getElementById("customerLoyaltyPointsInput");
+}
+
+function syncSettingsScreenElementReferences() {
+  elements.settingsForm = document.getElementById("settingsForm");
+  elements.settingsProfileImage = document.getElementById("settingsProfileImage");
+  elements.settingsProfilePreview = document.getElementById("settingsProfilePreview");
+  elements.settingsBusinessName = document.getElementById("settingsBusinessName");
+  elements.settingsBusinessDescription = document.getElementById("settingsBusinessDescription");
+  elements.settingsPaymentMethod = document.getElementById("settingsPaymentMethod");
+  elements.settingsQrUpload = document.getElementById("settingsQrUpload");
+  elements.settingsQrPreview = document.getElementById("settingsQrPreview");
+  elements.settingsReceiptTitle = document.getElementById("settingsReceiptTitle");
+  elements.settingsReceiptFooter = document.getElementById("settingsReceiptFooter");
+  elements.settingsReceiptAddress = document.getElementById("settingsReceiptAddress");
+  elements.settingsReceiptContact = document.getElementById("settingsReceiptContact");
+  elements.settingsReceiptManager = document.getElementById("settingsReceiptManager");
+  elements.settingsReceiptNote = document.getElementById("settingsReceiptNote");
+  elements.settingsRetailTaxRate = document.getElementById("settingsRetailTaxRate");
+  elements.settingsRetailBarcodeMode = document.getElementById("settingsRetailBarcodeMode");
+  elements.settingsRetailStoreCreditLabel = document.getElementById("settingsRetailStoreCreditLabel");
+  elements.settingsRetailLoyaltyLabel = document.getElementById("settingsRetailLoyaltyLabel");
+  elements.settingsOptionSizes = document.getElementById("settingsOptionSizes");
+  elements.settingsOptionSugar = document.getElementById("settingsOptionSugar");
+  elements.settingsOptionIce = document.getElementById("settingsOptionIce");
+  elements.settingsOptionCoffee = document.getElementById("settingsOptionCoffee");
+  elements.settingsOptionToppings = document.getElementById("settingsOptionToppings");
+  elements.settingsOrderCounter = document.getElementById("settingsOrderCounter");
+  elements.resetOrderCounterButton = document.getElementById("resetOrderCounterButton");
+  elements.categoryForm = document.getElementById("categoryForm");
+  elements.categoryNameInput = document.getElementById("categoryNameInput");
+  elements.categoryEnableSize = document.getElementById("categoryEnableSize");
+  elements.categoryEnableSugar = document.getElementById("categoryEnableSugar");
+  elements.categoryEnableIce = document.getElementById("categoryEnableIce");
+  elements.categoryEnableCoffee = document.getElementById("categoryEnableCoffee");
+  elements.categoryEnableToppings = document.getElementById("categoryEnableToppings");
+  elements.categoryCount = document.getElementById("categoryCount");
+  elements.categoryList = document.getElementById("categoryList");
+}
+
+function ensureCustomersScreenMarkup() {
+  const targetType = currentShopType();
+  if (!elements.screens.customers) return;
+  if (state.customersMarkupType === targetType && elements.customerList) return;
+  elements.screens.customers.innerHTML = targetType === "retail" ? retailCustomersMarkup() : fnbCustomersMarkup();
+  state.customersMarkupType = targetType;
+  syncCustomersScreenElementReferences();
+  bindCustomersScreenEvents();
+}
+
+function ensureSettingsScreenMarkup() {
+  const targetType = currentShopType();
+  if (!elements.screens.settings) return;
+  if (state.settingsMarkupType === targetType && elements.settingsForm) return;
+  elements.screens.settings.innerHTML = targetType === "retail" ? retailSettingsMarkup() : fnbSettingsMarkup();
+  state.settingsMarkupType = targetType;
+  syncSettingsScreenElementReferences();
+  bindSettingsScreenEvents();
 }
 
 function renderSettings() {
@@ -1456,9 +1908,9 @@ function renderCategories() {
         .map((category) => {
           const enabled = [
             category.enable_size ? t("productEnableSize") : "",
-            category.enable_sugar ? t("productEnableSugar") : "",
-            category.enable_ice ? t("productEnableIce") : "",
-            category.enable_coffee ? t("productEnableCoffee") : "",
+            !isRetailShop() && category.enable_sugar ? t("productEnableSugar") : "",
+            !isRetailShop() && category.enable_ice ? t("productEnableIce") : "",
+            !isRetailShop() && category.enable_coffee ? t("productEnableCoffee") : "",
             category.enable_toppings ? t("productEnableToppings") : ""
           ].filter(Boolean);
           return `
@@ -1516,17 +1968,31 @@ function currentRole() {
   return role === "business_owner" || role === "admin" ? "owner" : role;
 }
 
+function activeShop() {
+  if (isPlatformAdminProfile() && state.platformAdminView === "workspace" && state.adminWorkspaceShop) {
+    return state.adminWorkspaceShop;
+  }
+  return state.shop;
+}
+
+function activeShopId() {
+  return activeShop()?.id || state.profile?.shop_id || state.profile?.shopId || null;
+}
+
+function actingDashboardRole() {
+  if (isPlatformAdminProfile() && state.platformAdminView === "workspace") return "owner";
+  return isPlatformAdminProfile(state.profile) ? "admin" : state.profile?.role;
+}
+
 function currentShellType() {
   if (!isPlatformAdminProfile()) return currentShopType();
-  if (state.platformAdminView === "fnb" || state.platformAdminView === "retail") return state.platformAdminView;
+  if (state.platformAdminView === "workspace") return currentShopType();
   return "admin";
 }
 
 function currentShopType() {
-  if (isPlatformAdminProfile() && (state.platformAdminView === "fnb" || state.platformAdminView === "retail")) {
-    return state.platformAdminView;
-  }
-  return state.shop?.shop_type || state.shop?.shopType || "fnb";
+  const shop = activeShop();
+  return shop?.shop_type || shop?.shopType || "fnb";
 }
 
 function isRetailShop() {
@@ -1534,8 +2000,7 @@ function isRetailShop() {
 }
 
 function adminRoutesForCurrentShell() {
-  if (state.platformAdminView === "fnb") return ["adminChooser", "admin", ...ownerRoutesForCurrentShell()];
-  if (state.platformAdminView === "retail") return ["adminChooser", "admin", ...ownerRoutesForCurrentShell()];
+  if (state.platformAdminView === "workspace") return ["adminChooser", "admin", ...ownerRoutesForCurrentShell()];
   return ["adminChooser", "admin", "help"];
 }
 
@@ -1573,14 +2038,17 @@ function fnbDefaultCategories() {
 }
 
 function canManageSettings() {
+  if (isPlatformAdminProfile() && state.platformAdminView !== "workspace") return false;
   return currentRole() === "owner";
 }
 
 function canManageUsers() {
+  if (isPlatformAdminProfile() && state.platformAdminView !== "workspace") return false;
   return currentRole() === "owner";
 }
 
 function canEditProductMeta() {
+  if (isPlatformAdminProfile() && state.platformAdminView !== "workspace") return false;
   return currentRole() === "owner";
 }
 
@@ -1928,7 +2396,7 @@ function bindPosEvents() {
     if (!state.cart.length || !state.profile) return;
     const pricing = retailPricingSummary();
     const payload = {
-      shopId: state.profile.shop_id || state.profile.shopId,
+      shopId: activeShopId(),
       invoiceNo: nextInvoiceNumber(),
       buyerName: state.currentBuyer,
       buyerPhone: state.currentPhone,
@@ -2040,7 +2508,11 @@ function updateShellVisibility() {
     elements.platformAdminSwitcher.classList.toggle("hidden", !isPlatformAdminProfile());
   }
   elements.adminSystemButtons?.forEach((button) => {
-    button.classList.toggle("tab-button--active", button.dataset.adminSystem === state.platformAdminView);
+    const system = button.dataset.adminSystem;
+    const active = system === "admin"
+      ? state.platformAdminView === "admin" || state.platformAdminView === "adminChooser"
+      : system === (state.platformAdminView === "workspace" ? currentShopType() : state.adminShopFilterType);
+    button.classList.toggle("tab-button--active", active);
   });
   document.querySelectorAll("[data-owner-only]").forEach((node) => {
     node.classList.toggle("hidden", !canManageUsers());
@@ -2406,6 +2878,159 @@ function renderCustomers() {
     : blankState(t("noCustomers"));
 }
 
+async function handleSaveCustomer(event) {
+  event.preventDefault();
+  if (!state.profile) return;
+  const payload = {
+    name: elements.customerNameInput?.value.trim() || "",
+    phone: elements.customerPhoneInput?.value.trim() || "",
+    member_code: elements.customerMemberCodeInput?.value.trim() || "",
+    store_credit_balance: Number(elements.customerStoreCreditInput?.value || 0),
+    loyalty_points: Number(elements.customerLoyaltyPointsInput?.value || 0)
+  };
+  if (!payload.name || !payload.phone) {
+    window.alert(state.language === "en" ? "Please enter member name and phone." : "សូមបញ្ចូលឈ្មោះ និងលេខទូរសព្ទសមាជិក។");
+    return;
+  }
+  try {
+    const savedCustomer = await runWithStatus({
+      title: state.language === "en" ? "Saving member" : "កំពុងរក្សាទុកសមាជិក",
+      message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
+      successTitle: t("customerSaved")
+    }, () => backend.saveCustomer(activeShopId(), payload));
+    const phone = normalizePhone(payload.phone);
+    const index = state.customers.findIndex((item) => normalizePhone(item.phone) === phone);
+    if (index >= 0) state.customers[index] = { ...state.customers[index], ...(savedCustomer || payload) };
+    else state.customers.unshift(savedCustomer || { id: crypto.randomUUID(), shop_id: activeShopId(), ...payload });
+    elements.customerForm?.reset();
+    renderAll();
+  } catch (error) {
+    window.alert(error.message || t("createUserFailed"));
+  }
+}
+
+function bindCustomersScreenEvents() {
+  elements.customerSearchInput?.addEventListener("input", () => {
+    state.customerSearchQuery = elements.customerSearchInput.value.trim();
+    renderCustomers();
+  });
+  elements.customerForm?.addEventListener("submit", handleSaveCustomer);
+}
+
+async function handleSaveSettings(event) {
+  event.preventDefault();
+  if (!state.profile) return;
+  try {
+    const current = currentSettings();
+    const profileImage = elements.settingsProfileImage?.files?.[0]
+      ? await readFileAsDataUrl(elements.settingsProfileImage.files[0])
+      : current.shop_logo_url || "";
+    const qrImage = elements.settingsQrUpload?.files?.[0]
+      ? await readFileAsDataUrl(elements.settingsQrUpload.files[0])
+      : current.qr_image_url || "";
+    const payload = {
+      business_name: elements.settingsBusinessName?.value.trim() || activeShop()?.name || "nilaa-os",
+      business_description: elements.settingsBusinessDescription?.value.trim() || "",
+      payment_method: elements.settingsPaymentMethod?.value || "both",
+      qr_image_url: qrImage,
+      receipt_name: elements.settingsReceiptTitle?.value.trim() || "nilaa-os",
+      receipt_footer: elements.settingsReceiptFooter?.value.trim() || t("receiptThanks"),
+      shop_logo_url: profileImage,
+      receipt_address: elements.settingsReceiptAddress?.value.trim() || "",
+      receipt_contact: elements.settingsReceiptContact?.value.trim() || "",
+      receipt_manager: elements.settingsReceiptManager?.value.trim() || "",
+      receipt_note: elements.settingsReceiptNote?.value.trim() || "",
+      retail_tax_rate: Number(elements.settingsRetailTaxRate?.value || 0),
+      retail_barcode_mode: elements.settingsRetailBarcodeMode?.value || "camera",
+      retail_store_credit_label: elements.settingsRetailStoreCreditLabel?.value?.trim() || "Store credit",
+      retail_loyalty_label: elements.settingsRetailLoyaltyLabel?.value?.trim() || "Loyalty points",
+      option_sizes: elements.settingsOptionSizes?.value.trim() || "",
+      option_sugar_levels: elements.settingsOptionSugar?.value.trim() || "",
+      option_ice_levels: elements.settingsOptionIce?.value.trim() || "",
+      option_coffee_levels: elements.settingsOptionCoffee?.value.trim() || "",
+      option_toppings: elements.settingsOptionToppings?.value.trim() || "",
+      order_counter: Math.max(1, Number(elements.settingsOrderCounter?.value || 1))
+    };
+    await runWithStatus({
+      title: state.language === "en" ? "Saving settings" : "កំពុងរក្សាទុកការកំណត់",
+      message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
+      successTitle: state.language === "en" ? "Settings saved" : "រក្សាទុកបាន"
+    }, () => backend.saveSettings(activeShopId(), payload, state.profile));
+    const active = activeShop();
+    if (active) active.name = payload.business_name;
+    if (!isPlatformAdminProfile() && state.shop) state.shop = { ...state.shop, name: payload.business_name };
+    state.settings = { ...current, ...payload };
+    if (elements.settingsProfileImage) elements.settingsProfileImage.value = "";
+    if (elements.settingsQrUpload) elements.settingsQrUpload.value = "";
+    renderAll();
+  } catch (error) {
+    window.alert(error.message || t("saveSettingsFailed"));
+  }
+}
+
+async function handleSaveCategory(event) {
+  event.preventDefault();
+  if (!state.profile) return;
+  const name = elements.categoryNameInput?.value.trim() || "";
+  if (!name) {
+    window.alert(t("categoryMissing"));
+    return;
+  }
+  const payload = {
+    name,
+    enable_size: elements.categoryEnableSize?.checked ?? true,
+    enable_sugar: elements.categoryEnableSugar?.checked ?? false,
+    enable_ice: elements.categoryEnableIce?.checked ?? false,
+    enable_coffee: elements.categoryEnableCoffee?.checked ?? false,
+    enable_toppings: elements.categoryEnableToppings?.checked ?? false
+  };
+  try {
+    const saved = await runWithStatus({
+      title: state.language === "en" ? "Saving category" : "កំពុងរក្សាទុកប្រភេទ",
+      message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
+      successTitle: state.language === "en" ? "Category saved" : "រក្សាទុកបាន"
+    }, () => backend.saveCategory(activeShopId(), payload));
+    const existingIndex = state.categories.findIndex((item) => item.id === saved.id || item.name.toLowerCase() === saved.name.toLowerCase());
+    if (existingIndex >= 0) state.categories[existingIndex] = { ...state.categories[existingIndex], ...saved };
+    else state.categories.push({ shop_id: activeShopId(), ...saved });
+    elements.categoryForm?.reset();
+    renderCategories();
+    renderProducts();
+  } catch (error) {
+    window.alert(error.message || t("saveCategoryFailed"));
+  }
+}
+
+function bindSettingsScreenEvents() {
+  elements.settingsProfileImage?.addEventListener("change", () => {
+    previewImage(elements.settingsProfileImage, elements.settingsProfilePreview);
+  });
+  elements.settingsQrUpload?.addEventListener("change", () => {
+    previewImage(elements.settingsQrUpload, elements.settingsQrPreview);
+  });
+  elements.resetOrderCounterButton?.addEventListener("click", () => {
+    if (elements.settingsOrderCounter) elements.settingsOrderCounter.value = "1";
+  });
+  elements.categoryForm?.addEventListener("submit", handleSaveCategory);
+  elements.categoryList?.addEventListener("click", async (event) => {
+    const target = event.target.closest("[data-category-id]");
+    if (!target || !state.profile) return;
+    try {
+      await runWithStatus({
+        title: state.language === "en" ? "Removing category" : "កំពុងលុបប្រភេទ",
+        message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
+        successTitle: state.language === "en" ? "Category removed" : "លុបបាន"
+      }, () => backend.deleteCategory(activeShopId(), target.dataset.categoryId));
+      state.categories = state.categories.filter((item) => item.id !== target.dataset.categoryId);
+      state.products = state.products.map((item) => item.category_id === target.dataset.categoryId ? { ...item, category_id: null } : item);
+      renderAll();
+    } catch (error) {
+      window.alert(error.message || t("deleteCategoryFailed"));
+    }
+  });
+  elements.settingsForm?.addEventListener("submit", handleSaveSettings);
+}
+
 function renderUsers() {
   if (!state.profile || !canManageUsers()) {
     elements.userCount.textContent = 0;
@@ -2435,19 +3060,27 @@ function renderUsers() {
 
 function renderAdminScreen() {
   if (!isPlatformAdminProfile()) return;
+  const filteredShops = state.platformData.shops.filter((shop) =>
+    state.adminShopFilterType === "all" ? true : (shop.shop_type || "fnb") === state.adminShopFilterType
+  );
   elements.adminShopCount.textContent = state.platformData.shops.length;
   elements.adminUserCount.textContent = state.platformData.users.length;
   elements.adminSchemaStatus.textContent = Object.values(state.capabilities || {}).every(Boolean) ? "Ready" : "Setup";
-  elements.adminShopListCount.textContent = state.platformData.shops.length;
+  elements.adminShopListCount.textContent = filteredShops.length;
   elements.adminUserListCount.textContent = state.platformData.users.length;
-  elements.adminShopList.innerHTML = state.platformData.shops.length
-    ? state.platformData.shops.map((shop) => `
+  elements.adminShopList.innerHTML = filteredShops.length
+    ? filteredShops.map((shop) => `
         <article class="record-row">
           <div>
             <strong>${safeText(shop.name)}</strong>
             <div class="meta-line">${safeText([shop.shop_type || "fnb", shop.id].join(" • "))}</div>
           </div>
-          <div><span class="tag">${safeText(shop.status || "active")}</span></div>
+          <div class="record-actions__buttons">
+            <span class="tag">${safeText(shop.status || "active")}</span>
+            <button class="secondary-button" type="button" data-open-workspace-id="${shop.id}">
+              ${safeText(state.adminWorkspaceShop?.id === shop.id ? (state.language === "en" ? "Current workspace" : "កំពុងបើក") : (state.language === "en" ? "Open workspace" : "បើកកន្លែងការងារ"))}
+            </button>
+          </div>
         </article>
       `).join("")
     : blankState(t("noShops"));
@@ -2565,6 +3198,8 @@ function renderReceipt() {
 
 function renderAll() {
   ensurePosScreenMarkup();
+  ensureCustomersScreenMarkup();
+  ensureSettingsScreenMarkup();
   applyLanguage();
   renderAuth();
   if (!state.authUser || !state.profile) return;
@@ -2672,7 +3307,7 @@ async function completePayment() {
       } else {
         state.customers.unshift({
           id: crypto.randomUUID(),
-          shop_id: state.profile.shop_id || state.profile.shopId,
+          shop_id: activeShopId(),
           name: receiptOrder.buyer_name || t("guestBuyer"),
           phone: receiptOrder.buyer_phone || "",
           member_code: "",
@@ -3826,7 +4461,21 @@ state.backendMode = backend.mode;
 
 async function loadDashboardData() {
   if (!state.profile) return;
-  const data = await backend.fetchDashboard(state.profile.shop_id || state.profile.shopId, isPlatformAdminProfile(state.profile) ? "admin" : state.profile.role);
+  const shopId = activeShopId();
+  if (isPlatformAdminProfile(state.profile) && state.platformAdminView !== "workspace") {
+    state.categories = [];
+    state.products = [];
+    state.expenses = [];
+    state.orders = [];
+    state.customers = [];
+    state.users = [];
+    state.settings = defaultSettingsForShopType("fnb");
+    state.capabilities = { settings: true, payments: true, customers: true };
+    state.platformData = backend.fetchPlatformData ? await backend.fetchPlatformData() : { shops: [], users: [] };
+    refreshSetupBanner();
+    return;
+  }
+  const data = await backend.fetchDashboard(shopId, actingDashboardRole());
   state.categories = (data.categories || []).map((row) => ({
     ...row,
     enable_size: row.enable_size ?? true,
@@ -3891,15 +4540,40 @@ async function loadSignedInUser(user) {
     state.customerExpanded = false;
     state.platformData = { shops: [], users: [] };
     state.platformAdminView = "adminChooser";
+    state.adminShopFilterType = "all";
+    state.adminWorkspaceShop = null;
     elements.paymentModal.classList.add("hidden");
     renderAll();
     return;
   }
   state.profile = await backend.getProfile(user.id || user.uid);
   state.shop = state.profile ? await backend.getShop(state.profile.shop_id || state.profile.shopId) : null;
+  state.adminWorkspaceShop = null;
   await loadDashboardData();
   state.platformAdminView = isPlatformAdminProfile(state.profile) ? "adminChooser" : currentShopType();
   state.route = defaultRouteForCurrentUser();
+  renderAll();
+}
+
+async function openAdminWorkspace(shopId) {
+  if (!isPlatformAdminProfile() || !shopId) return;
+  const shop = state.platformData.shops.find((item) => item.id === shopId) || await backend.getShop(shopId);
+  if (!shop) return;
+  state.adminWorkspaceShop = shop;
+  state.adminShopFilterType = shop.shop_type || "fnb";
+  state.platformAdminView = "workspace";
+  state.route = "pos";
+  await loadDashboardData();
+  renderAll();
+}
+
+async function openAdminIndex(filterType = state.adminShopFilterType || "all") {
+  if (!isPlatformAdminProfile()) return;
+  state.adminWorkspaceShop = null;
+  state.adminShopFilterType = filterType;
+  state.platformAdminView = "admin";
+  state.route = "admin";
+  await loadDashboardData();
   renderAll();
 }
 
@@ -3957,11 +4631,19 @@ elements.dashboardDrawer.addEventListener("click", (event) => {
   if (event.target.id === "dashboardDrawer") openDrawer(false);
 });
 elements.adminSystemButtons.forEach((button) => {
-  button.addEventListener("click", () => {
+  button.addEventListener("click", async () => {
     const target = button.dataset.adminSystem;
     if (!isPlatformAdminProfile()) return;
-    state.platformAdminView = target === "admin" ? "admin" : target;
-    setRoute(target === "admin" ? "admin" : target === "fnb" || target === "retail" ? "pos" : "adminChooser");
+    if (target === "admin") {
+      await openAdminIndex("all");
+    } else if (target === "fnb" || target === "retail") {
+      await openAdminIndex(target);
+    } else {
+      state.platformAdminView = "adminChooser";
+      state.adminWorkspaceShop = null;
+      state.route = "adminChooser";
+      renderAll();
+    }
     openDrawer(false);
   });
 });
@@ -4058,10 +4740,10 @@ elements.expenseForm.addEventListener("submit", async (event) => {
       title: state.language === "en" ? "Saving expense" : "កំពុងរក្សាទុកចំណាយ",
       message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
       successTitle: state.language === "en" ? "Expense saved" : "រក្សាទុកបាន"
-    }, () => backend.createExpense(state.profile.shop_id || state.profile.shopId, { note, amount }, state.profile));
+    }, () => backend.createExpense(activeShopId(), { note, amount }, state.profile));
     state.expenses.unshift(savedExpense || {
       id: crypto.randomUUID(),
-      shop_id: state.profile.shop_id || state.profile.shopId,
+      shop_id: activeShopId(),
       note,
       amount,
       created_by: state.profile.username,
@@ -4083,7 +4765,7 @@ elements.expenseList.addEventListener("click", async (event) => {
     title: state.language === "en" ? "Removing expense" : "កំពុងលុបចំណាយ",
     message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
     successTitle: state.language === "en" ? "Expense removed" : "លុបបាន"
-  }, () => backend.deleteExpense(state.profile.shop_id || state.profile.shopId, target.dataset.expenseId));
+  }, () => backend.deleteExpense(activeShopId(), target.dataset.expenseId));
   state.expenses = state.expenses.filter((item) => item.id !== target.dataset.expenseId);
   renderAll();
 });
@@ -4150,11 +4832,11 @@ elements.productForm.addEventListener("submit", async (event) => {
       title: state.language === "en" ? "Saving product" : "កំពុងរក្សាទុកទំនិញ",
       message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
       successTitle: state.language === "en" ? "Product saved" : "រក្សាទុកបាន"
-    }, () => backend.saveProduct(state.profile.shop_id || state.profile.shopId, payload));
+    }, () => backend.saveProduct(activeShopId(), payload));
     if (existing) {
       Object.assign(existing, savedProduct || payload);
     } else {
-      state.products.push(savedProduct || { id: crypto.randomUUID(), shop_id: state.profile.shop_id || state.profile.shopId, ...payload });
+      state.products.push(savedProduct || { id: crypto.randomUUID(), shop_id: activeShopId(), ...payload });
     }
   } catch (error) {
     window.alert(error.message || t("saveProductFailed"));
@@ -4174,7 +4856,7 @@ elements.productList.addEventListener("click", async (event) => {
     title: state.language === "en" ? "Removing product" : "កំពុងលុបទំនិញ",
     message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
     successTitle: state.language === "en" ? "Product removed" : "លុបបាន"
-  }, () => backend.deleteProduct(state.profile.shop_id || state.profile.shopId, target.dataset.productId));
+  }, () => backend.deleteProduct(activeShopId(), target.dataset.productId));
   state.products = state.products.filter((item) => item.id !== target.dataset.productId);
   renderAll();
 });
@@ -4195,7 +4877,7 @@ const handleOrderAction = async (event) => {
     title: state.language === "en" ? "Removing order" : "កំពុងលុបការបញ្ជាទិញ",
     message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
     successTitle: state.language === "en" ? "Order removed" : "លុបបាន"
-  }, () => backend.deleteOrder(state.profile.shop_id || state.profile.shopId, deleteTarget.dataset.orderId));
+  }, () => backend.deleteOrder(activeShopId(), deleteTarget.dataset.orderId));
   const order = state.orders.find((item) => item.id === deleteTarget.dataset.orderId);
   if (order) {
     order.items.forEach((item) => {
@@ -4231,7 +4913,7 @@ elements.adminCreateUserForm.addEventListener("submit", async (event) => {
       email: elements.newUsername.value.trim(),
       phone: elements.newPhone.value.trim(),
       role: elements.newUserRole.value,
-      shop_id: state.profile.shop_id || state.profile.shopId,
+      shop_id: activeShopId(),
       status: "active",
       created_at: new Date().toISOString()
     });
@@ -4268,6 +4950,12 @@ elements.adminUserList?.addEventListener("click", async (event) => {
   const target = event.target.closest("[data-delete-platform-user-id]");
   if (!target) return;
   await handleDeleteUser(target.dataset.deletePlatformUserId);
+});
+
+elements.adminShopList?.addEventListener("click", async (event) => {
+  const target = event.target.closest("[data-open-workspace-id]");
+  if (!target) return;
+  await openAdminWorkspace(target.dataset.openWorkspaceId);
 });
 
 elements.adminPlatformForm?.addEventListener("submit", async (event) => {
@@ -4326,10 +5014,10 @@ elements.categoryForm?.addEventListener("submit", async (event) => {
       title: state.language === "en" ? "Saving category" : "កំពុងរក្សាទុកប្រភេទ",
       message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
       successTitle: state.language === "en" ? "Category saved" : "រក្សាទុកបាន"
-    }, () => backend.saveCategory(state.profile.shop_id || state.profile.shopId, payload));
+    }, () => backend.saveCategory(activeShopId(), payload));
     const existingIndex = state.categories.findIndex((item) => item.id === saved.id || item.name.toLowerCase() === saved.name.toLowerCase());
     if (existingIndex >= 0) state.categories[existingIndex] = { ...state.categories[existingIndex], ...saved };
-    else state.categories.push({ shop_id: state.profile.shop_id || state.profile.shopId, ...saved });
+    else state.categories.push({ shop_id: activeShopId(), ...saved });
     elements.categoryForm.reset();
     renderCategories();
     renderProducts();
@@ -4346,7 +5034,7 @@ elements.categoryList?.addEventListener("click", async (event) => {
       title: state.language === "en" ? "Removing category" : "កំពុងលុបប្រភេទ",
       message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
       successTitle: state.language === "en" ? "Category removed" : "លុបបាន"
-    }, () => backend.deleteCategory(state.profile.shop_id || state.profile.shopId, target.dataset.categoryId));
+    }, () => backend.deleteCategory(activeShopId(), target.dataset.categoryId));
     state.categories = state.categories.filter((item) => item.id !== target.dataset.categoryId);
     state.products = state.products.map((item) => item.category_id === target.dataset.categoryId ? { ...item, category_id: null } : item);
     renderAll();
@@ -4393,7 +5081,7 @@ elements.settingsForm?.addEventListener("submit", async (event) => {
       title: state.language === "en" ? "Saving settings" : "កំពុងរក្សាទុកការកំណត់",
       message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
       successTitle: state.language === "en" ? "Settings saved" : "រក្សាទុកបាន"
-    }, () => backend.saveSettings(state.profile.shop_id || state.profile.shopId, payload, state.profile));
+    }, () => backend.saveSettings(activeShopId(), payload, state.profile));
     state.shop = { ...(state.shop || {}), name: payload.business_name };
     state.settings = { ...current, ...payload };
     elements.settingsProfileImage.value = "";
@@ -4423,11 +5111,11 @@ elements.customerForm?.addEventListener("submit", async (event) => {
       title: state.language === "en" ? "Saving member" : "កំពុងរក្សាទុកសមាជិក",
       message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
       successTitle: t("customerSaved")
-    }, () => backend.saveCustomer(state.profile.shop_id || state.profile.shopId, payload));
+    }, () => backend.saveCustomer(activeShopId(), payload));
     const phone = normalizePhone(payload.phone);
     const index = state.customers.findIndex((item) => normalizePhone(item.phone) === phone);
     if (index >= 0) state.customers[index] = { ...state.customers[index], ...(savedCustomer || payload) };
-    else state.customers.unshift(savedCustomer || { id: crypto.randomUUID(), shop_id: state.profile.shop_id || state.profile.shopId, ...payload });
+    else state.customers.unshift(savedCustomer || { id: crypto.randomUUID(), shop_id: activeShopId(), ...payload });
     elements.customerForm.reset();
     renderAll();
   } catch (error) {
