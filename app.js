@@ -2414,14 +2414,22 @@ function renderUsers() {
   }
   elements.userCount.textContent = state.users.length;
   elements.userList.innerHTML = state.users.length
-    ? state.users.map((user) => `
-        <article class="record-row">
-          <div>
-            <strong>${safeText(user.username)}</strong>
-            <div class="meta-line">${safeText([user.role, user.phone, user.status || "active"].filter(Boolean).join(" • "))}</div>
-          </div>
-        </article>
-      `).join("")
+    ? state.users.map((user) => {
+        const locked = user.id === state.profile?.id || normalizeLoginIdentifier(user.email || user.username || "") === "nilaademo@gmail.com";
+        return `
+          <article class="record-row">
+            <div>
+              <strong>${safeText(user.username)}</strong>
+              <div class="meta-line">${safeText([user.role, user.phone, user.status || "active"].filter(Boolean).join(" • "))}</div>
+            </div>
+            ${locked ? "" : `
+              <div class="record-actions__buttons">
+                <button class="delete-button" type="button" data-delete-user-id="${user.id}">${t("deleteButton")}</button>
+              </div>
+            `}
+          </article>
+        `;
+      }).join("")
     : blankState(t("noUsers"));
 }
 
@@ -2444,14 +2452,22 @@ function renderAdminScreen() {
       `).join("")
     : blankState(t("noShops"));
   elements.adminUserList.innerHTML = state.platformData.users.length
-    ? state.platformData.users.map((user) => `
-        <article class="record-row">
-          <div>
-            <strong>${safeText(user.username || user.email || "-")}</strong>
-            <div class="meta-line">${safeText([user.role, user.shop_id || user.shopId, user.phone].filter(Boolean).join(" • "))}</div>
-          </div>
-        </article>
-      `).join("")
+    ? state.platformData.users.map((user) => {
+        const locked = user.id === state.profile?.id || normalizeLoginIdentifier(user.email || user.username || "") === "nilaademo@gmail.com";
+        return `
+          <article class="record-row">
+            <div>
+              <strong>${safeText(user.username || user.email || "-")}</strong>
+              <div class="meta-line">${safeText([user.role, user.shop_id || user.shopId, user.phone].filter(Boolean).join(" • "))}</div>
+            </div>
+            ${locked ? "" : `
+              <div class="record-actions__buttons">
+                <button class="delete-button" type="button" data-delete-platform-user-id="${user.id}">${t("deleteButton")}</button>
+              </div>
+            `}
+          </article>
+        `;
+      }).join("")
     : blankState(t("noPlatformUsers"));
 }
 
@@ -2975,7 +2991,8 @@ function createMockBackend() {
     async getProfile(uid) {
       const store = load();
       const user = store.users.find((item) => item.id === uid);
-      return user ? { id: user.id, username: user.username, email: user.email, phone: user.phone, role: user.role, shop_id: user.shop_id, status: user.status } : null;
+      if (!user || user.status === "disabled") return null;
+      return { id: user.id, username: user.username, email: user.email, phone: user.phone, role: user.role, shop_id: user.shop_id, status: user.status };
     },
     async getShop(shopId) {
       const store = load();
@@ -2989,14 +3006,16 @@ function createMockBackend() {
         expenses: store.expenses.filter((item) => item.shop_id === shopId && item.date === todayKey()).reverse(),
         orders: store.orders.filter((item) => item.shop_id === shopId && item.date === todayKey()).reverse(),
         customers: (store.customers || []).filter((item) => item.shop_id === shopId),
-        users: role === "admin" ? store.users : store.users.filter((item) => item.shop_id === shopId),
+        users: role === "admin"
+          ? store.users.filter((item) => item.status !== "disabled")
+          : store.users.filter((item) => item.shop_id === shopId && item.status !== "disabled"),
         settings: store.settings.find((item) => item.shop_id === shopId) || null,
         capabilities: { settings: true, payments: true, customers: true }
       };
     },
     async fetchPlatformData() {
       const store = load();
-      return { shops: store.shops, users: store.users };
+      return { shops: store.shops, users: store.users.filter((item) => item.status !== "disabled") };
     },
     async saveProduct(shopId, payload) {
       const store = load();
@@ -3154,6 +3173,18 @@ function createMockBackend() {
       save(store);
       return user;
     },
+    async deleteUser(actorProfile, targetUserId) {
+      const store = load();
+      const targetUser = store.users.find((item) => item.id === targetUserId);
+      if (!targetUser) throw new Error("User not found.");
+      if (targetUser.id === actorProfile.id) throw new Error("You cannot delete your own account.");
+      if (normalizeLoginIdentifier(targetUser.email || targetUser.username) === "nilaademo@gmail.com") {
+        throw new Error("Platform admin account cannot be deleted.");
+      }
+      store.users = store.users.filter((item) => item.id !== targetUserId);
+      if (store.sessionUserId === targetUserId) store.sessionUserId = null;
+      save(store);
+    },
     async saveSettings(shopId, payload) {
       const store = load();
       const existing = store.settings.find((item) => item.shop_id === shopId);
@@ -3233,8 +3264,20 @@ function createSupabaseBackend() {
     },
     async signIn(username, password) {
       const email = await resolveLoginEmail(username);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      const userId = data.user?.id;
+      if (!userId) return;
+      const { data: profileRow, error: profileError } = await supabase
+        .from("users")
+        .select("status")
+        .eq("id", userId)
+        .maybeSingle();
+      if (profileError) throw profileError;
+      if (!profileRow || profileRow.status === "disabled") {
+        await supabase.auth.signOut();
+        throw new Error(state.language === "en" ? "This account is disabled." : "គណនីនេះត្រូវបានបិទ។");
+      }
     },
     async signOut() {
       const { error } = await supabase.auth.signOut();
@@ -3243,6 +3286,7 @@ function createSupabaseBackend() {
     async getProfile(uid) {
       const { data, error } = await supabase.from("users").select("*").eq("id", uid).single();
       if (error) throw error;
+      if (data?.status === "disabled") return null;
       return data;
     },
     async getShop(shopId) {
@@ -3262,8 +3306,8 @@ function createSupabaseBackend() {
         supabase.from("expenses").select("*").eq("shop_id", shopId).eq("date", todayKey()).order("created_at", { ascending: false }),
         supabase.from("orders").select("*").eq("shop_id", shopId).eq("date", todayKey()).order("created_at", { ascending: false }),
         role === "admin"
-          ? supabase.from("users").select("*").order("created_at", { ascending: false })
-          : supabase.from("users").select("*").eq("shop_id", shopId).order("created_at", { ascending: false }),
+          ? supabase.from("users").select("*").neq("status", "disabled").order("created_at", { ascending: false })
+          : supabase.from("users").select("*").eq("shop_id", shopId).neq("status", "disabled").order("created_at", { ascending: false }),
         capabilities.settings
           ? supabase.from("settings").select("*").eq("shop_id", shopId).maybeSingle()
           : Promise.resolve({ data: null, error: null }),
@@ -3290,7 +3334,7 @@ function createSupabaseBackend() {
     async fetchPlatformData() {
       const [shopsRes, usersRes] = await Promise.all([
         supabase.from("shops").select("*").order("created_at", { ascending: false }),
-        supabase.from("users").select("*").order("created_at", { ascending: false })
+        supabase.from("users").select("*").neq("status", "disabled").order("created_at", { ascending: false })
       ]);
       if (shopsRes.error) throw shopsRes.error;
       if (usersRes.error) throw usersRes.error;
@@ -3671,6 +3715,27 @@ function createSupabaseBackend() {
         }, { onConflict: "shop_id" });
       }
       return profileRecord;
+    },
+    async deleteUser(actorProfile, targetUserId) {
+      if (!targetUserId) throw new Error("User not found.");
+      if (targetUserId === actorProfile.id) throw new Error("You cannot delete your own account.");
+      const { data: targetUser, error: targetError } = await supabase
+        .from("users")
+        .select("id, email, username")
+        .eq("id", targetUserId)
+        .single();
+      if (targetError) throw targetError;
+      const targetIdentifier = normalizeLoginIdentifier(targetUser?.email || targetUser?.username || "");
+      if (targetIdentifier === "nilaademo@gmail.com") {
+        throw new Error("Platform admin account cannot be deleted.");
+      }
+      const aliasDelete = await supabase.from("login_aliases").delete().eq("user_id", targetUserId);
+      if (aliasDelete.error && !relationMissing(aliasDelete.error)) throw aliasDelete.error;
+      const { error } = await supabase
+        .from("users")
+        .update({ status: "disabled" })
+        .eq("id", targetUserId);
+      if (error) throw error;
     },
     async saveSettings(shopId, payload) {
       const settingsRecord = {
@@ -4175,6 +4240,34 @@ elements.adminCreateUserForm.addEventListener("submit", async (event) => {
   } catch (error) {
     window.alert(error.message || t("createUserFailed"));
   }
+});
+
+const handleDeleteUser = async (targetUserId) => {
+  if (!targetUserId || !state.profile) return;
+  try {
+    await runWithStatus({
+      title: state.language === "en" ? "Removing account" : "កំពុងលុបគណនី",
+      message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
+      successTitle: state.language === "en" ? "Account removed" : "លុបគណនីបាន"
+    }, () => backend.deleteUser(state.profile, targetUserId));
+    state.users = state.users.filter((item) => item.id !== targetUserId);
+    state.platformData.users = (state.platformData.users || []).filter((item) => item.id !== targetUserId);
+    renderAll();
+  } catch (error) {
+    window.alert(error.message || t("createUserFailed"));
+  }
+};
+
+elements.userList?.addEventListener("click", async (event) => {
+  const target = event.target.closest("[data-delete-user-id]");
+  if (!target) return;
+  await handleDeleteUser(target.dataset.deleteUserId);
+});
+
+elements.adminUserList?.addEventListener("click", async (event) => {
+  const target = event.target.closest("[data-delete-platform-user-id]");
+  if (!target) return;
+  await handleDeleteUser(target.dataset.deletePlatformUserId);
 });
 
 elements.adminPlatformForm?.addEventListener("submit", async (event) => {
