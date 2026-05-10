@@ -370,24 +370,34 @@ button:focus {
 }
 
 .category-chips {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
   flex-wrap: wrap;
   margin: 10px 0 12px;
 }
 
 .category-chip {
-  min-height: 38px;
-  padding: 0 12px;
+  display: grid;
+  gap: 3px;
+  align-items: start;
+  min-height: 62px;
+  padding: 10px 12px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 8px;
   background: var(--surface-strong);
   color: var(--accent-deep);
+  text-align: left;
+}
+
+.category-chip small {
+  color: var(--muted);
+  font-size: 0.78rem;
 }
 
 .category-chip--active {
-  background: rgba(205, 116, 43, 0.18);
-  border-color: rgba(205, 116, 43, 0.28);
+  background: rgba(0, 93, 253, 0.1);
+  border-color: rgba(0, 93, 253, 0.35);
 }
 
 .quick-product {
@@ -1219,7 +1229,7 @@ button:focus {
     min-height: calc(100vh - 32px);
     padding: 14px;
     border: 1px solid var(--line);
-    border-radius: 8px;
+    border-radius: 4px;
     background: var(--surface);
     box-shadow: var(--shadow);
   }
@@ -2308,6 +2318,15 @@ body.shop-type-retail .record-box {
 
 .bottom-nav .nav-button {
   border-radius: 8px !important;
+}
+
+.admin-workspace-controls {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-workspace-box .shop-type-picker {
+  justify-content: flex-start;
 }
 
 @media (max-width: 719px) {

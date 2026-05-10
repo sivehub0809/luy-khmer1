@@ -3,6 +3,7 @@ import { appSettings, supabaseConfig } from "./supabase-config.js";
 
 const MOCK_STORAGE_KEY = "nilaa-os-preview-store-v2";
 const LANGUAGE_STORAGE_KEY = "nilaa-os-language";
+const OFFLINE_SNAPSHOT_STORAGE_KEY = "nilaa-os-offline-snapshots-v1";
 
 const state = {
   route: "pos",
@@ -29,6 +30,7 @@ const state = {
   pendingPaymentOrder: null,
   latestReceipt: null,
   backendMode: "setup",
+  isOfflineSnapshot: false,
   splashDone: false,
   customerExpanded: false,
   productSearchQuery: "",
@@ -190,6 +192,10 @@ const elements = {
   adminUserList: document.getElementById("adminUserList"),
   adminShopListCount: document.getElementById("adminShopListCount"),
   adminUserListCount: document.getElementById("adminUserListCount"),
+  adminWorkspaceStatus: document.getElementById("adminWorkspaceStatus"),
+  adminFilterAll: document.getElementById("adminFilterAll"),
+  adminFilterFnb: document.getElementById("adminFilterFnb"),
+  adminFilterRetail: document.getElementById("adminFilterRetail"),
   settingsForm: document.getElementById("settingsForm"),
   settingsProfileImage: document.getElementById("settingsProfileImage"),
   settingsProfilePreview: document.getElementById("settingsProfilePreview"),
@@ -1188,6 +1194,10 @@ function refreshSetupBanner() {
     showSetupBanner(t("previewBanner"));
     return;
   }
+  if (state.isOfflineSnapshot) {
+    showSetupBanner(state.language === "en" ? "Offline mode: showing last saved shop snapshot." : "របៀបក្រៅបណ្ដាញ៖ កំពុងបង្ហាញទិន្នន័យដែលបានរក្សាទុកចុងក្រោយ។");
+    return;
+  }
   const missing = Object.entries(state.capabilities || {})
     .filter(([, enabled]) => !enabled)
     .map(([name]) => name);
@@ -1968,6 +1978,32 @@ function currentRole() {
   return role === "business_owner" || role === "admin" ? "owner" : role;
 }
 
+function offlineSnapshotsStore() {
+  try {
+    return JSON.parse(localStorage.getItem(OFFLINE_SNAPSHOT_STORAGE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveOfflineSnapshot(key, data) {
+  const store = offlineSnapshotsStore();
+  store[key] = {
+    savedAt: new Date().toISOString(),
+    data
+  };
+  localStorage.setItem(OFFLINE_SNAPSHOT_STORAGE_KEY, JSON.stringify(store));
+}
+
+function loadOfflineSnapshot(key) {
+  return offlineSnapshotsStore()[key]?.data || null;
+}
+
+function activeSnapshotKey() {
+  if (isPlatformAdminProfile() && state.platformAdminView !== "workspace") return "platform-admin";
+  return activeShopId() ? `shop:${activeShopId()}` : "default";
+}
+
 function activeShop() {
   if (isPlatformAdminProfile() && state.platformAdminView === "workspace" && state.adminWorkspaceShop) {
     return state.adminWorkspaceShop;
@@ -2063,11 +2099,18 @@ function posSearchPlaceholderKey() {
 }
 
 function posCategoryMarkup() {
+  const categories = state.categories
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name, "km"));
   return `
     <div class="category-chips">
-      <button class="category-chip category-chip--active" type="button" data-product-filter="all" data-i18n="filterAll">All</button>
-      <button class="category-chip" type="button" data-product-filter="popular" data-i18n="filterPopular">Popular</button>
-      <button class="category-chip" type="button" data-product-filter="low" data-i18n="filterLowStock">Low Stock</button>
+      <button class="category-chip ${state.productFilter === "all" ? "category-chip--active" : ""}" type="button" data-product-filter="all" data-i18n="filterAll">All</button>
+      ${categories.map((category) => `
+        <button class="category-chip ${state.productFilter === category.id ? "category-chip--active" : ""}" type="button" data-product-filter="${category.id}">
+          <strong>${safeText(category.name)}</strong>
+          <small>${state.products.filter((product) => (product.category_id || product.categoryId) === category.id).length} ${safeText(t("itemUnit"))}</small>
+        </button>
+      `).join("")}
     </div>
   `;
 }
@@ -2104,7 +2147,7 @@ function fnbPosMarkup() {
           </label>
         </div>
 
-        ${posCategoryMarkup()}
+        <div id="posCategoryChips">${posCategoryMarkup()}</div>
 
         <div id="quickProductList" class="quick-product-list quick-product-list--desktop"></div>
         <button id="mobileCheckoutButton" class="primary-button mobile-checkout-button" type="button" data-i18n="scrollToCheckoutButton">View checkout</button>
@@ -2195,7 +2238,7 @@ function retailPosMarkup() {
           </label>
         </div>
 
-        ${posCategoryMarkup()}
+        <div id="posCategoryChips">${posCategoryMarkup()}</div>
 
         <div id="quickProductList" class="quick-product-list quick-product-list--desktop"></div>
         <button id="mobileCheckoutButton" class="primary-button mobile-checkout-button" type="button" data-i18n="scrollToCheckoutButton">View checkout</button>
@@ -2360,12 +2403,6 @@ function bindPosEvents() {
   [elements.retailSubtotalDiscountInput, elements.retailTaxRateInput, elements.retailStoreCreditInput, elements.orderFee].forEach((input) => {
     input?.addEventListener("input", () => renderCart());
   });
-  elements.categoryChips.forEach((button) => {
-    button.addEventListener("click", () => {
-      state.productFilter = button.dataset.productFilter;
-      renderProducts();
-    });
-  });
   elements.quickProductList?.addEventListener("click", (event) => {
     const target = event.target.closest("[data-quick-product-id]");
     if (!target) return;
@@ -2517,6 +2554,9 @@ function updateShellVisibility() {
   document.querySelectorAll("[data-owner-only]").forEach((node) => {
     node.classList.toggle("hidden", !canManageUsers());
   });
+  document.querySelectorAll("[data-platform-admin-route='true']").forEach((node) => {
+    node.classList.toggle("hidden", !isPlatformAdminProfile());
+  });
   elements.nonStaffFields.forEach((node) => {
     node.classList.toggle("hidden", !canEditProductMeta());
   });
@@ -2541,6 +2581,9 @@ function updateShellVisibility() {
     elements.adminShopTypeFnb?.classList.toggle("shop-type-picker__button--active", shopType === "fnb");
     elements.adminShopTypeRetail?.classList.toggle("shop-type-picker__button--active", shopType === "retail");
   }
+  elements.adminFilterAll?.classList.toggle("shop-type-picker__button--active", state.adminShopFilterType === "all");
+  elements.adminFilterFnb?.classList.toggle("shop-type-picker__button--active", state.adminShopFilterType === "fnb");
+  elements.adminFilterRetail?.classList.toggle("shop-type-picker__button--active", state.adminShopFilterType === "retail");
 }
 
 function setRoute(route) {
@@ -2650,6 +2693,20 @@ function renderMoney() {
 
 function renderProducts() {
   elements.productCount.textContent = state.products.length;
+  if (state.productFilter !== "all" && !state.categories.some((category) => category.id === state.productFilter)) {
+    state.productFilter = "all";
+  }
+  const categoryHost = document.getElementById("posCategoryChips");
+  if (categoryHost) {
+    categoryHost.innerHTML = posCategoryMarkup();
+    elements.categoryChips = [...document.querySelectorAll("[data-product-filter]")];
+    elements.categoryChips.forEach((button) => {
+      button.addEventListener("click", () => {
+        state.productFilter = button.dataset.productFilter;
+        renderProducts();
+      });
+    });
+  }
   if (elements.productSearch) {
     elements.productSearch.placeholder = isRetailShop() ? t("retailPosHint") : t("productSearchPlaceholder");
   }
@@ -2673,8 +2730,7 @@ function renderProducts() {
     .filter((product, index) => {
       const left = effectiveStock(product);
       const lowAt = Number(product.low_stock_at ?? product.lowStockAt ?? 0);
-      if (state.productFilter === "popular" && !(Boolean(product.is_popular) || index < 8)) return false;
-      if (state.productFilter === "low" && !(left <= lowAt)) return false;
+      if (state.productFilter !== "all" && (product.category_id || product.categoryId) !== state.productFilter) return false;
       if (!query) return true;
       return [
         product.name,
@@ -3068,6 +3124,11 @@ function renderAdminScreen() {
   elements.adminSchemaStatus.textContent = Object.values(state.capabilities || {}).every(Boolean) ? "Ready" : "Setup";
   elements.adminShopListCount.textContent = filteredShops.length;
   elements.adminUserListCount.textContent = state.platformData.users.length;
+  if (elements.adminWorkspaceStatus) {
+    elements.adminWorkspaceStatus.textContent = state.adminWorkspaceShop
+      ? `${state.language === "en" ? "Current workspace:" : "កន្លែងការងារបច្ចុប្បន្ន៖"} ${state.adminWorkspaceShop.name} (${state.adminWorkspaceShop.shop_type || "fnb"})`
+      : (state.language === "en" ? "No workspace selected. Choose a shop below." : "មិនទាន់ជ្រើសកន្លែងការងារ។ សូមជ្រើសហាងខាងក្រោម។");
+  }
   elements.adminShopList.innerHTML = filteredShops.length
     ? filteredShops.map((shop) => `
         <article class="record-row">
@@ -4472,10 +4533,21 @@ async function loadDashboardData() {
     state.settings = defaultSettingsForShopType("fnb");
     state.capabilities = { settings: true, payments: true, customers: true };
     state.platformData = backend.fetchPlatformData ? await backend.fetchPlatformData() : { shops: [], users: [] };
+    state.isOfflineSnapshot = false;
     refreshSetupBanner();
     return;
   }
-  const data = await backend.fetchDashboard(shopId, actingDashboardRole());
+  let data;
+  try {
+    data = await backend.fetchDashboard(shopId, actingDashboardRole());
+    state.isOfflineSnapshot = false;
+    saveOfflineSnapshot(activeSnapshotKey(), data);
+  } catch (error) {
+    const snapshot = loadOfflineSnapshot(activeSnapshotKey());
+    if (!snapshot) throw error;
+    data = snapshot;
+    state.isOfflineSnapshot = true;
+  }
   state.categories = (data.categories || []).map((row) => ({
     ...row,
     enable_size: row.enable_size ?? true,
@@ -4575,6 +4647,15 @@ async function openAdminIndex(filterType = state.adminShopFilterType || "all") {
   state.route = "admin";
   await loadDashboardData();
   renderAll();
+}
+
+async function registerOfflineSupport() {
+  if (!("serviceWorker" in navigator)) return;
+  try {
+    await navigator.serviceWorker.register(new URL("./sw.js", window.location.href), { scope: "./" });
+  } catch {
+    // Ignore registration failures so the main POS keeps working online.
+  }
 }
 
 function currentProductByName(name) {
@@ -4958,6 +5039,16 @@ elements.adminShopList?.addEventListener("click", async (event) => {
   await openAdminWorkspace(target.dataset.openWorkspaceId);
 });
 
+elements.adminFilterAll?.addEventListener("click", async () => {
+  await openAdminIndex("all");
+});
+elements.adminFilterFnb?.addEventListener("click", async () => {
+  await openAdminIndex("fnb");
+});
+elements.adminFilterRetail?.addEventListener("click", async () => {
+  await openAdminIndex("retail");
+});
+
 elements.adminPlatformForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!state.profile || !isPlatformAdminProfile()) return;
@@ -5180,7 +5271,15 @@ elements.shareReceiptButton?.addEventListener("click", async () => {
 
 initializeSplash();
 applyLanguage();
+await registerOfflineSupport();
 await backend.init();
+window.addEventListener("online", () => {
+  state.isOfflineSnapshot = false;
+  refreshSetupBanner();
+});
+window.addEventListener("offline", () => {
+  if (!state.isOfflineSnapshot) refreshSetupBanner();
+});
 backend.onAuthChange(async (user) => {
   await loadSignedInUser(user);
 });

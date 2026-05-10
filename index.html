@@ -141,6 +141,7 @@
             <button class="nav-button" data-route="reports" type="button" data-i18n="navReports">Reports</button>
             <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">Settings</button>
             <button class="nav-button hidden" data-owner-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
+            <button class="nav-button hidden" data-platform-admin-route="true" data-route="admin" type="button" data-i18n="navAdmin">Admin index</button>
             <button class="nav-button" data-route="help" type="button" data-i18n="navHelp">Help &amp; Support</button>
           </div>
           <div data-shell-nav="retail" class="nav-group hidden">
@@ -151,6 +152,7 @@
             <button class="nav-button" data-route="expenses" type="button" data-i18n="navExpenses">Expenses</button>
             <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">Settings</button>
             <button class="nav-button hidden" data-owner-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
+            <button class="nav-button hidden" data-platform-admin-route="true" data-route="admin" type="button" data-i18n="navAdmin">Admin index</button>
             <button class="nav-button" data-route="help" type="button" data-i18n="navHelp">Help &amp; Support</button>
           </div>
           <div data-admin-nav="true" class="nav-group hidden">
@@ -177,6 +179,7 @@
               <button class="nav-button" data-route="reports" type="button" data-i18n="navReports">Reports</button>
               <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">Settings</button>
               <button class="nav-button hidden" id="adminNavButton" data-owner-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
+              <button class="nav-button hidden" data-platform-admin-route="true" data-route="admin" type="button" data-i18n="navAdmin">Admin index</button>
               <button class="nav-button" data-route="help" type="button" data-i18n="navHelp">Help &amp; Support</button>
             </div>
             <div data-shell-nav="retail" class="nav-group hidden">
@@ -187,6 +190,7 @@
               <button class="nav-button" data-route="expenses" type="button" data-i18n="navExpenses">Expenses</button>
               <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">Settings</button>
               <button class="nav-button hidden" data-owner-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
+              <button class="nav-button hidden" data-platform-admin-route="true" data-route="admin" type="button" data-i18n="navAdmin">Admin index</button>
               <button class="nav-button" data-route="help" type="button" data-i18n="navHelp">Help &amp; Support</button>
             </div>
             <div data-admin-nav="true" class="nav-group hidden">
@@ -821,6 +825,20 @@
                 <p data-i18n="adminSchemaLabel">Schema</p>
                 <strong id="adminSchemaStatus">OK</strong>
               </article>
+            </div>
+
+            <div class="record-box admin-workspace-box">
+              <div class="list-head">
+                <h4>Workspace control</h4>
+              </div>
+              <div class="admin-workspace-controls">
+                <div id="adminWorkspaceStatus" class="meta-line">No workspace selected</div>
+                <div class="shop-type-picker">
+                  <button id="adminFilterAll" class="secondary-button shop-type-picker__button shop-type-picker__button--active" type="button">All shops</button>
+                  <button id="adminFilterFnb" class="secondary-button shop-type-picker__button" type="button">F&amp;B shops</button>
+                  <button id="adminFilterRetail" class="secondary-button shop-type-picker__button" type="button">Retail shops</button>
+                </div>
+              </div>
             </div>
 
             <form id="adminPlatformForm" class="grid-form">
