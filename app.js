@@ -312,6 +312,8 @@ const elements = {
   itemModalMeta: document.getElementById("itemModalMeta"),
   itemVariantLabel: document.getElementById("itemVariantLabel"),
   itemVariant: document.getElementById("itemVariant"),
+  itemSizeField: document.getElementById("itemSizeField"),
+  itemSizeButtons: document.getElementById("itemSizeButtons"),
   bottomNavButtons: [
     document.getElementById("bottomNavButton1"),
     document.getElementById("bottomNavButton2"),
@@ -1097,13 +1099,35 @@ function parseOptionList(value, fallback = []) {
   return items.length ? items : fallback;
 }
 
+function ensurePreferredOption(options, preferred) {
+  const list = [...options];
+  if (!list.some((item) => String(item).trim().toLowerCase() === preferred.toLowerCase())) {
+    list.unshift(preferred);
+  }
+  return [...new Set(list.map((item) => String(item).trim()).filter(Boolean))];
+}
+
+function defaultSelectableOption(options, preferred = "Normal") {
+  const preferredMatch = options.find((item) => String(item).trim().toLowerCase() === preferred.toLowerCase());
+  if (preferredMatch) return preferredMatch;
+  if (preferred.toLowerCase() === "medium") {
+    const mediumLike = options.find((item) => /medium|med/i.test(String(item)));
+    if (mediumLike) return mediumLike;
+  }
+  return options[0] || "";
+}
+
 function currentOptionConfig() {
   const settings = currentSettings();
+  const sizes = parseOptionList(settings.option_sizes, ["Small", "Medium", "Large"]);
+  const sugar = ensurePreferredOption(parseOptionList(settings.option_sugar_levels, ["Normal"]), "Normal");
+  const ice = ensurePreferredOption(parseOptionList(settings.option_ice_levels, ["Normal"]), "Normal");
+  const coffee = ensurePreferredOption(parseOptionList(settings.option_coffee_levels, ["Normal"]), "Normal");
   return {
-    sizes: parseOptionList(settings.option_sizes, ["Regular"]),
-    sugar: parseOptionList(settings.option_sugar_levels, ["100%"]),
-    ice: parseOptionList(settings.option_ice_levels, ["Normal"]),
-    coffee: parseOptionList(settings.option_coffee_levels, ["Normal"]),
+    sizes,
+    sugar,
+    ice,
+    coffee,
     toppings: parseOptionList(settings.option_toppings, [])
   };
 }
@@ -3443,6 +3467,22 @@ function fillSelectOptions(select, options) {
   select.innerHTML = options.map((option) => `<option value="${safeText(option)}">${safeText(option)}</option>`).join("");
 }
 
+function sizeIconForIndex(index) {
+  return ["🥛", "☕", "🥤"][index] || "☕";
+}
+
+function renderSizeButtons(options, selectedValue) {
+  if (!elements.itemSizeButtons) return;
+  const visibleOptions = options.slice(0, 3);
+  elements.itemSizeButtons.innerHTML = visibleOptions.map((option, index) => `
+    <button class="size-button ${option === selectedValue ? "size-button--active" : ""}" type="button" data-size-option="${safeText(option)}">
+      <span class="size-button__icon">${safeText(sizeIconForIndex(index))}</span>
+      <strong>${safeText(option)}</strong>
+      <small>${safeText(index === 0 ? "Small cup" : index === 1 ? "Medium cup" : "Large cup")}</small>
+    </button>
+  `).join("");
+}
+
 function renderItemCustomizer() {
   const product = state.pendingCustomizerProduct;
   if (!product) {
@@ -3472,7 +3512,12 @@ function renderItemCustomizer() {
   fillSelectOptions(elements.itemSugar, config.sugar);
   fillSelectOptions(elements.itemIce, config.ice);
   fillSelectOptions(elements.itemCoffee, config.coffee);
-  elements.itemSize.closest("label")?.classList.toggle("hidden", !enabled.size);
+  elements.itemSize.value = defaultSelectableOption(config.sizes, "Medium");
+  elements.itemSugar.value = defaultSelectableOption(config.sugar, "Normal");
+  elements.itemIce.value = defaultSelectableOption(config.ice, "Normal");
+  elements.itemCoffee.value = defaultSelectableOption(config.coffee, "Normal");
+  renderSizeButtons(config.sizes, elements.itemSize.value);
+  elements.itemSizeField?.classList.toggle("hidden", !enabled.size);
   elements.itemSugar.closest("label")?.classList.toggle("hidden", !enabled.sugar);
   elements.itemIce.closest("label")?.classList.toggle("hidden", !enabled.ice);
   elements.itemCoffee.closest("label")?.classList.toggle("hidden", !enabled.coffee);
@@ -5073,151 +5118,17 @@ elements.adminPlatformForm?.addEventListener("submit", async (event) => {
   }
 });
 
-elements.settingsProfileImage?.addEventListener("change", () => {
-  previewImage(elements.settingsProfileImage, elements.settingsProfilePreview);
-});
-
-elements.settingsQrUpload?.addEventListener("change", () => {
-  previewImage(elements.settingsQrUpload, elements.settingsQrPreview);
-});
-elements.resetOrderCounterButton?.addEventListener("click", () => {
-  if (elements.settingsOrderCounter) elements.settingsOrderCounter.value = "1";
-});
-
-elements.categoryForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  if (!state.profile) return;
-  const name = elements.categoryNameInput.value.trim();
-  if (!name) {
-    window.alert(t("categoryMissing"));
-    return;
-  }
-  const payload = {
-    name,
-    enable_size: elements.categoryEnableSize.checked,
-    enable_sugar: elements.categoryEnableSugar.checked,
-    enable_ice: elements.categoryEnableIce.checked,
-    enable_coffee: elements.categoryEnableCoffee.checked,
-    enable_toppings: elements.categoryEnableToppings.checked
-  };
-  try {
-    const saved = await runWithStatus({
-      title: state.language === "en" ? "Saving category" : "កំពុងរក្សាទុកប្រភេទ",
-      message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
-      successTitle: state.language === "en" ? "Category saved" : "រក្សាទុកបាន"
-    }, () => backend.saveCategory(activeShopId(), payload));
-    const existingIndex = state.categories.findIndex((item) => item.id === saved.id || item.name.toLowerCase() === saved.name.toLowerCase());
-    if (existingIndex >= 0) state.categories[existingIndex] = { ...state.categories[existingIndex], ...saved };
-    else state.categories.push({ shop_id: activeShopId(), ...saved });
-    elements.categoryForm.reset();
-    renderCategories();
-    renderProducts();
-  } catch (error) {
-    window.alert(error.message || t("saveCategoryFailed"));
-  }
-});
-
-elements.categoryList?.addEventListener("click", async (event) => {
-  const target = event.target.closest("[data-category-id]");
-  if (!target || !state.profile) return;
-  try {
-    await runWithStatus({
-      title: state.language === "en" ? "Removing category" : "កំពុងលុបប្រភេទ",
-      message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
-      successTitle: state.language === "en" ? "Category removed" : "លុបបាន"
-    }, () => backend.deleteCategory(activeShopId(), target.dataset.categoryId));
-    state.categories = state.categories.filter((item) => item.id !== target.dataset.categoryId);
-    state.products = state.products.map((item) => item.category_id === target.dataset.categoryId ? { ...item, category_id: null } : item);
-    renderAll();
-  } catch (error) {
-    window.alert(error.message || t("deleteCategoryFailed"));
-  }
-});
-
-elements.settingsForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  if (!state.profile) return;
-  try {
-    const current = currentSettings();
-    const profileImage = elements.settingsProfileImage.files?.[0]
-      ? await readFileAsDataUrl(elements.settingsProfileImage.files[0])
-      : current.shop_logo_url || "";
-    const qrImage = elements.settingsQrUpload.files?.[0]
-      ? await readFileAsDataUrl(elements.settingsQrUpload.files[0])
-      : current.qr_image_url || "";
-    const payload = {
-      business_name: elements.settingsBusinessName.value.trim() || state.shop?.name || "nilaa-os",
-      business_description: elements.settingsBusinessDescription.value.trim(),
-      payment_method: elements.settingsPaymentMethod.value,
-      qr_image_url: qrImage,
-      receipt_name: elements.settingsReceiptTitle.value.trim() || "nilaa-os",
-      receipt_footer: elements.settingsReceiptFooter.value.trim() || t("receiptThanks"),
-      shop_logo_url: profileImage,
-      receipt_address: elements.settingsReceiptAddress.value.trim(),
-      receipt_contact: elements.settingsReceiptContact.value.trim(),
-      receipt_manager: elements.settingsReceiptManager.value.trim(),
-      receipt_note: elements.settingsReceiptNote.value.trim(),
-      retail_tax_rate: Number(elements.settingsRetailTaxRate?.value || 0),
-      retail_barcode_mode: elements.settingsRetailBarcodeMode?.value || "camera",
-      retail_store_credit_label: elements.settingsRetailStoreCreditLabel?.value?.trim() || "Store credit",
-      retail_loyalty_label: elements.settingsRetailLoyaltyLabel?.value?.trim() || "Loyalty points",
-      option_sizes: elements.settingsOptionSizes.value.trim(),
-      option_sugar_levels: elements.settingsOptionSugar.value.trim(),
-      option_ice_levels: elements.settingsOptionIce.value.trim(),
-      option_coffee_levels: elements.settingsOptionCoffee.value.trim(),
-      option_toppings: elements.settingsOptionToppings.value.trim(),
-      order_counter: Math.max(1, Number(elements.settingsOrderCounter.value || 1))
-    };
-    await runWithStatus({
-      title: state.language === "en" ? "Saving settings" : "កំពុងរក្សាទុកការកំណត់",
-      message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
-      successTitle: state.language === "en" ? "Settings saved" : "រក្សាទុកបាន"
-    }, () => backend.saveSettings(activeShopId(), payload, state.profile));
-    state.shop = { ...(state.shop || {}), name: payload.business_name };
-    state.settings = { ...current, ...payload };
-    elements.settingsProfileImage.value = "";
-    elements.settingsQrUpload.value = "";
-    renderAll();
-  } catch (error) {
-    window.alert(error.message || t("saveSettingsFailed"));
-  }
-});
-
-elements.customerForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  if (!state.profile) return;
-  const payload = {
-    name: elements.customerNameInput.value.trim(),
-    phone: elements.customerPhoneInput.value.trim(),
-    member_code: elements.customerMemberCodeInput.value.trim(),
-    store_credit_balance: Number(elements.customerStoreCreditInput.value || 0),
-    loyalty_points: Number(elements.customerLoyaltyPointsInput.value || 0)
-  };
-  if (!payload.name || !payload.phone) {
-    window.alert(state.language === "en" ? "Please enter member name and phone." : "សូមបញ្ចូលឈ្មោះ និងលេខទូរស័ព្ទសមាជិក។");
-    return;
-  }
-  try {
-    const savedCustomer = await runWithStatus({
-      title: state.language === "en" ? "Saving member" : "កំពុងរក្សាទុកសមាជិក",
-      message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
-      successTitle: t("customerSaved")
-    }, () => backend.saveCustomer(activeShopId(), payload));
-    const phone = normalizePhone(payload.phone);
-    const index = state.customers.findIndex((item) => normalizePhone(item.phone) === phone);
-    if (index >= 0) state.customers[index] = { ...state.customers[index], ...(savedCustomer || payload) };
-    else state.customers.unshift(savedCustomer || { id: crypto.randomUUID(), shop_id: activeShopId(), ...payload });
-    elements.customerForm.reset();
-    renderAll();
-  } catch (error) {
-    window.alert(error.message || t("createUserFailed"));
-  }
-});
 
 elements.closeReceiptButton.addEventListener("click", closeReceipt);
 elements.closeItemButton?.addEventListener("click", closeItemCustomizer);
 elements.cancelItemButton?.addEventListener("click", closeItemCustomizer);
 elements.addItemToCartButton?.addEventListener("click", addCustomizedItemToCart);
+elements.itemSizeButtons?.addEventListener("click", (event) => {
+  const target = event.target.closest("[data-size-option]");
+  if (!target || !elements.itemSize) return;
+  elements.itemSize.value = target.dataset.sizeOption || "";
+  renderSizeButtons(currentOptionConfig().sizes, elements.itemSize.value);
+});
 elements.itemModal?.addEventListener("click", (event) => {
   if (event.target.id === "itemModal") closeItemCustomizer();
 });

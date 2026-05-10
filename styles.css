@@ -1019,6 +1019,42 @@ button:focus {
   color: var(--muted);
 }
 
+.size-button-group {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.size-button {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  min-height: 86px;
+  padding: 10px 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-strong);
+  color: var(--text);
+  text-align: center;
+}
+
+.size-button__icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.size-button small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.size-button--active {
+  border-color: rgba(0, 93, 253, 0.38);
+  background: rgba(0, 93, 253, 0.08);
+  color: #005dfd;
+}
+
 .checkout-line--grand {
   padding-top: 10px;
   border-top: 1px dashed var(--line);

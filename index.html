@@ -979,10 +979,11 @@
           <span data-i18n="variantLabel">Variant</span>
           <select id="itemVariant"></select>
         </label>
-        <label>
+        <fieldset class="option-fieldset" id="itemSizeField">
           <span data-i18n="sizeLabel">Size</span>
-          <select id="itemSize"></select>
-        </label>
+          <div id="itemSizeButtons" class="size-button-group"></div>
+          <select id="itemSize" class="hidden"></select>
+        </fieldset>
         <label>
           <span data-i18n="sugarLabel">Sugar level</span>
           <select id="itemSugar"></select>
