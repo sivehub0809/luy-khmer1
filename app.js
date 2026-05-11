@@ -42,6 +42,8 @@ const state = {
   adminShopFilterType: "all",
   adminWorkspaceShop: null,
   posMarkupType: "",
+  stockMarkupType: "",
+  ordersMarkupType: "",
   customersMarkupType: "",
   settingsMarkupType: ""
 };
@@ -1818,6 +1820,276 @@ function retailSettingsMarkup() {
   `;
 }
 
+function ordersScreenMarkup(systemLabel = "F&B") {
+  return `
+    <article class="panel panel--${systemLabel.toLowerCase()}">
+      <div class="panel__head">
+        <div>
+          <p class="eyebrow">${systemLabel}</p>
+          <h3 data-i18n="navOrdersShort">Orders</h3>
+        </div>
+      </div>
+      <div class="summary-grid">
+        <article class="summary-card">
+          <p data-i18n="orderCountLabel">Invoices</p>
+          <strong id="ordersPageCountSummary">0</strong>
+        </article>
+        <article class="summary-card">
+          <p data-i18n="todaySalesShort">Sales total</p>
+          <strong id="ordersSalesTotal">$0.00</strong>
+        </article>
+        <article class="summary-card">
+          <p data-i18n="customerCountLabel">Customers</p>
+          <strong id="ordersCustomerCount">0</strong>
+        </article>
+      </div>
+      <div class="record-box">
+        <div class="list-head">
+          <h4 data-i18n="orderLookupHeading">Order lookup</h4>
+        </div>
+        <label class="search-field">
+          <span class="hidden" data-i18n="orderLookupHeading">Order lookup</span>
+          <input id="ordersSearchInput" type="text" data-i18n-placeholder="ordersSearchPlaceholder" placeholder="Search invoice, buyer, phone, or item">
+        </label>
+      </div>
+      <div class="record-box">
+        <div class="list-head">
+          <h4 data-i18n="orderHistoryHeading">Order history</h4>
+          <span id="ordersPageCount">0</span>
+        </div>
+        <div id="ordersHistoryList" class="stack-list"></div>
+      </div>
+    </article>
+  `;
+}
+
+function fnbOrdersMarkup() {
+  return ordersScreenMarkup("F&B");
+}
+
+function retailOrdersMarkup() {
+  return ordersScreenMarkup("Retail");
+}
+
+function fnbStockMarkup() {
+  return `
+    <article class="panel panel--fnb">
+      <div class="panel__head">
+        <div>
+          <p class="eyebrow">F&B</p>
+          <h3 data-i18n="stockHeading">Stock</h3>
+        </div>
+      </div>
+
+      <form id="productForm" class="grid-form">
+        <label class="grid-form__wide">
+          <span data-i18n="productNameLabel">Product name</span>
+          <input id="productNameInput" type="text" data-i18n-placeholder="productNamePlaceholder" placeholder="Iced latte">
+        </label>
+        <div class="grid-form__wide settings-media">
+          <img id="productImagePreview" class="settings-preview settings-preview--logo hidden" src="" alt="Product preview">
+          <label class="product-image-field">
+            <span data-i18n="productImageLabel">Product image</span>
+            <input id="productImageInput" type="file" accept="image/*">
+          </label>
+        </div>
+        <label data-non-staff="true">
+          <span data-i18n="productCategoryLabel">Product category</span>
+          <select id="productCategorySelect">
+            <option value="" data-i18n="productCategoryPlaceholder">No category</option>
+          </select>
+        </label>
+        <label data-non-staff="true">
+          <span data-i18n="priceLabel">Price</span>
+          <input id="productPriceInput" type="number" min="0" step="0.01" placeholder="0.00">
+        </label>
+        <label>
+          <span data-i18n="stockLeftLabel">Stock left</span>
+          <input id="productStockInput" type="number" min="0" value="0">
+        </label>
+        <label data-non-staff="true">
+          <span data-i18n="lowStockLabelText">Low stock warning</span>
+          <input id="productLowStockInput" type="number" min="0" value="5">
+        </label>
+        <fieldset class="option-fieldset grid-form__wide" data-non-staff="true">
+          <legend data-i18n="productOptionEnableHeading">Enable item options</legend>
+          <div class="option-toggle-grid">
+            <label class="option-check">
+              <input id="productEnableSize" type="checkbox" checked>
+              <span data-i18n="productEnableSize">Size</span>
+            </label>
+            <label class="option-check">
+              <input id="productEnableSugar" type="checkbox" checked>
+              <span data-i18n="productEnableSugar">Sugar</span>
+            </label>
+            <label class="option-check">
+              <input id="productEnableIce" type="checkbox" checked>
+              <span data-i18n="productEnableIce">Ice</span>
+            </label>
+            <label class="option-check">
+              <input id="productEnableCoffee" type="checkbox" checked>
+              <span data-i18n="productEnableCoffee">Coffee</span>
+            </label>
+            <label class="option-check">
+              <input id="productEnableToppings" type="checkbox">
+              <span data-i18n="productEnableToppings">Toppings</span>
+            </label>
+          </div>
+        </fieldset>
+        <button class="primary-button primary-button--full" type="submit" data-i18n="saveProductButton">Save product</button>
+      </form>
+
+      <div class="record-box">
+        <div class="list-head">
+          <h4 data-i18n="productListHeading">Products</h4>
+          <span id="productCount">0</span>
+        </div>
+        <div id="productList" class="stack-list"></div>
+      </div>
+    </article>
+  `;
+}
+
+function retailStockMarkup() {
+  return `
+    <article class="panel panel--retail">
+      <div class="panel__head">
+        <div>
+          <p class="eyebrow">Retail</p>
+          <h3 data-i18n="stockHeading">Stock</h3>
+        </div>
+      </div>
+
+      <form id="productForm" class="grid-form">
+        <label class="grid-form__wide">
+          <span data-i18n="productNameLabel">Product name</span>
+          <input id="productNameInput" type="text" data-i18n-placeholder="productNamePlaceholder" placeholder="Home vase">
+        </label>
+        <div class="grid-form__wide settings-media">
+          <img id="productImagePreview" class="settings-preview settings-preview--logo hidden" src="" alt="Product preview">
+          <label class="product-image-field">
+            <span data-i18n="productImageLabel">Product image</span>
+            <input id="productImageInput" type="file" accept="image/*">
+          </label>
+        </div>
+        <label data-non-staff="true">
+          <span data-i18n="productCategoryLabel">Product category</span>
+          <select id="productCategorySelect">
+            <option value="" data-i18n="productCategoryPlaceholder">No category</option>
+          </select>
+        </label>
+        <label data-non-staff="true">
+          <span data-i18n="priceLabel">Price</span>
+          <input id="productPriceInput" type="number" min="0" step="0.01" placeholder="0.00">
+        </label>
+        <label data-non-staff="true">
+          <span data-i18n="barcodeLabel">Barcode</span>
+          <input id="productBarcodeInput" type="text" placeholder="8851234567890">
+        </label>
+        <label data-non-staff="true">
+          <span data-i18n="skuLabel">SKU</span>
+          <input id="productSkuInput" type="text" placeholder="SKU-001">
+        </label>
+        <label data-non-staff="true">
+          <span data-i18n="costPriceLabel">Cost price</span>
+          <input id="productCostPriceInput" type="number" min="0" step="0.01" placeholder="0.00">
+        </label>
+        <label data-non-staff="true">
+          <span data-i18n="brandLabel">Brand</span>
+          <input id="productBrandInput" type="text" placeholder="Nilaa Home">
+        </label>
+        <label data-non-staff="true">
+          <span data-i18n="supplierLabel">Supplier</span>
+          <input id="productSupplierInput" type="text" placeholder="Main supplier">
+        </label>
+        <label data-non-staff="true">
+          <span data-i18n="variantColorLabel">Color</span>
+          <input id="productColorInput" type="text" placeholder="Black">
+        </label>
+        <label data-non-staff="true">
+          <span data-i18n="variantSizeLabel">Size label</span>
+          <input id="productSizeLabelInput" type="text" placeholder="M">
+        </label>
+        <label data-non-staff="true">
+          <span data-i18n="discountLabel">Discount</span>
+          <input id="productDiscountInput" type="number" min="0" step="0.01" placeholder="0.00">
+        </label>
+        <label class="grid-form__wide" data-non-staff="true">
+          <span data-i18n="variantsLabel">Variants</span>
+          <textarea id="productVariantsInput" rows="3" placeholder="Red / M&#10;Blue / L"></textarea>
+        </label>
+        <label>
+          <span data-i18n="stockLeftLabel">Stock left</span>
+          <input id="productStockInput" type="number" min="0" value="0">
+        </label>
+        <label data-non-staff="true">
+          <span data-i18n="lowStockLabelText">Low stock warning</span>
+          <input id="productLowStockInput" type="number" min="0" value="5">
+        </label>
+        <fieldset class="option-fieldset grid-form__wide" data-non-staff="true">
+          <legend data-i18n="productOptionEnableHeading">Enable item options</legend>
+          <div class="option-toggle-grid">
+            <label class="option-check">
+              <input id="productEnableSize" type="checkbox" checked>
+              <span data-i18n="productEnableSize">Size</span>
+            </label>
+            <label class="option-check">
+              <input id="productEnableToppings" type="checkbox">
+              <span data-i18n="productEnableToppings">Toppings</span>
+            </label>
+          </div>
+        </fieldset>
+        <button class="primary-button primary-button--full" type="submit" data-i18n="saveProductButton">Save product</button>
+      </form>
+
+      <div class="record-box">
+        <div class="list-head">
+          <h4 data-i18n="productListHeading">Products</h4>
+          <span id="productCount">0</span>
+        </div>
+        <div id="productList" class="stack-list"></div>
+      </div>
+    </article>
+  `;
+}
+
+function syncOrdersScreenElementReferences() {
+  elements.ordersHistoryList = document.getElementById("ordersHistoryList");
+  elements.ordersPageCount = document.getElementById("ordersPageCount");
+  elements.ordersSearchInput = document.getElementById("ordersSearchInput");
+  elements.ordersPageCountSummary = document.getElementById("ordersPageCountSummary");
+  elements.ordersSalesTotal = document.getElementById("ordersSalesTotal");
+  elements.ordersCustomerCount = document.getElementById("ordersCustomerCount");
+}
+
+function syncStockScreenElementReferences() {
+  elements.productForm = document.getElementById("productForm");
+  elements.productNameInput = document.getElementById("productNameInput");
+  elements.productImageInput = document.getElementById("productImageInput");
+  elements.productImagePreview = document.getElementById("productImagePreview");
+  elements.productCategorySelect = document.getElementById("productCategorySelect");
+  elements.productPriceInput = document.getElementById("productPriceInput");
+  elements.productBarcodeInput = document.getElementById("productBarcodeInput");
+  elements.productSkuInput = document.getElementById("productSkuInput");
+  elements.productCostPriceInput = document.getElementById("productCostPriceInput");
+  elements.productBrandInput = document.getElementById("productBrandInput");
+  elements.productSupplierInput = document.getElementById("productSupplierInput");
+  elements.productColorInput = document.getElementById("productColorInput");
+  elements.productSizeLabelInput = document.getElementById("productSizeLabelInput");
+  elements.productDiscountInput = document.getElementById("productDiscountInput");
+  elements.productVariantsInput = document.getElementById("productVariantsInput");
+  elements.productStockInput = document.getElementById("productStockInput");
+  elements.productLowStockInput = document.getElementById("productLowStockInput");
+  elements.productEnableSize = document.getElementById("productEnableSize");
+  elements.productEnableSugar = document.getElementById("productEnableSugar");
+  elements.productEnableIce = document.getElementById("productEnableIce");
+  elements.productEnableCoffee = document.getElementById("productEnableCoffee");
+  elements.productEnableToppings = document.getElementById("productEnableToppings");
+  elements.productList = document.getElementById("productList");
+  elements.productCount = document.getElementById("productCount");
+  elements.nonStaffFields = [...document.querySelectorAll("[data-non-staff='true']")];
+}
+
 function syncCustomersScreenElementReferences() {
   elements.customerList = document.getElementById("customerList");
   elements.customerCount = document.getElementById("customerCount");
@@ -2492,6 +2764,26 @@ function ensurePosScreenMarkup() {
   bindPosEvents();
 }
 
+function ensureStockScreenMarkup() {
+  const targetType = currentShopType();
+  if (!elements.screens.stock) return;
+  if (state.stockMarkupType === targetType && elements.productForm) return;
+  elements.screens.stock.innerHTML = targetType === "retail" ? retailStockMarkup() : fnbStockMarkup();
+  state.stockMarkupType = targetType;
+  syncStockScreenElementReferences();
+  bindStockScreenEvents();
+}
+
+function ensureOrdersScreenMarkup() {
+  const targetType = currentShopType();
+  if (!elements.screens.orders) return;
+  if (state.ordersMarkupType === targetType && elements.ordersHistoryList) return;
+  elements.screens.orders.innerHTML = targetType === "retail" ? retailOrdersMarkup() : fnbOrdersMarkup();
+  state.ordersMarkupType = targetType;
+  syncOrdersScreenElementReferences();
+  bindOrdersScreenEvents();
+}
+
 function canAccessRoute(route) {
   if (isPlatformAdminProfile()) return adminRoutesForCurrentShell().includes(route);
   const role = currentRole();
@@ -2716,6 +3008,7 @@ function renderMoney() {
 }
 
 function renderProducts() {
+  if (!elements.productList || !elements.productCount) return;
   elements.productCount.textContent = state.products.length;
   if (state.productFilter !== "all" && !state.categories.some((category) => category.id === state.productFilter)) {
     state.productFilter = "all";
@@ -2956,6 +3249,149 @@ function renderCustomers() {
         </article>
       `).join("")
     : blankState(t("noCustomers"));
+}
+
+function handleOrdersSearchInput() {
+  if (!elements.ordersSearchInput) return;
+  state.ordersSearchQuery = elements.ordersSearchInput.value.trim();
+  renderOrdersHistory();
+}
+
+function bindOrdersScreenEvents() {
+  elements.ordersSearchInput?.addEventListener("input", handleOrdersSearchInput);
+  elements.ordersHistoryList?.addEventListener("click", handleOrderAction);
+}
+
+function handleProductNameDraftInput() {
+  if (!elements.productNameInput) return;
+  const existing = currentProductByName(elements.productNameInput.value);
+  if (!existing) {
+    if (canEditProductMeta()) {
+      if (elements.productPriceInput) elements.productPriceInput.value = "";
+      if (elements.productLowStockInput) elements.productLowStockInput.value = "5";
+    }
+    if (elements.productStockInput) elements.productStockInput.value = "0";
+    syncProductFormPreview();
+    if (elements.productCategorySelect?.value) {
+      applyCategoryDefaultsToProductForm(elements.productCategorySelect.value);
+    }
+    return;
+  }
+  if (elements.productPriceInput) elements.productPriceInput.value = existing.price ?? "";
+  if (elements.productStockInput) elements.productStockInput.value = existing.stock_qty ?? 0;
+  if (elements.productLowStockInput) elements.productLowStockInput.value = existing.low_stock_at ?? 5;
+  syncProductFormPreview(existing);
+}
+
+function handleProductCategoryDraftChange() {
+  if (!elements.productNameInput || !elements.productCategorySelect) return;
+  const existing = currentProductByName(elements.productNameInput.value);
+  if (!existing) {
+    applyCategoryDefaultsToProductForm(elements.productCategorySelect.value);
+  }
+}
+
+function handleProductImageDraftChange() {
+  previewImage(elements.productImageInput, elements.productImagePreview);
+}
+
+async function handleSaveProduct(event) {
+  event.preventDefault();
+  if (!state.profile || !elements.productNameInput) return;
+  const name = elements.productNameInput.value.trim();
+  const existing = currentProductByName(name);
+  const price = canEditProductMeta() ? Number(elements.productPriceInput?.value || 0) : Number(existing?.price || 0);
+  const stock_qty = Number(elements.productStockInput?.value || 0);
+  const low_stock_at = canEditProductMeta() ? Number(elements.productLowStockInput?.value || 0) : Number(existing?.low_stock_at ?? existing?.lowStockAt ?? 5);
+  if (!name || price < 0 || stock_qty < 0 || low_stock_at < 0) {
+    window.alert(t("productInvalid"));
+    return;
+  }
+  if (!canEditProductMeta() && !existing) {
+    window.alert(t("stockOnlyWarning"));
+    return;
+  }
+  try {
+    const image_url = elements.productImageInput?.files?.[0]
+      ? await readFileAsDataUrl(elements.productImageInput.files[0])
+      : existing?.image_url || "";
+    const category_id = canEditProductMeta() ? (elements.productCategorySelect?.value || null) : (existing?.category_id || null);
+    const variant_options = canEditProductMeta()
+      ? (elements.productVariantsInput?.value || "").split(/\r?\n/).map((item) => item.trim()).filter(Boolean)
+      : (existing?.variant_options || []);
+    const optionPayload = canEditProductMeta()
+      ? {
+          enable_size: elements.productEnableSize?.checked ?? true,
+          enable_sugar: elements.productEnableSugar?.checked ?? true,
+          enable_ice: elements.productEnableIce?.checked ?? true,
+          enable_coffee: elements.productEnableCoffee?.checked ?? true,
+          enable_toppings: elements.productEnableToppings?.checked ?? false
+        }
+      : {
+          enable_size: existing?.enable_size ?? true,
+          enable_sugar: existing?.enable_sugar ?? true,
+          enable_ice: existing?.enable_ice ?? true,
+          enable_coffee: existing?.enable_coffee ?? true,
+          enable_toppings: existing?.enable_toppings ?? false
+        };
+    const payload = {
+      name,
+      image_url,
+      price,
+      stock_qty,
+      low_stock_at,
+      active: true,
+      category_id,
+      barcode: canEditProductMeta() ? (elements.productBarcodeInput?.value.trim() || "") : (existing?.barcode || ""),
+      sku: canEditProductMeta() ? (elements.productSkuInput?.value.trim() || "") : (existing?.sku || ""),
+      cost_price: canEditProductMeta() ? Number(elements.productCostPriceInput?.value || 0) : Number(existing?.cost_price || 0),
+      brand: canEditProductMeta() ? (elements.productBrandInput?.value.trim() || "") : (existing?.brand || ""),
+      supplier: canEditProductMeta() ? (elements.productSupplierInput?.value.trim() || "") : (existing?.supplier || ""),
+      color: canEditProductMeta() ? (elements.productColorInput?.value.trim() || "") : (existing?.color || ""),
+      size_label: canEditProductMeta() ? (elements.productSizeLabelInput?.value.trim() || "") : (existing?.size_label || ""),
+      discount: canEditProductMeta() ? Number(elements.productDiscountInput?.value || 0) : Number(existing?.discount || 0),
+      variant_options,
+      ...optionPayload
+    };
+    const savedProduct = await runWithStatus({
+      title: state.language === "en" ? "Saving product" : "áž€áŸ†áž–áž»áž„ážšáž€áŸ’ážŸáž¶áž‘áž»áž€áž‘áŸ†áž“áž·áž‰",
+      message: state.language === "en" ? "Please wait..." : "ážŸáž¼áž˜ážšáž„áŸ‹áž…áž¶áŸ†...",
+      successTitle: state.language === "en" ? "Product saved" : "ážšáž€áŸ’ážŸáž¶áž‘áž»áž€áž”áž¶áž“"
+    }, () => backend.saveProduct(activeShopId(), payload));
+    if (existing) {
+      Object.assign(existing, savedProduct || payload);
+    } else {
+      state.products.push(savedProduct || { id: crypto.randomUUID(), shop_id: activeShopId(), ...payload });
+    }
+  } catch (error) {
+    window.alert(error.message || t("saveProductFailed"));
+    return;
+  }
+  elements.productForm?.reset();
+  if (elements.productStockInput) elements.productStockInput.value = "0";
+  if (elements.productLowStockInput) elements.productLowStockInput.value = "5";
+  syncProductFormPreview();
+  renderAll();
+}
+
+async function handleDeleteProductClick(event) {
+  const target = event.target.closest("[data-product-id]");
+  if (!target || !state.profile) return;
+  await runWithStatus({
+    title: state.language === "en" ? "Removing product" : "áž€áŸ†áž–áž»áž„áž›áž»áž”áž‘áŸ†áž“áž·აჟ",
+    message: state.language === "en" ? "Please wait..." : "ážŸáž¼áž˜ážšáž„áŸ‹áž…áž¶áŸ†...",
+    successTitle: state.language === "en" ? "Product removed" : "áž›áž»áž”აჟបាន"
+  }, () => backend.deleteProduct(activeShopId(), target.dataset.productId));
+  state.products = state.products.filter((item) => item.id !== target.dataset.productId);
+  renderAll();
+}
+
+function bindStockScreenEvents() {
+  elements.productNameInput?.addEventListener("input", handleProductNameDraftInput);
+  elements.productCategorySelect?.addEventListener("change", handleProductCategoryDraftChange);
+  elements.productImageInput?.addEventListener("change", handleProductImageDraftChange);
+  elements.productForm?.addEventListener("submit", handleSaveProduct);
+  elements.productList?.addEventListener("click", handleDeleteProductClick);
 }
 
 async function handleSaveCustomer(event) {
@@ -3283,6 +3719,8 @@ function renderReceipt() {
 
 function renderAll() {
   ensurePosScreenMarkup();
+  ensureStockScreenMarkup();
+  ensureOrdersScreenMarkup();
   ensureCustomersScreenMarkup();
   ensureSettingsScreenMarkup();
   applyLanguage();
@@ -4811,45 +5249,9 @@ elements.logoutButton.addEventListener("click", async () => {
 elements.sidebarLogoutButton?.addEventListener("click", async () => {
   await backend.signOut();
 });
-elements.ordersSearchInput?.addEventListener("input", () => {
-  state.ordersSearchQuery = elements.ordersSearchInput.value.trim();
-  renderOrdersHistory();
-});
-
 elements.customerSearchInput?.addEventListener("input", () => {
   state.customerSearchQuery = elements.customerSearchInput.value.trim();
   renderCustomers();
-});
-
-elements.productNameInput?.addEventListener("input", () => {
-  const existing = currentProductByName(elements.productNameInput.value);
-  if (!existing) {
-    if (canEditProductMeta()) {
-      elements.productPriceInput.value = "";
-      elements.productLowStockInput.value = "5";
-    }
-    elements.productStockInput.value = "0";
-    syncProductFormPreview();
-    if (elements.productCategorySelect?.value) {
-      applyCategoryDefaultsToProductForm(elements.productCategorySelect.value);
-    }
-    return;
-  }
-  elements.productPriceInput.value = existing.price ?? "";
-  elements.productStockInput.value = existing.stock_qty ?? 0;
-  elements.productLowStockInput.value = existing.low_stock_at ?? 5;
-  syncProductFormPreview(existing);
-});
-
-elements.productCategorySelect?.addEventListener("change", () => {
-  const existing = currentProductByName(elements.productNameInput.value);
-  if (!existing) {
-    applyCategoryDefaultsToProductForm(elements.productCategorySelect.value);
-  }
-});
-
-elements.productImageInput?.addEventListener("change", () => {
-  previewImage(elements.productImageInput, elements.productImagePreview);
 });
 
 elements.expenseForm.addEventListener("submit", async (event) => {
@@ -4896,7 +5298,7 @@ elements.expenseList.addEventListener("click", async (event) => {
   renderAll();
 });
 
-elements.productForm.addEventListener("submit", async (event) => {
+elements.productForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!state.profile) return;
   const name = elements.productNameInput.value.trim();
@@ -4975,7 +5377,7 @@ elements.productForm.addEventListener("submit", async (event) => {
   renderAll();
 });
 
-elements.productList.addEventListener("click", async (event) => {
+elements.productList?.addEventListener("click", async (event) => {
   const target = event.target.closest("[data-product-id]");
   if (!target || !state.profile) return;
   await runWithStatus({
