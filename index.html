@@ -140,7 +140,7 @@
             <button class="nav-button" data-route="expenses" type="button" data-i18n="navExpenses">Expenses</button>
             <button class="nav-button" data-route="reports" type="button" data-i18n="navReports">Reports</button>
             <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">Settings</button>
-            <button class="nav-button hidden" data-owner-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
+            <button class="nav-button hidden" data-platform-admin-route="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
             <button class="nav-button hidden" data-platform-admin-route="true" data-route="admin" type="button" data-i18n="navAdmin">Admin index</button>
             <button class="nav-button" data-route="help" type="button" data-i18n="navHelp">Help &amp; Support</button>
           </div>
@@ -151,14 +151,16 @@
             <button class="nav-button" data-route="customers" type="button" data-i18n="navCustomers">Customers</button>
             <button class="nav-button" data-route="expenses" type="button" data-i18n="navExpenses">Expenses</button>
             <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">Settings</button>
-            <button class="nav-button hidden" data-owner-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
+            <button class="nav-button hidden" data-platform-admin-route="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
             <button class="nav-button hidden" data-platform-admin-route="true" data-route="admin" type="button" data-i18n="navAdmin">Admin index</button>
             <button class="nav-button" data-route="help" type="button" data-i18n="navHelp">Help &amp; Support</button>
           </div>
           <div data-admin-nav="true" class="nav-group hidden">
             <button class="nav-button" data-route="admin" type="button" data-i18n="navAdmin">Admin index</button>
+            <button class="nav-button" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
           </div>
           <button class="nav-button" id="sidebarLogoutButton" type="button" data-i18n="logoutButton">Logout</button>
+          <button class="nav-button hidden" id="sidebarAdminControlButton" data-platform-admin-route="true" data-route="admin" type="button" data-i18n="navAdmin">Admin control</button>
         </nav>
       </aside>
 
@@ -178,7 +180,7 @@
               <button class="nav-button" data-route="expenses" type="button" data-i18n="navExpenses">Expenses</button>
               <button class="nav-button" data-route="reports" type="button" data-i18n="navReports">Reports</button>
               <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">Settings</button>
-              <button class="nav-button hidden" id="adminNavButton" data-owner-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
+              <button class="nav-button hidden" id="adminNavButton" data-platform-admin-route="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
               <button class="nav-button hidden" data-platform-admin-route="true" data-route="admin" type="button" data-i18n="navAdmin">Admin index</button>
               <button class="nav-button" data-route="help" type="button" data-i18n="navHelp">Help &amp; Support</button>
             </div>
@@ -189,12 +191,13 @@
               <button class="nav-button" data-route="customers" type="button" data-i18n="navCustomers">Customers</button>
               <button class="nav-button" data-route="expenses" type="button" data-i18n="navExpenses">Expenses</button>
               <button class="nav-button" data-route="settings" type="button" data-i18n="navSettings">Settings</button>
-              <button class="nav-button hidden" data-owner-only="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
+              <button class="nav-button hidden" data-platform-admin-route="true" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
               <button class="nav-button hidden" data-platform-admin-route="true" data-route="admin" type="button" data-i18n="navAdmin">Admin index</button>
               <button class="nav-button" data-route="help" type="button" data-i18n="navHelp">Help &amp; Support</button>
             </div>
             <div data-admin-nav="true" class="nav-group hidden">
               <button class="nav-button" data-route="admin" type="button" data-i18n="navAdmin">Admin index</button>
+              <button class="nav-button" data-route="users" type="button" data-i18n="navUsers">Users &amp; Staff</button>
             </div>
           </nav>
         </div>
@@ -595,6 +598,10 @@
             </div>
             <form id="adminCreateUserForm" class="grid-form">
               <label>
+                <span data-i18n="businessNameLabel">Business name</span>
+                <input id="newUserShopName" type="text" placeholder="Nilaa Main Shop" required>
+              </label>
+              <label>
                 <span data-i18n="newUsernameLabel">User email</span>
                 <input id="newUsername" type="email" data-i18n-placeholder="userEmailPlaceholder" placeholder="owner@example.com">
               </label>
@@ -612,6 +619,13 @@
                   <option value="owner">owner</option>
                   <option value="staff">staff</option>
                   <option value="cashier">cashier</option>
+                </select>
+              </label>
+              <label>
+                <span>POS system</span>
+                <select id="newUserShopType" required>
+                  <option value="fnb">F&amp;B shop</option>
+                  <option value="retail">Retail shop</option>
                 </select>
               </label>
               <button class="primary-button primary-button--full" type="submit" data-i18n="createAccountButton">Create account</button>

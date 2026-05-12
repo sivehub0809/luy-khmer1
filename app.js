@@ -175,6 +175,8 @@ const elements = {
   lowStockList: document.getElementById("lowStockList"),
   adminCreateUserForm: document.getElementById("adminCreateUserForm"),
   newUsername: document.getElementById("newUsername"),
+  newUserShopName: document.getElementById("newUserShopName"),
+  newUserShopType: document.getElementById("newUserShopType"),
   newPhone: document.getElementById("newPhone"),
   newPassword: document.getElementById("newPassword"),
   newUserRole: document.getElementById("newUserRole"),
@@ -2381,7 +2383,7 @@ function isRetailShop() {
 
 function adminRoutesForCurrentShell() {
   if (state.platformAdminView === "workspace") return ["adminChooser", "admin", "users", ...ownerRoutesForCurrentShell()];
-  return ["adminChooser", "admin", "help"];
+  return ["adminChooser", "admin", "users", "help"];
 }
 
 function ownerRoutesForCurrentShell() {
@@ -3663,9 +3665,12 @@ function renderUsers() {
     elements.userList.innerHTML = blankState(t("adminOnlyUsers"));
     return;
   }
-  elements.userCount.textContent = state.users.length;
-  elements.userList.innerHTML = state.users.length
-    ? state.users.map((user) => {
+  const visibleUsers = isPlatformAdminProfile() && state.platformAdminView !== "workspace"
+    ? (state.platformData.users || [])
+    : state.users;
+  elements.userCount.textContent = visibleUsers.length;
+  elements.userList.innerHTML = visibleUsers.length
+    ? visibleUsers.map((user) => {
         const locked = user.id === state.profile?.id || normalizeLoginIdentifier(user.email || user.username || "") === "nilaademo@gmail.com";
         return `
           <article class="record-row">
@@ -5509,29 +5514,40 @@ elements.ordersHistoryList?.addEventListener("click", handleOrderAction);
 
 elements.adminCreateUserForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (!state.profile) return;
+  if (!state.profile || !isPlatformAdminProfile()) return;
   try {
+    const shopName = elements.newUserShopName.value.trim();
+    const shopType = elements.newUserShopType.value || "fnb";
     const createdUser = await runWithStatus({
       title: state.language === "en" ? "Creating user" : "កំពុងបង្កើតអ្នកប្រើ",
       message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
       successTitle: state.language === "en" ? "User created" : "បង្កើតបាន"
     }, () => backend.createUser({
+      shopName,
+      shopType,
       username: elements.newUsername.value.trim(),
       phone: elements.newPhone.value.trim(),
       password: elements.newPassword.value.trim(),
       role: elements.newUserRole.value,
-      scope: "team"
+      scope: "platform"
     }, state.profile));
-    state.users.unshift(createdUser || {
+    const provisionedUser = createdUser || {
       id: crypto.randomUUID(),
+      shop_id: activeShopId(),
+      shop_type: shopType,
+      shop_name: shopName,
       username: elements.newUsername.value.trim(),
       email: elements.newUsername.value.trim(),
       phone: elements.newPhone.value.trim(),
       role: elements.newUserRole.value,
-      shop_id: activeShopId(),
       status: "active",
       created_at: new Date().toISOString()
-    });
+    };
+    state.platformData.users = [provisionedUser, ...(state.platformData.users || [])];
+    if (state.platformAdminView === "workspace" && provisionedUser.shop_id === activeShopId()) {
+      state.users.unshift(provisionedUser);
+    }
+    state.platformData = backend.fetchPlatformData ? await backend.fetchPlatformData() : state.platformData;
     elements.adminCreateUserForm.reset();
     renderAll();
   } catch (error) {
