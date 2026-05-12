@@ -4546,6 +4546,15 @@ function createSupabaseBackend() {
     return data;
   };
 
+  const edgeFunctionUnavailable = (error) => {
+    const message = String(error?.message || "").toLowerCase();
+    return message.includes("failed to send a request to the edge function")
+      || message.includes("non-2xx")
+      || message.includes("not found")
+      || message.includes("functionsfetcherror")
+      || message.includes("edge function");
+  };
+
   const columnMissing = (error) => String(error?.message || "").toLowerCase().includes("column");
   const relationMissing = (error) => {
     const message = String(error?.message || "").toLowerCase();
@@ -4959,6 +4968,22 @@ function createSupabaseBackend() {
       if (!["owner", "business_owner", "admin"].includes(profile.role)) throw new Error("Only owner can create users.");
       const email = normalizeLoginIdentifier(payload.username);
       const phone = normalizePhone(payload.phone);
+      if (payload.scope === "platform") {
+        try {
+          const functionResult = await callFunction("admin-create-user", {
+            username: payload.username,
+            phone: payload.phone,
+            password: payload.password,
+            shopName: payload.shopName,
+            shopType: payload.shopType || "fnb",
+            role: payload.role
+          });
+          if (functionResult?.profile) return functionResult.profile;
+          if (functionResult?.user) return functionResult.user;
+        } catch (error) {
+          if (!edgeFunctionUnavailable(error)) throw error;
+        }
+      }
       const saveProfileRecord = async (record) => {
         let { error } = await supabase.from("users").upsert(record, { onConflict: "id" });
         if (error && columnMissing(error)) {
