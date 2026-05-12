@@ -468,6 +468,8 @@ const translations = {
     expenseInvalid: "សូមបញ្ចូលចំណាយអោយត្រឹមត្រូវ",
     productInvalid: "សូមបំពេញព័ត៌មានទំនិញអោយត្រឹមត្រូវ",
     createUserFailed: "បង្កើតអ្នកប្រើមិនបាន",
+    createUserRateLimit: "Supabase កំពុងកំណត់ចំនួន email signup។ សូមរង់ចាំបន្តិច រួចសាកម្តងទៀត ឬប្រើ email ថ្មី។",
+    createUserExists: "Email នេះមានគណនីរួចហើយ។ សូមប្រើ email ផ្សេង ឬលុបគណនីចាស់ជាមុន។",
     createPdfFailed: "មិនអាចបង្កើត PDF បាន",
     saveExpenseFailed: "រក្សាទុកចំណាយមិនបាន",
     saveProductFailed: "រក្សាទុកទំនិញមិនបាន",
@@ -609,6 +611,8 @@ const translations = {
     expenseInvalid: "Please enter a valid expense.",
     productInvalid: "Please enter valid product details.",
     createUserFailed: "Could not create the user.",
+    createUserRateLimit: "Supabase email signup rate limit was reached. Please wait a bit and try again, or use a different email.",
+    createUserExists: "This email already has an account. Please use a different email or remove the old account first.",
     createPdfFailed: "Could not generate the PDF.",
     saveExpenseFailed: "Could not save the expense.",
     saveProductFailed: "Could not save the product.",
@@ -1082,6 +1086,23 @@ function loginErrorMessage(error, attemptedIdentifier) {
       return t("loginEmailOnly");
     }
     return fallback;
+  }
+  return message;
+}
+
+function createUserErrorMessage(error) {
+  const fallback = t("createUserFailed");
+  const message = String(error?.message || "").trim();
+  if (!message) return fallback;
+  const lower = message.toLowerCase();
+  if (lower.includes("email rate limit exceeded") || (lower.includes("rate limit") && lower.includes("email"))) {
+    return t("createUserRateLimit");
+  }
+  if (lower.includes("user already registered") || lower.includes("already registered")) {
+    return t("createUserExists");
+  }
+  if (lower.includes("duplicate key value violates unique constraint") && lower.includes("users_pkey")) {
+    return t("createUserExists");
   }
   return message;
 }
@@ -5625,7 +5646,7 @@ elements.adminCreateUserForm.addEventListener("submit", async (event) => {
     elements.adminCreateUserForm.reset();
     renderAll();
   } catch (error) {
-    window.alert(error.message || t("createUserFailed"));
+    window.alert(createUserErrorMessage(error));
   }
 });
 
@@ -5641,7 +5662,7 @@ const handleDeleteUser = async (targetUserId) => {
     state.platformData.users = (state.platformData.users || []).filter((item) => item.id !== targetUserId);
     renderAll();
   } catch (error) {
-    window.alert(error.message || t("createUserFailed"));
+    window.alert(createUserErrorMessage(error));
   }
 };
 
@@ -5693,7 +5714,7 @@ elements.adminPlatformForm?.addEventListener("submit", async (event) => {
     elements.adminPlatformForm.reset();
     await afterMutation();
   } catch (error) {
-    window.alert(error.message || t("createUserFailed"));
+    window.alert(createUserErrorMessage(error));
   }
 });
 
