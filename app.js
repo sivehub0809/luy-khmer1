@@ -5000,10 +5000,10 @@ function createSupabaseBackend() {
         status: "active",
         created_at: new Date().toISOString()
       };
-      let { error: profileError } = await supabase.from("users").insert(profileRecord);
+      let { error: profileError } = await supabase.from("users").upsert(profileRecord, { onConflict: "id" });
       if (profileError && columnMissing(profileError)) {
         const { email: _email, phone: _phone, ...legacyProfileRecord } = profileRecord;
-        const legacyResult = await supabase.from("users").insert(legacyProfileRecord);
+        const legacyResult = await supabase.from("users").upsert(legacyProfileRecord, { onConflict: "id" });
         profileError = legacyResult.error;
       }
       if (profileError) throw profileError;
