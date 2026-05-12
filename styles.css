@@ -2375,3 +2375,411 @@ body.shop-type-retail .record-box {
     min-width: 0;
   }
 }
+
+/* UI recovery: square system + calmer mobile hierarchy */
+.auth-card,
+.panel,
+.summary-card,
+.cart-box,
+.record-box,
+.drawer__card,
+.payment-card,
+.receipt-card,
+.quick-product,
+.category-chip,
+.system-card,
+.admin-form-note,
+.cart-footer__summary,
+.payment-total,
+.qr-box,
+.option-fieldset,
+.user-chip,
+.tag {
+  border-radius: 8px !important;
+}
+
+.tab-button,
+.primary-button,
+.secondary-button,
+.ghost-button,
+.icon-button,
+.delete-button,
+.nav-button,
+.shop-type-picker__button,
+.bottom-nav .nav-button {
+  border-radius: 6px !important;
+}
+
+.topbar {
+  margin-bottom: 12px;
+}
+
+.panel {
+  padding: 16px;
+}
+
+.panel__head {
+  margin-bottom: 10px;
+}
+
+.summary-grid,
+.settings-layout,
+.settings-stack,
+.grid-form,
+.stack-list,
+.two-column,
+.admin-chooser-grid,
+.payment-choice-grid {
+  gap: 12px;
+}
+
+.summary-card {
+  padding: 14px;
+}
+
+.summary-card strong {
+  margin-top: 6px;
+  font-size: 1.28rem;
+}
+
+.record-box,
+.cart-box {
+  padding: 12px;
+}
+
+.nav-button {
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 0.94rem;
+}
+
+.primary-button {
+  min-height: 46px;
+  padding: 0 14px;
+  font-size: 0.95rem;
+}
+
+.secondary-button,
+.ghost-button {
+  min-height: 42px;
+  padding: 0 14px;
+  font-size: 0.92rem;
+}
+
+.delete-button {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 0.84rem;
+}
+
+.icon-button {
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.category-chip {
+  min-height: 56px;
+  padding: 9px 10px;
+}
+
+.category-chip strong {
+  font-size: 0.92rem;
+}
+
+.category-chip small {
+  font-size: 0.72rem;
+}
+
+.quick-product {
+  min-height: 122px;
+  padding: 10px;
+}
+
+.quick-product strong {
+  font-size: 0.94rem;
+}
+
+.quick-product span,
+.quick-product small,
+.meta-line {
+  font-size: 0.8rem;
+}
+
+.record-actions__buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.receipt-paper {
+  padding: 14px;
+}
+
+.receipt-actions {
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.topbar__actions .secondary-button,
+.topbar__actions .primary-button {
+  min-height: 40px;
+}
+
+@media (max-width: 719px) {
+  .app-shell {
+    padding: 10px 0 76px;
+  }
+
+  .auth-shell,
+  .app-shell {
+    width: min(100% - 10px, 1120px);
+  }
+
+  .topbar {
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .brand-lockup h2 {
+    font-size: 1.05rem;
+  }
+
+  .brand-lockup .eyebrow {
+    font-size: 0.72rem;
+  }
+
+  .topbar__actions {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .topbar__actions .language-switch,
+  .topbar__actions .user-chip {
+    grid-column: 1 / -1;
+  }
+
+  .topbar__actions .tab-button,
+  .topbar__actions .secondary-button,
+  .topbar__actions .primary-button {
+    min-height: 38px;
+    font-size: 0.82rem;
+    padding: 0 10px;
+  }
+
+  .user-chip {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  .panel,
+  .summary-card,
+  .record-box,
+  .cart-box,
+  .payment-card,
+  .receipt-card,
+  .drawer__card {
+    padding: 12px;
+  }
+
+  .summary-grid,
+  .settings-layout,
+  .settings-stack,
+  .grid-form,
+  .stack-list,
+  .two-column {
+    gap: 10px;
+  }
+
+  .panel__head {
+    margin-bottom: 8px;
+  }
+
+  .panel__head h3 {
+    font-size: 1rem;
+  }
+
+  .eyebrow {
+    font-size: 0.72rem;
+  }
+
+  .summary-card strong {
+    font-size: 1.05rem;
+  }
+
+  .summary-card p,
+  .record-box h4,
+  .list-head span,
+  .meta-line {
+    font-size: 0.76rem;
+  }
+
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+    padding: 0 12px;
+    font-size: 0.9rem;
+  }
+
+  textarea {
+    min-height: 108px;
+    padding: 12px;
+  }
+
+  .nav-button {
+    min-height: 40px;
+    padding: 0 10px;
+    font-size: 0.84rem;
+  }
+
+  .primary-button {
+    min-height: 42px;
+    padding: 0 12px;
+    font-size: 0.88rem;
+  }
+
+  .secondary-button,
+  .ghost-button {
+    min-height: 38px;
+    padding: 0 10px;
+    font-size: 0.82rem;
+  }
+
+  .delete-button {
+    min-height: 32px;
+    font-size: 0.78rem;
+  }
+
+  .icon-button {
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .category-chips {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 8px 0 10px;
+  }
+
+  .category-chip {
+    min-height: 50px;
+    padding: 8px;
+  }
+
+  .category-chip strong {
+    font-size: 0.82rem;
+  }
+
+  .category-chip small {
+    font-size: 0.68rem;
+  }
+
+  .quick-product-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .quick-product {
+    min-height: 122px;
+    padding: 8px;
+    gap: 3px;
+  }
+
+  .quick-product .product-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+  }
+
+  .quick-product strong {
+    font-size: 0.82rem;
+    line-height: 1.25;
+  }
+
+  .quick-product span,
+  .quick-product small,
+  .quick-product__hint {
+    font-size: 0.68rem;
+  }
+
+  .cart-row,
+  .product-row,
+  .record-row {
+    gap: 8px;
+    padding: 10px 0;
+  }
+
+  .record-actions__buttons,
+  .checkout-actions,
+  .receipt-actions {
+    gap: 8px;
+  }
+
+  .record-actions__buttons .secondary-button,
+  .record-actions__buttons .delete-button,
+  .checkout-actions .primary-button,
+  .checkout-actions .secondary-button,
+  .receipt-actions .primary-button,
+  .receipt-actions .secondary-button {
+    width: 100%;
+  }
+
+  .mobile-checkout-button {
+    bottom: 70px;
+    min-height: 42px;
+    font-size: 0.86rem;
+  }
+
+  .bottom-nav {
+    left: 6px;
+    right: 6px;
+    bottom: 6px;
+    gap: 4px;
+    padding: 6px;
+    border-radius: 10px;
+  }
+
+  .bottom-nav .nav-button {
+    min-height: 38px;
+    padding: 0 4px;
+    font-size: 0.7rem;
+  }
+
+  .drawer {
+    padding: 8px;
+  }
+
+  .drawer__card {
+    width: min(100%, 300px);
+    padding: 12px;
+  }
+
+  .receipt-card {
+    max-height: calc(100vh - 16px);
+    padding: 8px;
+  }
+
+  .receipt-paper {
+    padding: 12px;
+  }
+
+  .receipt-brand__logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+  }
+
+  .receipt-row,
+  .receipt-total {
+    font-size: 0.78rem;
+  }
+
+  .payment-card {
+    padding: 12px;
+  }
+
+  .payment-total strong {
+    font-size: 1.4rem;
+  }
+}
