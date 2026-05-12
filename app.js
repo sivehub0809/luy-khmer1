@@ -4965,7 +4965,7 @@ function createSupabaseBackend() {
         if (shopError && columnMissing(shopError)) {
           const fallback = await supabase
             .from("shops")
-            .insert({ name: payload.shopName, status: "active" })
+            .insert({ name: payload.shopName })
             .select("*")
             .single();
           shop = fallback.data;
@@ -5040,9 +5040,7 @@ function createSupabaseBackend() {
           };
           settingsUpsert = await supabase.from("settings").upsert(legacySettings, { onConflict: "shop_id" });
         }
-        if (settingsUpsert.error && relationMissing(settingsUpsert.error)) {
-          throw new Error(t("schemaBanner"));
-        }
+        if (settingsUpsert.error && relationMissing(settingsUpsert.error)) settingsUpsert.error = null;
         if (settingsUpsert.error) throw settingsUpsert.error;
       }
       return profileRecord;
