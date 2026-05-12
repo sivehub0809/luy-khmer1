@@ -5016,11 +5016,20 @@ function createSupabaseBackend() {
     async deleteUser(actorProfile, targetUserId) {
       if (!targetUserId) throw new Error("User not found.");
       if (targetUserId === actorProfile.id) throw new Error("You cannot delete your own account.");
-      const { data: targetUser, error: targetError } = await supabase
+      let { data: targetUser, error: targetError } = await supabase
         .from("users")
-        .select("id, email, username")
+        .select("id, username, role, phone, shop_id, status")
         .eq("id", targetUserId)
         .single();
+      if (targetError && columnMissing(targetError)) {
+        const fallback = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", targetUserId)
+          .single();
+        targetUser = fallback.data;
+        targetError = fallback.error;
+      }
       if (targetError) throw targetError;
       if (isPlatformAdminProfile(targetUser)) {
         throw new Error("Platform admin account cannot be deleted.");
