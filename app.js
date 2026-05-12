@@ -1069,7 +1069,8 @@ function normalizeLoginIdentifier(value) {
 
 function isPlatformAdminProfile(profile = state.profile) {
   const identifier = String(profile?.email || profile?.username || "").trim().toLowerCase();
-  return identifier === "nilaademo@gmail.com";
+  const role = String(profile?.role || "").trim().toLowerCase();
+  return identifier === "nilaademo@gmail.com" || role === "admin";
 }
 
 function loginErrorMessage(error, attemptedIdentifier) {
@@ -3671,7 +3672,7 @@ function renderUsers() {
   elements.userCount.textContent = visibleUsers.length;
   elements.userList.innerHTML = visibleUsers.length
     ? visibleUsers.map((user) => {
-        const locked = user.id === state.profile?.id || normalizeLoginIdentifier(user.email || user.username || "") === "nilaademo@gmail.com";
+        const locked = user.id === state.profile?.id || isPlatformAdminProfile(user);
         return `
           <article class="record-row">
             <div>
@@ -3722,7 +3723,7 @@ function renderAdminScreen() {
     : blankState(t("noShops"));
   elements.adminUserList.innerHTML = state.platformData.users.length
     ? state.platformData.users.map((user) => {
-        const locked = user.id === state.profile?.id || normalizeLoginIdentifier(user.email || user.username || "") === "nilaademo@gmail.com";
+        const locked = user.id === state.profile?.id || isPlatformAdminProfile(user);
         return `
           <article class="record-row">
             <div>
@@ -4474,7 +4475,7 @@ function createMockBackend() {
       const targetUser = store.users.find((item) => item.id === targetUserId);
       if (!targetUser) throw new Error("User not found.");
       if (targetUser.id === actorProfile.id) throw new Error("You cannot delete your own account.");
-      if (normalizeLoginIdentifier(targetUser.email || targetUser.username) === "nilaademo@gmail.com") {
+      if (isPlatformAdminProfile(targetUser)) {
         throw new Error("Platform admin account cannot be deleted.");
       }
       store.users = store.users.filter((item) => item.id !== targetUserId);
@@ -5021,8 +5022,7 @@ function createSupabaseBackend() {
         .eq("id", targetUserId)
         .single();
       if (targetError) throw targetError;
-      const targetIdentifier = normalizeLoginIdentifier(targetUser?.email || targetUser?.username || "");
-      if (targetIdentifier === "nilaademo@gmail.com") {
+      if (isPlatformAdminProfile(targetUser)) {
         throw new Error("Platform admin account cannot be deleted.");
       }
       const aliasDelete = await supabase.from("login_aliases").delete().eq("user_id", targetUserId);
