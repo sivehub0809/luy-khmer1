@@ -4957,11 +4957,20 @@ function createSupabaseBackend() {
       let shopId = profile.shop_id || profile.shopId;
       if (payload.scope === "platform") {
         const shopType = payload.shopType || "fnb";
-        const { data: shop, error: shopError } = await supabase
+        let { data: shop, error: shopError } = await supabase
           .from("shops")
           .insert({ name: payload.shopName, shop_type: shopType, status: "active" })
           .select("*")
           .single();
+        if (shopError && columnMissing(shopError)) {
+          const fallback = await supabase
+            .from("shops")
+            .insert({ name: payload.shopName, status: "active" })
+            .select("*")
+            .single();
+          shop = fallback.data;
+          shopError = fallback.error;
+        }
         if (shopError) throw shopError;
         shopId = shop.id;
         const defaultCategories = (shopType === "retail" ? retailDefaultCategories() : fnbDefaultCategories()).map((name) => ({
@@ -4973,7 +4982,12 @@ function createSupabaseBackend() {
           enable_coffee: shopType !== "retail",
           enable_toppings: false
         }));
-        await supabase.from("categories").insert(defaultCategories);
+        let categoryInsert = await supabase.from("categories").insert(defaultCategories);
+        if (categoryInsert.error && columnMissing(categoryInsert.error)) {
+          const legacyCategories = defaultCategories.map((item) => ({ shop_id: item.shop_id, name: item.name }));
+          categoryInsert = await supabase.from("categories").insert(legacyCategories);
+        }
+        if (categoryInsert.error && !relationMissing(categoryInsert.error)) throw categoryInsert.error;
       }
 
       const profileRecord = {
@@ -4994,22 +5008,42 @@ function createSupabaseBackend() {
       }
       if (profileError) throw profileError;
       if (phone) {
-        await supabase.from("login_aliases").upsert({
+        const aliasUpsert = await supabase.from("login_aliases").upsert({
           alias: phone,
           login_email: email,
           user_id: authData.user.id,
           shop_id: shopId,
           updated_at: new Date().toISOString()
         });
+        if (aliasUpsert.error && !relationMissing(aliasUpsert.error)) throw aliasUpsert.error;
       }
       if (payload.scope === "platform") {
-        await supabase.from("settings").upsert({
+        let settingsUpsert = await supabase.from("settings").upsert({
           shop_id: shopId,
           ...defaultSettingsForShopType(payload.shopType || "fnb"),
           business_name: payload.shopName,
           receipt_name: payload.shopName || "nilaa-os",
           updated_at: new Date().toISOString()
         }, { onConflict: "shop_id" });
+        if (settingsUpsert.error && columnMissing(settingsUpsert.error)) {
+          const shopDefaults = defaultSettingsForShopType(payload.shopType || "fnb");
+          const legacySettings = {
+            shop_id: shopId,
+            business_name: payload.shopName,
+            business_description: shopDefaults.business_description || "",
+            payment_method: shopDefaults.payment_method || "both",
+            qr_image_url: shopDefaults.qr_image_url || "",
+            receipt_name: payload.shopName || "nilaa-os",
+            receipt_footer: shopDefaults.receipt_footer || "",
+            shop_logo_url: shopDefaults.shop_logo_url || "",
+            updated_at: new Date().toISOString()
+          };
+          settingsUpsert = await supabase.from("settings").upsert(legacySettings, { onConflict: "shop_id" });
+        }
+        if (settingsUpsert.error && relationMissing(settingsUpsert.error)) {
+          throw new Error(t("schemaBanner"));
+        }
+        if (settingsUpsert.error) throw settingsUpsert.error;
       }
       return profileRecord;
     },
