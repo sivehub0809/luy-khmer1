@@ -4938,6 +4938,15 @@ function createSupabaseBackend() {
       if (!["owner", "business_owner", "admin"].includes(profile.role)) throw new Error("Only owner can create users.");
       const email = normalizeLoginIdentifier(payload.username);
       const phone = normalizePhone(payload.phone);
+      const saveProfileRecord = async (record) => {
+        let { error } = await supabase.from("users").upsert(record, { onConflict: "id" });
+        if (error && columnMissing(error)) {
+          const { email: _email, phone: _phone, ...legacyProfileRecord } = record;
+          const legacyResult = await supabase.from("users").upsert(legacyProfileRecord, { onConflict: "id" });
+          error = legacyResult.error;
+        }
+        return error;
+      };
       const authClient = createClient(supabaseConfig.url, supabaseConfig.anonKey, {
         auth: {
           persistSession: false,
@@ -5000,12 +5009,7 @@ function createSupabaseBackend() {
         status: "active",
         created_at: new Date().toISOString()
       };
-      let { error: profileError } = await supabase.from("users").upsert(profileRecord, { onConflict: "id" });
-      if (profileError && columnMissing(profileError)) {
-        const { email: _email, phone: _phone, ...legacyProfileRecord } = profileRecord;
-        const legacyResult = await supabase.from("users").upsert(legacyProfileRecord, { onConflict: "id" });
-        profileError = legacyResult.error;
-      }
+      let profileError = await saveProfileRecord(profileRecord);
       if (profileError) throw profileError;
       if (phone) {
         const aliasUpsert = await supabase.from("login_aliases").upsert({
@@ -5043,7 +5047,36 @@ function createSupabaseBackend() {
         if (settingsUpsert.error && relationMissing(settingsUpsert.error)) settingsUpsert.error = null;
         if (settingsUpsert.error) throw settingsUpsert.error;
       }
-      return profileRecord;
+      let { data: savedProfile, error: savedProfileError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", authData.user.id)
+        .maybeSingle();
+      if (savedProfileError && columnMissing(savedProfileError)) {
+        const fallback = await supabase
+          .from("users")
+          .select("id, username, role, phone, shop_id, status, created_at")
+          .eq("id", authData.user.id)
+          .maybeSingle();
+        savedProfile = fallback.data;
+        savedProfileError = fallback.error;
+      }
+      if (savedProfileError) throw savedProfileError;
+      if (!savedProfile) {
+        profileError = await saveProfileRecord(profileRecord);
+        if (profileError) throw profileError;
+        const retryResult = await supabase
+          .from("users")
+          .select("id, username, role, phone, shop_id, status, created_at")
+          .eq("id", authData.user.id)
+          .maybeSingle();
+        if (retryResult.error) throw retryResult.error;
+        savedProfile = retryResult.data;
+      }
+      if (!savedProfile) {
+        throw new Error("User account was created, but the profile row is still missing in public.users.");
+      }
+      return savedProfile;
     },
     async deleteUser(actorProfile, targetUserId) {
       if (!targetUserId) throw new Error("User not found.");
