@@ -2782,4 +2782,100 @@ body.shop-type-retail .record-box {
   .payment-total strong {
     font-size: 1.4rem;
   }
+
+  #posScreen .panel__head {
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  #posScreen .quick-products {
+    margin: 10px 0;
+  }
+
+  #posScreen .checkout-head {
+    gap: 6px;
+  }
+
+  #posScreen .checkout-totals {
+    gap: 8px;
+  }
+
+  #posScreen .panel--checkout {
+    padding: 10px;
+  }
+
+  #posScreen .checkout-line {
+    font-size: 0.8rem;
+  }
+
+  #posScreen .checkout-line--grand strong {
+    font-size: 1rem;
+  }
+
+  #adminScreen .panel,
+  #settingsScreen .panel,
+  #expensesScreen .panel {
+    padding: 12px;
+  }
+
+  #adminScreen .summary-grid,
+  #adminScreen .grid-form,
+  #adminScreen .stack-list,
+  #settingsScreen .settings-layout,
+  #settingsScreen .settings-stack {
+    gap: 10px;
+  }
+
+  #adminScreen .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #adminScreen .shop-type-picker {
+    grid-template-columns: 1fr;
+  }
+
+  #adminScreen .record-actions__buttons,
+  #adminScreen .secondary-button,
+  #adminScreen .primary-button,
+  #adminScreen .delete-button {
+    width: 100%;
+  }
+
+  #adminScreen .record-row {
+    gap: 6px;
+  }
+
+  #adminScreen .meta-line {
+    line-height: 1.35;
+  }
+
+  #settingsScreen .settings-layout {
+    grid-template-columns: 1fr;
+  }
+
+  #settingsScreen .settings-media {
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  #settingsScreen .settings-preview {
+    max-width: 84px;
+    border-radius: 8px;
+  }
+
+  #settingsScreen .record-box--nested {
+    padding: 10px;
+  }
+
+  #settingsScreen .primary-button--full {
+    min-height: 44px;
+  }
+
+  #settingsScreen .option-toggle-grid {
+    gap: 8px;
+  }
+
+  #settingsScreen textarea {
+    min-height: 92px;
+  }
 }

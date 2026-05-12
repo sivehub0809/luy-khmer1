@@ -44,6 +44,7 @@ const state = {
   posMarkupType: "",
   stockMarkupType: "",
   ordersMarkupType: "",
+  expensesMarkupType: "",
   customersMarkupType: "",
   settingsMarkupType: ""
 };
@@ -2053,6 +2054,45 @@ function retailStockMarkup() {
   `;
 }
 
+function expensesScreenMarkup(systemLabel = "F&B", notePlaceholder = "Electricity, packaging, transport") {
+  return `
+    <article class="panel panel--${systemLabel.toLowerCase()}">
+      <div class="panel__head">
+        <div>
+          <p class="eyebrow">${systemLabel}</p>
+          <h3 data-i18n="navExpenses">Expenses</h3>
+        </div>
+      </div>
+      <form id="expenseForm" class="grid-form">
+        <label class="grid-form__wide">
+          <span data-i18n="expenseNoteLabel">Expense note</span>
+          <input id="expenseNote" type="text" data-i18n-placeholder="expenseNotePlaceholder" placeholder="${notePlaceholder}">
+        </label>
+        <label>
+          <span data-i18n="expenseAmountLabel">Amount</span>
+          <input id="expenseAmount" type="number" min="0" step="0.01" placeholder="0.00">
+        </label>
+        <button class="primary-button primary-button--full" type="submit" data-i18n="addExpenseButton">Add expense</button>
+      </form>
+      <div class="record-box">
+        <div class="list-head">
+          <h4 data-i18n="expenseListHeading">Today expenses</h4>
+          <span id="expenseCount">0</span>
+        </div>
+        <div id="expenseList" class="stack-list"></div>
+      </div>
+    </article>
+  `;
+}
+
+function fnbExpensesMarkup() {
+  return expensesScreenMarkup("F&B", "Electricity, packaging, transport");
+}
+
+function retailExpensesMarkup() {
+  return expensesScreenMarkup("Retail", "Packaging, courier, supplier, damaged stock");
+}
+
 function syncOrdersScreenElementReferences() {
   elements.ordersHistoryList = document.getElementById("ordersHistoryList");
   elements.ordersPageCount = document.getElementById("ordersPageCount");
@@ -2088,6 +2128,14 @@ function syncStockScreenElementReferences() {
   elements.productList = document.getElementById("productList");
   elements.productCount = document.getElementById("productCount");
   elements.nonStaffFields = [...document.querySelectorAll("[data-non-staff='true']")];
+}
+
+function syncExpensesScreenElementReferences() {
+  elements.expenseForm = document.getElementById("expenseForm");
+  elements.expenseNote = document.getElementById("expenseNote");
+  elements.expenseAmount = document.getElementById("expenseAmount");
+  elements.expenseList = document.getElementById("expenseList");
+  elements.expenseCount = document.getElementById("expenseCount");
 }
 
 function syncCustomersScreenElementReferences() {
@@ -2783,6 +2831,16 @@ function ensureOrdersScreenMarkup() {
   bindOrdersScreenEvents();
 }
 
+function ensureExpensesScreenMarkup() {
+  const targetType = currentShopType();
+  if (!elements.screens.expenses) return;
+  if (state.expensesMarkupType === targetType && elements.expenseForm) return;
+  elements.screens.expenses.innerHTML = targetType === "retail" ? retailExpensesMarkup() : fnbExpensesMarkup();
+  state.expensesMarkupType = targetType;
+  syncExpensesScreenElementReferences();
+  bindExpensesScreenEvents();
+}
+
 function canAccessRoute(route) {
   if (isPlatformAdminProfile()) return adminRoutesForCurrentShell().includes(route);
   const role = currentRole();
@@ -2989,6 +3047,10 @@ function renderMoney() {
   elements.todaySalesValue.textContent = money(todaySales);
   elements.todayExpenseValue.textContent = money(todayExpenses);
   elements.todayNetValue.textContent = money(todaySales - todayExpenses);
+}
+
+function renderExpenses() {
+  if (!elements.expenseList || !elements.expenseCount) return;
   elements.expenseCount.textContent = state.expenses.length;
   elements.expenseList.innerHTML = state.expenses.length
     ? state.expenses.map((expense) => `
@@ -3259,6 +3321,55 @@ function handleOrdersSearchInput() {
 function bindOrdersScreenEvents() {
   elements.ordersSearchInput?.addEventListener("input", handleOrdersSearchInput);
   elements.ordersHistoryList?.addEventListener("click", handleOrderAction);
+}
+
+async function handleSaveExpense(event) {
+  event.preventDefault();
+  if (!state.profile || !elements.expenseNote || !elements.expenseAmount) return;
+  const note = elements.expenseNote.value.trim();
+  const amount = Number(elements.expenseAmount.value);
+  if (!note || amount < 0) {
+    window.alert(t("expenseInvalid"));
+    return;
+  }
+  try {
+    const savedExpense = await runWithStatus({
+      title: state.language === "en" ? "Saving expense" : "កំពុងរក្សាទុកចំណាយ",
+      message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
+      successTitle: state.language === "en" ? "Expense saved" : "រក្សាទុកបាន"
+    }, () => backend.createExpense(activeShopId(), { note, amount }, state.profile));
+    state.expenses.unshift(savedExpense || {
+      id: crypto.randomUUID(),
+      shop_id: activeShopId(),
+      note,
+      amount,
+      created_by: state.profile.username,
+      created_at: new Date().toISOString(),
+      date: todayKey()
+    });
+  } catch (error) {
+    window.alert(error.message || t("saveExpenseFailed"));
+    return;
+  }
+  elements.expenseForm?.reset();
+  renderAll();
+}
+
+async function handleDeleteExpenseClick(event) {
+  const target = event.target.closest("[data-expense-id]");
+  if (!target || !state.profile) return;
+  await runWithStatus({
+    title: state.language === "en" ? "Removing expense" : "កំពុងលុបចំណាយ",
+    message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
+    successTitle: state.language === "en" ? "Expense removed" : "លុបបាន"
+  }, () => backend.deleteExpense(activeShopId(), target.dataset.expenseId));
+  state.expenses = state.expenses.filter((item) => item.id !== target.dataset.expenseId);
+  renderAll();
+}
+
+function bindExpensesScreenEvents() {
+  elements.expenseForm?.addEventListener("submit", handleSaveExpense);
+  elements.expenseList?.addEventListener("click", handleDeleteExpenseClick);
 }
 
 function handleProductNameDraftInput() {
@@ -3720,6 +3831,7 @@ function renderAll() {
   ensurePosScreenMarkup();
   ensureStockScreenMarkup();
   ensureOrdersScreenMarkup();
+  ensureExpensesScreenMarkup();
   ensureCustomersScreenMarkup();
   ensureSettingsScreenMarkup();
   applyLanguage();
@@ -3734,6 +3846,7 @@ function renderAll() {
   elements.customerFields?.classList.toggle("hidden", !state.customerExpanded);
   renderCart();
   renderMoney();
+  renderExpenses();
   renderProducts();
   renderOrdersHistory();
   renderReports();
@@ -5271,49 +5384,6 @@ elements.customerSearchInput?.addEventListener("input", () => {
   renderCustomers();
 });
 
-elements.expenseForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  if (!state.profile) return;
-  const note = elements.expenseNote.value.trim();
-  const amount = Number(elements.expenseAmount.value);
-  if (!note || amount < 0) {
-    window.alert(t("expenseInvalid"));
-    return;
-  }
-  try {
-    const savedExpense = await runWithStatus({
-      title: state.language === "en" ? "Saving expense" : "កំពុងរក្សាទុកចំណាយ",
-      message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
-      successTitle: state.language === "en" ? "Expense saved" : "រក្សាទុកបាន"
-    }, () => backend.createExpense(activeShopId(), { note, amount }, state.profile));
-    state.expenses.unshift(savedExpense || {
-      id: crypto.randomUUID(),
-      shop_id: activeShopId(),
-      note,
-      amount,
-      created_by: state.profile.username,
-      created_at: new Date().toISOString(),
-      date: todayKey()
-    });
-  } catch (error) {
-    window.alert(error.message || t("saveExpenseFailed"));
-    return;
-  }
-  elements.expenseForm.reset();
-  renderAll();
-});
-
-elements.expenseList.addEventListener("click", async (event) => {
-  const target = event.target.closest("[data-expense-id]");
-  if (!target || !state.profile) return;
-  await runWithStatus({
-    title: state.language === "en" ? "Removing expense" : "កំពុងលុបចំណាយ",
-    message: state.language === "en" ? "Please wait..." : "សូមរង់ចាំ...",
-    successTitle: state.language === "en" ? "Expense removed" : "លុបបាន"
-  }, () => backend.deleteExpense(activeShopId(), target.dataset.expenseId));
-  state.expenses = state.expenses.filter((item) => item.id !== target.dataset.expenseId);
-  renderAll();
-});
 
 elements.productForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
