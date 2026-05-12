@@ -2332,14 +2332,14 @@ function isRetailShop() {
 }
 
 function adminRoutesForCurrentShell() {
-  if (state.platformAdminView === "workspace") return ["adminChooser", "admin", ...ownerRoutesForCurrentShell()];
+  if (state.platformAdminView === "workspace") return ["adminChooser", "admin", "users", ...ownerRoutesForCurrentShell()];
   return ["adminChooser", "admin", "help"];
 }
 
 function ownerRoutesForCurrentShell() {
   return isRetailShop()
-    ? ["pos", "stock", "orders", "customers", "expenses", "settings", "users", "help"]
-    : ["pos", "orders", "money", "expenses", "stock", "customers", "reports", "settings", "users", "help"];
+    ? ["pos", "stock", "orders", "customers", "expenses", "settings", "help"]
+    : ["pos", "orders", "money", "expenses", "stock", "customers", "reports", "settings", "help"];
 }
 
 function staffRoutesForCurrentShell() {
@@ -2375,8 +2375,7 @@ function canManageSettings() {
 }
 
 function canManageUsers() {
-  if (isPlatformAdminProfile() && state.platformAdminView !== "workspace") return false;
-  return currentRole() === "owner";
+  return isPlatformAdminProfile();
 }
 
 function canEditProductMeta() {
@@ -5132,6 +5131,24 @@ async function openAdminIndex(filterType = state.adminShopFilterType || "all") {
   renderAll();
 }
 
+async function openAdminWorkspaceByType(shopType) {
+  if (!isPlatformAdminProfile()) return;
+  const shops = state.platformData.shops || [];
+  const currentWorkspaceMatches = state.adminWorkspaceShop && (state.adminWorkspaceShop.shop_type || "fnb") === shopType;
+  if (currentWorkspaceMatches) {
+    state.platformAdminView = "workspace";
+    state.route = "pos";
+    renderAll();
+    return;
+  }
+  const targetShop = shops.find((shop) => (shop.shop_type || "fnb") === shopType);
+  if (targetShop) {
+    await openAdminWorkspace(targetShop.id);
+    return;
+  }
+  await openAdminIndex(shopType);
+}
+
 async function registerOfflineSupport() {
   if (!("serviceWorker" in navigator)) return;
   try {
@@ -5201,7 +5218,7 @@ elements.adminSystemButtons.forEach((button) => {
     if (target === "admin") {
       await openAdminIndex("all");
     } else if (target === "fnb" || target === "retail") {
-      await openAdminIndex(target);
+      await openAdminWorkspaceByType(target);
     } else {
       state.platformAdminView = "adminChooser";
       state.adminWorkspaceShop = null;
