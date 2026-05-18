@@ -1761,7 +1761,7 @@ function fnbSettingsMarkup() {
           <div class="list-head">
             <h4 data-i18n="categoryOptionHeading">Category option defaults</h4>
           </div>
-          <form id="categoryForm" class="settings-stack">
+          <div id="categoryForm" class="settings-stack">
             <label>
               <span data-i18n="categoryNameLabel">Category name</span>
               <input id="categoryNameInput" type="text" data-i18n-placeholder="categoryNamePlaceholder" placeholder="Coffee">
@@ -1776,8 +1776,8 @@ function fnbSettingsMarkup() {
                 <label class="option-check"><input id="categoryEnableToppings" type="checkbox"><span data-i18n="productEnableToppings">Toppings</span></label>
               </div>
             </fieldset>
-            <button class="secondary-button" type="submit" data-i18n="saveCategoryButton">Save category</button>
-          </form>
+            <button id="saveCategoryButton" class="secondary-button" type="button" data-i18n="saveCategoryButton">Save category</button>
+          </div>
           <div class="record-box record-box--nested">
             <div class="list-head">
               <h4 data-i18n="categoryListHeading">Saved categories</h4>
@@ -1834,7 +1834,7 @@ function retailSettingsMarkup() {
           <div class="list-head">
             <h4 data-i18n="categoryOptionHeading">Category option defaults</h4>
           </div>
-          <form id="categoryForm" class="settings-stack">
+          <div id="categoryForm" class="settings-stack">
             <label>
               <span data-i18n="categoryNameLabel">Category name</span>
               <input id="categoryNameInput" type="text" data-i18n-placeholder="categoryNamePlaceholder" placeholder="Homeware">
@@ -1846,8 +1846,8 @@ function retailSettingsMarkup() {
                 <label class="option-check"><input id="categoryEnableToppings" type="checkbox"><span data-i18n="productEnableToppings">Toppings</span></label>
               </div>
             </fieldset>
-            <button class="secondary-button" type="submit" data-i18n="saveCategoryButton">Save category</button>
-          </form>
+            <button id="saveCategoryButton" class="secondary-button" type="button" data-i18n="saveCategoryButton">Save category</button>
+          </div>
           <div class="record-box record-box--nested">
             <div class="list-head">
               <h4 data-i18n="categoryListHeading">Saved categories</h4>
@@ -3485,6 +3485,7 @@ async function handleSaveProduct(event) {
   }
   try {
     const shopOptionDefaults = defaultOptionStateForShop(currentShopType());
+    const retailProduct = currentShopType() === "retail";
     const image_url = elements.productImageInput?.files?.[0]
       ? await readFileAsDataUrl(elements.productImageInput.files[0])
       : existing?.image_url || "";
@@ -3494,18 +3495,18 @@ async function handleSaveProduct(event) {
       : (existing?.variant_options || []);
     const optionPayload = canEditProductMeta()
       ? {
-          enable_size: elements.productEnableSize?.checked ?? shopOptionDefaults.size,
-          enable_sugar: elements.productEnableSugar?.checked ?? shopOptionDefaults.sugar,
-          enable_ice: elements.productEnableIce?.checked ?? shopOptionDefaults.ice,
-          enable_coffee: elements.productEnableCoffee?.checked ?? shopOptionDefaults.coffee,
-          enable_toppings: elements.productEnableToppings?.checked ?? shopOptionDefaults.toppings
+          enable_size: retailProduct ? (elements.productEnableSize?.checked ?? true) : (elements.productEnableSize?.checked ?? shopOptionDefaults.size),
+          enable_sugar: retailProduct ? false : (elements.productEnableSugar?.checked ?? shopOptionDefaults.sugar),
+          enable_ice: retailProduct ? false : (elements.productEnableIce?.checked ?? shopOptionDefaults.ice),
+          enable_coffee: retailProduct ? false : (elements.productEnableCoffee?.checked ?? shopOptionDefaults.coffee),
+          enable_toppings: retailProduct ? (elements.productEnableToppings?.checked ?? false) : (elements.productEnableToppings?.checked ?? shopOptionDefaults.toppings)
         }
       : {
-          enable_size: existing?.enable_size ?? shopOptionDefaults.size,
-          enable_sugar: existing?.enable_sugar ?? shopOptionDefaults.sugar,
-          enable_ice: existing?.enable_ice ?? shopOptionDefaults.ice,
-          enable_coffee: existing?.enable_coffee ?? shopOptionDefaults.coffee,
-          enable_toppings: existing?.enable_toppings ?? shopOptionDefaults.toppings
+          enable_size: retailProduct ? (existing?.enable_size ?? true) : (existing?.enable_size ?? shopOptionDefaults.size),
+          enable_sugar: retailProduct ? false : (existing?.enable_sugar ?? shopOptionDefaults.sugar),
+          enable_ice: retailProduct ? false : (existing?.enable_ice ?? shopOptionDefaults.ice),
+          enable_coffee: retailProduct ? false : (existing?.enable_coffee ?? shopOptionDefaults.coffee),
+          enable_toppings: retailProduct ? (existing?.enable_toppings ?? false) : (existing?.enable_toppings ?? shopOptionDefaults.toppings)
         };
     const payload = {
       name,
@@ -3658,7 +3659,7 @@ async function handleSaveSettings(event) {
 }
 
 async function handleSaveCategory(event) {
-  event.preventDefault();
+  event?.preventDefault?.();
   if (!state.profile) return;
   const name = elements.categoryNameInput?.value.trim() || "";
   if (!name) {
@@ -3700,7 +3701,7 @@ function bindSettingsScreenEvents() {
   elements.resetOrderCounterButton?.addEventListener("click", () => {
     if (elements.settingsOrderCounter) elements.settingsOrderCounter.value = "1";
   });
-  elements.categoryForm?.addEventListener("submit", handleSaveCategory);
+  document.getElementById("saveCategoryButton")?.addEventListener("click", handleSaveCategory);
   elements.categoryList?.addEventListener("click", async (event) => {
     const target = event.target.closest("[data-category-id]");
     if (!target || !state.profile) return;
@@ -5620,6 +5621,7 @@ elements.productForm?.addEventListener("submit", async (event) => {
   const name = elements.productNameInput.value.trim();
   const existing = currentProductByName(name);
   const shopOptionDefaults = defaultOptionStateForShop(currentShopType());
+  const retailProduct = currentShopType() === "retail";
   const price = canEditProductMeta() ? Number(elements.productPriceInput.value) : Number(existing?.price || 0);
   const stock_qty = Number(elements.productStockInput.value);
   const low_stock_at = canEditProductMeta() ? Number(elements.productLowStockInput.value) : Number(existing?.low_stock_at ?? existing?.lowStockAt ?? 5);
@@ -5641,18 +5643,18 @@ elements.productForm?.addEventListener("submit", async (event) => {
       : (existing?.variant_options || []);
     const optionPayload = canEditProductMeta()
       ? {
-          enable_size: elements.productEnableSize?.checked ?? shopOptionDefaults.size,
-          enable_sugar: elements.productEnableSugar?.checked ?? shopOptionDefaults.sugar,
-          enable_ice: elements.productEnableIce?.checked ?? shopOptionDefaults.ice,
-          enable_coffee: elements.productEnableCoffee?.checked ?? shopOptionDefaults.coffee,
-          enable_toppings: elements.productEnableToppings?.checked ?? false
+          enable_size: retailProduct ? (elements.productEnableSize?.checked ?? true) : (elements.productEnableSize?.checked ?? shopOptionDefaults.size),
+          enable_sugar: retailProduct ? false : (elements.productEnableSugar?.checked ?? shopOptionDefaults.sugar),
+          enable_ice: retailProduct ? false : (elements.productEnableIce?.checked ?? shopOptionDefaults.ice),
+          enable_coffee: retailProduct ? false : (elements.productEnableCoffee?.checked ?? shopOptionDefaults.coffee),
+          enable_toppings: retailProduct ? (elements.productEnableToppings?.checked ?? false) : (elements.productEnableToppings?.checked ?? shopOptionDefaults.toppings)
         }
       : {
-          enable_size: existing?.enable_size ?? shopOptionDefaults.size,
-          enable_sugar: existing?.enable_sugar ?? shopOptionDefaults.sugar,
-          enable_ice: existing?.enable_ice ?? shopOptionDefaults.ice,
-          enable_coffee: existing?.enable_coffee ?? shopOptionDefaults.coffee,
-          enable_toppings: existing?.enable_toppings ?? shopOptionDefaults.toppings
+          enable_size: retailProduct ? (existing?.enable_size ?? true) : (existing?.enable_size ?? shopOptionDefaults.size),
+          enable_sugar: retailProduct ? false : (existing?.enable_sugar ?? shopOptionDefaults.sugar),
+          enable_ice: retailProduct ? false : (existing?.enable_ice ?? shopOptionDefaults.ice),
+          enable_coffee: retailProduct ? false : (existing?.enable_coffee ?? shopOptionDefaults.coffee),
+          enable_toppings: retailProduct ? (existing?.enable_toppings ?? false) : (existing?.enable_toppings ?? shopOptionDefaults.toppings)
         };
     const payload = {
       name,
