@@ -4547,17 +4547,25 @@ function createSupabaseBackend() {
 
   const callFunction = async (name, body) => {
     const { data, error } = await supabase.functions.invoke(name, { body });
-    if (error) throw error;
+    if (error) {
+      try {
+        if (typeof error?.context?.json === "function") {
+          const payload = await error.context.json();
+          if (payload?.error) throw new Error(String(payload.error));
+        }
+      } catch (parseError) {
+        if (parseError instanceof Error) throw parseError;
+      }
+      throw error;
+    }
     return data;
   };
 
   const edgeFunctionUnavailable = (error) => {
     const message = String(error?.message || "").toLowerCase();
     return message.includes("failed to send a request to the edge function")
-      || message.includes("non-2xx")
       || message.includes("not found")
-      || message.includes("functionsfetcherror")
-      || message.includes("edge function");
+      || message.includes("functionsfetcherror");
   };
 
   const columnMissing = (error) => String(error?.message || "").toLowerCase().includes("column");
