@@ -40,21 +40,142 @@ const relationMissing = (error: unknown) => {
   return message.includes("schema cache") || message.includes("could not find the table") || message.includes("relation");
 };
 
+const listAuthUsers = async (adminClient: ReturnType<typeof createClient>) => {
+  const authUsersRes = await adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  if (authUsersRes.error) throw authUsersRes.error;
+  return authUsersRes.data?.users || [];
+};
+
+const ensureShop = async (adminClient: ReturnType<typeof createClient>, shopName: string, shopType: string) => {
+  const shopsRes = await adminClient
+    .from("shops")
+    .select("*")
+    .eq("name", shopName)
+    .order("created_at", { ascending: false });
+  if (shopsRes.error) throw shopsRes.error;
+
+  const publicUsersRes = await adminClient.from("users").select("id, shop_id");
+  if (publicUsersRes.error) throw publicUsersRes.error;
+  const linkedShopIds = new Set((publicUsersRes.data || []).map((user) => user.shop_id).filter(Boolean));
+
+  const matchingShops = (shopsRes.data || []).filter((shop) => (shop.shop_type || "fnb") === shopType);
+  const orphanShop = matchingShops.find((shop) => !linkedShopIds.has(shop.id));
+  if (orphanShop) return { shop: orphanShop, created: false };
+  const existingShop = matchingShops[0];
+  if (existingShop) return { shop: existingShop, created: false };
+
+  let { data: shop, error: shopError } = await adminClient
+    .from("shops")
+    .insert({ name: shopName, shop_type: shopType, status: "active" })
+    .select("*")
+    .single();
+  if (shopError && columnMissing(shopError)) {
+    const fallback = await adminClient
+      .from("shops")
+      .insert({ name: shopName })
+      .select("*")
+      .single();
+    shop = fallback.data;
+    shopError = fallback.error;
+  }
+  if (shopError) throw shopError;
+  return { shop, created: true };
+};
+
+const ensureCategories = async (adminClient: ReturnType<typeof createClient>, shopId: string, shopType: string) => {
+  const existingCategories = await adminClient.from("categories").select("id").eq("shop_id", shopId).limit(1);
+  if (existingCategories.error && !relationMissing(existingCategories.error)) throw existingCategories.error;
+  if ((existingCategories.data || []).length) return;
+
+  const categories = (shopType === "retail" ? retailDefaultCategories() : fnbDefaultCategories()).map((name) => ({
+    shop_id: shopId,
+    name,
+    enable_size: shopType === "retail",
+    enable_sugar: shopType !== "retail",
+    enable_ice: shopType !== "retail",
+    enable_coffee: shopType !== "retail",
+    enable_toppings: false
+  }));
+  let categoryInsert = await adminClient.from("categories").insert(categories);
+  if (categoryInsert.error && columnMissing(categoryInsert.error)) {
+    categoryInsert = await adminClient.from("categories").insert(categories.map((item) => ({ shop_id: item.shop_id, name: item.name })));
+  }
+  if (categoryInsert.error && !relationMissing(categoryInsert.error)) throw categoryInsert.error;
+};
+
+const ensureSettings = async (adminClient: ReturnType<typeof createClient>, shopId: string, shopName: string, shopType: string) => {
+  const defaultSettings = defaultSettingsForShopType(shopType);
+  let settingsUpsert = await adminClient.from("settings").upsert({
+    shop_id: shopId,
+    ...defaultSettings,
+    business_name: shopName,
+    receipt_name: shopName,
+    updated_at: new Date().toISOString()
+  }, { onConflict: "shop_id" });
+  if (settingsUpsert.error && columnMissing(settingsUpsert.error)) {
+    settingsUpsert = await adminClient.from("settings").upsert({
+      shop_id: shopId,
+      business_name: shopName,
+      business_description: defaultSettings.business_description,
+      payment_method: defaultSettings.payment_method,
+      qr_image_url: defaultSettings.qr_image_url,
+      receipt_name: shopName,
+      receipt_footer: defaultSettings.receipt_footer,
+      shop_logo_url: defaultSettings.shop_logo_url,
+      updated_at: new Date().toISOString()
+    }, { onConflict: "shop_id" });
+  }
+  if (settingsUpsert.error && !relationMissing(settingsUpsert.error)) throw settingsUpsert.error;
+};
+
+const ensureProfileRecord = async (
+  adminClient: ReturnType<typeof createClient>,
+  profileRecord: Record<string, unknown>
+) => {
+  let profileInsert = await adminClient.from("users").upsert(profileRecord, { onConflict: "id" });
+  if (profileInsert.error && columnMissing(profileInsert.error)) {
+    const { email: _email, phone: _phone, ...legacyProfileRecord } = profileRecord as Record<string, unknown>;
+    profileInsert = await adminClient.from("users").upsert(legacyProfileRecord, { onConflict: "id" });
+  }
+  if (profileInsert.error) throw profileInsert.error;
+};
+
+const ensureLoginAlias = async (
+  adminClient: ReturnType<typeof createClient>,
+  phone: string,
+  email: string,
+  userId: string,
+  shopId: string
+) => {
+  if (!phone) return;
+  const aliasUpsert = await adminClient.from("login_aliases").upsert({
+    alias: phone,
+    login_email: email,
+    user_id: userId,
+    shop_id: shopId,
+    updated_at: new Date().toISOString()
+  });
+  if (aliasUpsert.error && !relationMissing(aliasUpsert.error)) throw aliasUpsert.error;
+};
+
+const hydrateUserDirectory = async (adminClient: ReturnType<typeof createClient>, targetEmail: string) => {
+  const authUsers = await listAuthUsers(adminClient);
+  return authUsers.find((user) => String(user.email || "").toLowerCase() === targetEmail.toLowerCase()) || null;
+};
+
 const fetchPlatformDirectory = async (adminClient: ReturnType<typeof createClient>) => {
-  const [shopsRes, usersRes, authUsersRes] = await Promise.all([
+  const [shopsRes, usersRes, authUsers] = await Promise.all([
     adminClient.from("shops").select("*").order("created_at", { ascending: false }),
     adminClient.from("users").select("*").order("created_at", { ascending: false }),
-    adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 })
+    listAuthUsers(adminClient)
   ]);
 
   if (shopsRes.error) throw shopsRes.error;
   if (usersRes.error) throw usersRes.error;
-  if (authUsersRes.error) throw authUsersRes.error;
 
   const shops = shopsRes.data || [];
   const publicUsers = usersRes.data || [];
   const publicUsersById = new Map(publicUsers.map((user) => [user.id, user]));
-  const authUsers = authUsersRes.data?.users || [];
 
   const mergedUsers = authUsers.map((authUser) => {
     const publicUser = publicUsersById.get(authUser.id);
@@ -205,36 +326,26 @@ serve(async (request) => {
       });
     }
 
-    const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { username, phone, shopType, role }
-    });
-    if (authError || !authData.user?.id) {
-      throw authError || new Error("Could not create auth user.");
+    let authUser = await hydrateUserDirectory(adminClient, email);
+    if (!authUser) {
+      const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { username, phone, shopType, role }
+      });
+      if (authError || !authData.user?.id) {
+        throw authError || new Error("Could not create auth user.");
+      }
+      authUser = authData.user;
     }
 
-    let shop;
-    let shopError;
-    ({ data: shop, error: shopError } = await adminClient
-      .from("shops")
-      .insert({ name: shopName, shop_type: shopType, status: "active" })
-      .select("*")
-      .single());
-    if (shopError && columnMissing(shopError)) {
-      const fallback = await adminClient
-        .from("shops")
-        .insert({ name: shopName })
-        .select("*")
-        .single();
-      shop = fallback.data;
-      shopError = fallback.error;
-    }
-    if (shopError) throw shopError;
+    const { shop } = await ensureShop(adminClient, shopName, shopType);
+    await ensureCategories(adminClient, shop.id, shopType);
+    await ensureSettings(adminClient, shop.id, shopName, shopType);
 
     const profileRecord = {
-      id: authData.user.id,
+      id: authUser.id,
       username,
       email,
       phone,
@@ -243,62 +354,8 @@ serve(async (request) => {
       status: "active",
       created_at: new Date().toISOString()
     };
-
-    let profileInsert = await adminClient.from("users").upsert(profileRecord, { onConflict: "id" });
-    if (profileInsert.error && columnMissing(profileInsert.error)) {
-      const { email: _email, phone: _phone, ...legacyProfileRecord } = profileRecord;
-      profileInsert = await adminClient.from("users").upsert(legacyProfileRecord, { onConflict: "id" });
-    }
-    if (profileInsert.error) throw profileInsert.error;
-
-    if (phone) {
-      const aliasUpsert = await adminClient.from("login_aliases").upsert({
-        alias: phone,
-        login_email: email,
-        user_id: authData.user.id,
-        shop_id: shop.id,
-        updated_at: new Date().toISOString()
-      });
-      if (aliasUpsert.error && !relationMissing(aliasUpsert.error)) throw aliasUpsert.error;
-    }
-
-    const categories = (shopType === "retail" ? retailDefaultCategories() : fnbDefaultCategories()).map((name) => ({
-      shop_id: shop.id,
-      name,
-      enable_size: shopType === "retail",
-      enable_sugar: shopType !== "retail",
-      enable_ice: shopType !== "retail",
-      enable_coffee: shopType !== "retail",
-      enable_toppings: false
-    }));
-    let categoryInsert = await adminClient.from("categories").insert(categories);
-    if (categoryInsert.error && columnMissing(categoryInsert.error)) {
-      categoryInsert = await adminClient.from("categories").insert(categories.map((item) => ({ shop_id: item.shop_id, name: item.name })));
-    }
-    if (categoryInsert.error && !relationMissing(categoryInsert.error)) throw categoryInsert.error;
-
-    const defaultSettings = defaultSettingsForShopType(shopType);
-    let settingsUpsert = await adminClient.from("settings").upsert({
-      shop_id: shop.id,
-      ...defaultSettings,
-      business_name: shopName,
-      receipt_name: shopName,
-      updated_at: new Date().toISOString()
-    }, { onConflict: "shop_id" });
-    if (settingsUpsert.error && columnMissing(settingsUpsert.error)) {
-      settingsUpsert = await adminClient.from("settings").upsert({
-        shop_id: shop.id,
-        business_name: shopName,
-        business_description: defaultSettings.business_description,
-        payment_method: defaultSettings.payment_method,
-        qr_image_url: defaultSettings.qr_image_url,
-        receipt_name: shopName,
-        receipt_footer: defaultSettings.receipt_footer,
-        shop_logo_url: defaultSettings.shop_logo_url,
-        updated_at: new Date().toISOString()
-      }, { onConflict: "shop_id" });
-    }
-    if (settingsUpsert.error && !relationMissing(settingsUpsert.error)) throw settingsUpsert.error;
+    await ensureProfileRecord(adminClient, profileRecord);
+    await ensureLoginAlias(adminClient, phone, email, authUser.id, shop.id);
 
     return new Response(JSON.stringify({
       ok: true,
