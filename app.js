@@ -470,6 +470,7 @@ const translations = {
     createUserFailed: "បង្កើតអ្នកប្រើមិនបាន",
     createUserRateLimit: "Supabase កំពុងកំណត់ចំនួន email signup។ សូមរង់ចាំបន្តិច រួចសាកម្តងទៀត ឬប្រើ email ថ្មី។",
     createUserExists: "Email នេះមានគណនីរួចហើយ។ សូមប្រើ email ផ្សេង ឬលុបគណនីចាស់ជាមុន។",
+    createUserFunctionMissing: "មុខងារ admin-create-user មិនទាន់ deploy នៅ Supabase ទេ។ សូម deploy Edge Function នេះជាមុនសិន បន្ទាប់មកបង្កើតគណនីឡើងវិញ។",
     createPdfFailed: "មិនអាចបង្កើត PDF បាន",
     saveExpenseFailed: "រក្សាទុកចំណាយមិនបាន",
     saveProductFailed: "រក្សាទុកទំនិញមិនបាន",
@@ -613,6 +614,7 @@ const translations = {
     createUserFailed: "Could not create the user.",
     createUserRateLimit: "Supabase email signup rate limit was reached. Please wait a bit and try again, or use a different email.",
     createUserExists: "This email already has an account. Please use a different email or remove the old account first.",
+    createUserFunctionMissing: "The admin-create-user Edge Function is not deployed in Supabase yet. Deploy that function first, then create the account again.",
     createPdfFailed: "Could not generate the PDF.",
     saveExpenseFailed: "Could not save the expense.",
     saveProductFailed: "Could not save the product.",
@@ -1097,6 +1099,9 @@ function createUserErrorMessage(error) {
   const lower = message.toLowerCase();
   if (lower.includes("email rate limit exceeded") || (lower.includes("rate limit") && lower.includes("email"))) {
     return t("createUserRateLimit");
+  }
+  if (lower.includes("admin-create-user") && (lower.includes("not deployed") || lower.includes("edge function"))) {
+    return t("createUserFunctionMissing");
   }
   if (lower.includes("user already registered") || lower.includes("already registered")) {
     return t("createUserExists");
@@ -4981,7 +4986,10 @@ function createSupabaseBackend() {
           if (functionResult?.profile) return functionResult.profile;
           if (functionResult?.user) return functionResult.user;
         } catch (error) {
-          if (!edgeFunctionUnavailable(error)) throw error;
+          if (edgeFunctionUnavailable(error)) {
+            throw new Error("admin-create-user Edge Function is not deployed.");
+          }
+          throw error;
         }
       }
       const saveProfileRecord = async (record) => {
