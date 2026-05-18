@@ -1183,7 +1183,17 @@ function defaultOptionStateForShop(shopType = currentShopType()) {
 
 function productOptionState(product = {}) {
   const category = categoryById(product.category_id || product.categoryId);
-  const defaults = defaultOptionStateForShop(product.shop_type || product.shopType || category?.shop_type || currentShopType());
+  const shopType = product.shop_type || product.shopType || category?.shop_type || currentShopType();
+  const defaults = defaultOptionStateForShop(shopType);
+  if (shopType === "retail") {
+    return {
+      size: product.enable_size ?? category?.enable_size ?? defaults.size,
+      sugar: false,
+      ice: false,
+      coffee: false,
+      toppings: product.enable_toppings ?? category?.enable_toppings ?? defaults.toppings
+    };
+  }
   return {
     size: product.enable_size ?? category?.enable_size ?? defaults.size,
     sugar: product.enable_sugar ?? category?.enable_sugar ?? defaults.sugar,
@@ -2604,7 +2614,6 @@ function retailPosMarkup() {
           </div>
           <div class="pos-head__meta">
             <span id="currentSystemBadge" class="tag tag--system">Retail POS</span>
-            <span class="tag">Barcode / SKU</span>
             <button id="clearCartButton" class="ghost-button" type="button" data-i18n="clearCart">Clear cart</button>
           </div>
         </div>
@@ -2625,10 +2634,17 @@ function retailPosMarkup() {
           </label>
         </div>
 
+        <div class="retail-pos-callout">
+          <div class="retail-pos-callout__copy">
+            <span class="tag">Barcode / SKU</span>
+            <p class="meta-line">${safeText(t("retailPosHint"))}</p>
+          </div>
+          <button id="mobileCheckoutButton" class="primary-button mobile-checkout-button" type="button" data-i18n="scrollToCheckoutButton">View checkout</button>
+        </div>
+
         <div id="posCategoryChips">${posCategoryMarkup()}</div>
 
         <div id="quickProductList" class="quick-product-list quick-product-list--desktop"></div>
-        <button id="mobileCheckoutButton" class="primary-button mobile-checkout-button" type="button" data-i18n="scrollToCheckoutButton">View checkout</button>
 
         <form id="orderForm" class="hidden">
           <input id="productQty" type="number" min="1" value="1">
@@ -5327,12 +5343,13 @@ async function loadDashboardData() {
   }
   state.categories = (data.categories || []).map((row) => {
     const shopDefaults = defaultOptionStateForShop(state.adminWorkspaceShop?.shop_type || state.shop?.shop_type || currentShopType());
+    const retailCategory = (row.shop_type || state.adminWorkspaceShop?.shop_type || state.shop?.shop_type || currentShopType()) === "retail";
     return {
       ...row,
       enable_size: row.enable_size ?? shopDefaults.size,
-      enable_sugar: row.enable_sugar ?? shopDefaults.sugar,
-      enable_ice: row.enable_ice ?? shopDefaults.ice,
-      enable_coffee: row.enable_coffee ?? shopDefaults.coffee,
+      enable_sugar: retailCategory ? false : (row.enable_sugar ?? shopDefaults.sugar),
+      enable_ice: retailCategory ? false : (row.enable_ice ?? shopDefaults.ice),
+      enable_coffee: retailCategory ? false : (row.enable_coffee ?? shopDefaults.coffee),
       enable_toppings: row.enable_toppings ?? shopDefaults.toppings
     };
   });
@@ -5343,6 +5360,9 @@ async function loadDashboardData() {
     cost_price: Number(row.cost_price || 0),
     discount: Number(row.discount || 0),
     low_stock_at: Number(row.low_stock_at ?? row.lowStockAt ?? 0),
+    enable_sugar: currentShopType() === "retail" ? false : row.enable_sugar,
+    enable_ice: currentShopType() === "retail" ? false : row.enable_ice,
+    enable_coffee: currentShopType() === "retail" ? false : row.enable_coffee,
     variant_options: Array.isArray(row.variant_options) ? row.variant_options : []
   }));
   state.expenses = data.expenses.map((row) => ({ ...row, amount: Number(row.amount || 0) }));
@@ -5575,6 +5595,7 @@ elements.productForm?.addEventListener("submit", async (event) => {
   if (!state.profile) return;
   const name = elements.productNameInput.value.trim();
   const existing = currentProductByName(name);
+  const shopOptionDefaults = defaultOptionStateForShop(currentShopType());
   const price = canEditProductMeta() ? Number(elements.productPriceInput.value) : Number(existing?.price || 0);
   const stock_qty = Number(elements.productStockInput.value);
   const low_stock_at = canEditProductMeta() ? Number(elements.productLowStockInput.value) : Number(existing?.low_stock_at ?? existing?.lowStockAt ?? 5);
@@ -5596,18 +5617,18 @@ elements.productForm?.addEventListener("submit", async (event) => {
       : (existing?.variant_options || []);
     const optionPayload = canEditProductMeta()
       ? {
-          enable_size: elements.productEnableSize?.checked ?? true,
-          enable_sugar: elements.productEnableSugar?.checked ?? true,
-          enable_ice: elements.productEnableIce?.checked ?? true,
-          enable_coffee: elements.productEnableCoffee?.checked ?? true,
+          enable_size: elements.productEnableSize?.checked ?? shopOptionDefaults.size,
+          enable_sugar: elements.productEnableSugar?.checked ?? shopOptionDefaults.sugar,
+          enable_ice: elements.productEnableIce?.checked ?? shopOptionDefaults.ice,
+          enable_coffee: elements.productEnableCoffee?.checked ?? shopOptionDefaults.coffee,
           enable_toppings: elements.productEnableToppings?.checked ?? false
         }
       : {
-          enable_size: existing?.enable_size ?? true,
-          enable_sugar: existing?.enable_sugar ?? true,
-          enable_ice: existing?.enable_ice ?? true,
-          enable_coffee: existing?.enable_coffee ?? true,
-          enable_toppings: existing?.enable_toppings ?? false
+          enable_size: existing?.enable_size ?? shopOptionDefaults.size,
+          enable_sugar: existing?.enable_sugar ?? shopOptionDefaults.sugar,
+          enable_ice: existing?.enable_ice ?? shopOptionDefaults.ice,
+          enable_coffee: existing?.enable_coffee ?? shopOptionDefaults.coffee,
+          enable_toppings: existing?.enable_toppings ?? shopOptionDefaults.toppings
         };
     const payload = {
       name,

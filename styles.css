@@ -1810,6 +1810,23 @@ textarea {
   display: none;
 }
 
+.retail-pos-callout {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin: 6px 0 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 93, 253, 0.12);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(240, 247, 255, 0.94));
+}
+
+.retail-pos-callout__copy {
+  display: grid;
+  gap: 8px;
+}
+
 .item-modal-card {
   max-height: calc(100vh - 24px);
   overflow: auto;
@@ -2172,6 +2189,8 @@ body.shop-type-retail .quick-product {
   align-content: start;
   gap: 8px;
   border-color: rgba(0, 93, 253, 0.16);
+  padding: 16px;
+  box-shadow: 0 12px 24px rgba(10, 37, 64, 0.05);
 }
 
 body.shop-type-retail .quick-product img,
@@ -2179,8 +2198,20 @@ body.shop-type-retail .product-row__media img {
   border-radius: 10px;
 }
 
+body.shop-type-retail .quick-product strong {
+  font-size: 1.02rem;
+  line-height: 1.35;
+}
+
+body.shop-type-retail .quick-product__hint {
+  color: #2b5dcf;
+  font-weight: 700;
+}
+
 body.shop-type-retail .panel--checkout {
   border-left: 2px solid rgba(0, 93, 253, 0.14);
+  position: sticky;
+  top: 16px;
 }
 
 body.shop-type-retail .payment-choice-grid {
@@ -2230,9 +2261,39 @@ body.shop-type-retail .record-box {
   background: #ffffff;
 }
 
+body.shop-type-retail .category-chip {
+  min-height: 76px;
+  padding: 14px;
+  border-width: 2px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+body.shop-type-retail .category-chip strong {
+  font-size: 1rem;
+}
+
+body.shop-type-retail .checkout-actions .primary-button {
+  min-height: 58px;
+  font-size: 1rem;
+  box-shadow: 0 14px 28px rgba(0, 93, 253, 0.16);
+}
+
 @media (min-width: 720px) {
   .retail-checkout-fields {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 719px) {
+  .retail-pos-callout {
+    display: grid;
+    gap: 10px;
+  }
+
+  .retail-pos-callout .mobile-checkout-button {
+    display: inline-flex;
+    width: 100%;
+    justify-content: center;
   }
 }
 
