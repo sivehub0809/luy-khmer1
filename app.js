@@ -3204,7 +3204,9 @@ function renderProducts() {
             ${category ? `<small>${safeText(category.name)}</small>` : ""}
             ${retailMeta ? `<small>${safeText(retailMeta)}</small>` : ""}
             <span>${money(product.price)} • ${left}</span>
-            <span class="quick-product__hint">${safeText(optionCount ? t("optionsCountLabel", { count: optionCount }) : t("tapToAdd"))}</span>
+            <span class="quick-product__hint">${safeText(isRetailShop()
+              ? (optionCount ? (state.language === "en" ? "Open details" : "បើកព័ត៌មានទំនិញ") : (state.language === "en" ? "Add to cart" : "បន្ថែមទៅកន្ត្រក"))
+              : (optionCount ? t("optionsCountLabel", { count: optionCount }) : t("tapToAdd")))}</span>
           </button>
         `;
       }).join("")
@@ -4088,6 +4090,15 @@ function sizeIconForIndex(index) {
 function renderSizeButtons(options, selectedValue) {
   if (!elements.itemSizeButtons) return;
   const visibleOptions = options.slice(0, 3);
+  if (isRetailShop()) {
+    elements.itemSizeButtons.innerHTML = visibleOptions.map((option) => `
+      <button class="size-button size-button--retail ${option === selectedValue ? "size-button--active" : ""}" type="button" data-size-option="${safeText(option)}">
+        <strong>${safeText(option)}</strong>
+        <small>${safeText(state.language === "en" ? "Size option" : "ជម្រើសទំហំ")}</small>
+      </button>
+    `).join("");
+    return;
+  }
   elements.itemSizeButtons.innerHTML = visibleOptions.map((option, index) => `
     <button class="size-button ${option === selectedValue ? "size-button--active" : ""}" type="button" data-size-option="${safeText(option)}">
       <span class="size-button__icon">${safeText(sizeIconForIndex(index))}</span>
@@ -4122,6 +4133,16 @@ function renderItemCustomizer() {
   }
   fillSelectOptions(elements.itemVariant, variantOptions.length ? variantOptions : [product.color, product.size_label].filter(Boolean));
   elements.itemVariantLabel?.classList.toggle("hidden", !isRetailShop() || !(variantOptions.length || product.color || product.size_label));
+  if (elements.itemVariantLabel) {
+    const variantLabelText = elements.itemVariantLabel.querySelector("span");
+    if (variantLabelText && isRetailShop()) variantLabelText.textContent = state.language === "en" ? "Variant" : "វ៉ារ្យ៉ង់";
+  }
+  if (elements.itemSizeField) {
+    const sizeLegend = elements.itemSizeField.querySelector("legend");
+    if (sizeLegend) sizeLegend.textContent = isRetailShop()
+      ? (state.language === "en" ? "Size option" : "ជម្រើសទំហំ")
+      : t("sizeLabel");
+  }
   fillSelectOptions(elements.itemSize, config.sizes);
   fillSelectOptions(elements.itemSugar, config.sugar);
   fillSelectOptions(elements.itemIce, config.ice);
@@ -4145,6 +4166,9 @@ function renderItemCustomizer() {
     : `<p class="meta-line">${safeText(state.language === "en" ? "No toppings configured yet." : "មិនទាន់មាន topping ទេ។")}</p>`;
   elements.itemToppings.closest("fieldset")?.classList.toggle("hidden", !enabled.toppings);
   elements.itemNote.value = "";
+  elements.itemNote.placeholder = isRetailShop()
+    ? (state.language === "en" ? "Add size, color, or order note" : "បន្ថែមចំណាំអំពីទំហំ ពណ៌ ឬការបញ្ជាទិញ")
+    : t("notePlaceholder");
   elements.itemModal.classList.remove("hidden");
 }
 
