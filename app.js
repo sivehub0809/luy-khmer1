@@ -1170,14 +1170,26 @@ function categoryById(categoryId) {
   return state.categories.find((item) => item.id === categoryId) || null;
 }
 
+function defaultOptionStateForShop(shopType = currentShopType()) {
+  const retail = shopType === "retail";
+  return {
+    size: true,
+    sugar: !retail,
+    ice: !retail,
+    coffee: !retail,
+    toppings: false
+  };
+}
+
 function productOptionState(product = {}) {
   const category = categoryById(product.category_id || product.categoryId);
+  const defaults = defaultOptionStateForShop(product.shop_type || product.shopType || category?.shop_type || currentShopType());
   return {
-    size: product.enable_size ?? category?.enable_size ?? true,
-    sugar: product.enable_sugar ?? category?.enable_sugar ?? true,
-    ice: product.enable_ice ?? category?.enable_ice ?? true,
-    coffee: product.enable_coffee ?? category?.enable_coffee ?? true,
-    toppings: product.enable_toppings ?? category?.enable_toppings ?? false
+    size: product.enable_size ?? category?.enable_size ?? defaults.size,
+    sugar: product.enable_sugar ?? category?.enable_sugar ?? defaults.sugar,
+    ice: product.enable_ice ?? category?.enable_ice ?? defaults.ice,
+    coffee: product.enable_coffee ?? category?.enable_coffee ?? defaults.coffee,
+    toppings: product.enable_toppings ?? category?.enable_toppings ?? defaults.toppings
   };
 }
 
@@ -2316,12 +2328,13 @@ function renderCategories() {
 
 function applyCategoryDefaultsToProductForm(categoryId) {
   const category = categoryById(categoryId);
+  const shopDefaults = defaultOptionStateForShop(currentShopType());
   const defaults = {
-    size: category?.enable_size ?? true,
-    sugar: category?.enable_sugar ?? true,
-    ice: category?.enable_ice ?? true,
-    coffee: category?.enable_coffee ?? true,
-    toppings: category?.enable_toppings ?? false
+    size: category?.enable_size ?? shopDefaults.size,
+    sugar: category?.enable_sugar ?? shopDefaults.sugar,
+    ice: category?.enable_ice ?? shopDefaults.ice,
+    coffee: category?.enable_coffee ?? shopDefaults.coffee,
+    toppings: category?.enable_toppings ?? shopDefaults.toppings
   };
   if (elements.productEnableSize) elements.productEnableSize.checked = defaults.size;
   if (elements.productEnableSugar) elements.productEnableSugar.checked = defaults.sugar;
@@ -3453,6 +3466,7 @@ async function handleSaveProduct(event) {
     return;
   }
   try {
+    const shopOptionDefaults = defaultOptionStateForShop(currentShopType());
     const image_url = elements.productImageInput?.files?.[0]
       ? await readFileAsDataUrl(elements.productImageInput.files[0])
       : existing?.image_url || "";
@@ -3462,18 +3476,18 @@ async function handleSaveProduct(event) {
       : (existing?.variant_options || []);
     const optionPayload = canEditProductMeta()
       ? {
-          enable_size: elements.productEnableSize?.checked ?? true,
-          enable_sugar: elements.productEnableSugar?.checked ?? true,
-          enable_ice: elements.productEnableIce?.checked ?? true,
-          enable_coffee: elements.productEnableCoffee?.checked ?? true,
-          enable_toppings: elements.productEnableToppings?.checked ?? false
+          enable_size: elements.productEnableSize?.checked ?? shopOptionDefaults.size,
+          enable_sugar: elements.productEnableSugar?.checked ?? shopOptionDefaults.sugar,
+          enable_ice: elements.productEnableIce?.checked ?? shopOptionDefaults.ice,
+          enable_coffee: elements.productEnableCoffee?.checked ?? shopOptionDefaults.coffee,
+          enable_toppings: elements.productEnableToppings?.checked ?? shopOptionDefaults.toppings
         }
       : {
-          enable_size: existing?.enable_size ?? true,
-          enable_sugar: existing?.enable_sugar ?? true,
-          enable_ice: existing?.enable_ice ?? true,
-          enable_coffee: existing?.enable_coffee ?? true,
-          enable_toppings: existing?.enable_toppings ?? false
+          enable_size: existing?.enable_size ?? shopOptionDefaults.size,
+          enable_sugar: existing?.enable_sugar ?? shopOptionDefaults.sugar,
+          enable_ice: existing?.enable_ice ?? shopOptionDefaults.ice,
+          enable_coffee: existing?.enable_coffee ?? shopOptionDefaults.coffee,
+          enable_toppings: existing?.enable_toppings ?? shopOptionDefaults.toppings
         };
     const payload = {
       name,
@@ -5311,14 +5325,17 @@ async function loadDashboardData() {
     data = snapshot;
     state.isOfflineSnapshot = true;
   }
-  state.categories = (data.categories || []).map((row) => ({
-    ...row,
-    enable_size: row.enable_size ?? true,
-    enable_sugar: row.enable_sugar ?? true,
-    enable_ice: row.enable_ice ?? true,
-    enable_coffee: row.enable_coffee ?? true,
-    enable_toppings: row.enable_toppings ?? false
-  }));
+  state.categories = (data.categories || []).map((row) => {
+    const shopDefaults = defaultOptionStateForShop(state.adminWorkspaceShop?.shop_type || state.shop?.shop_type || currentShopType());
+    return {
+      ...row,
+      enable_size: row.enable_size ?? shopDefaults.size,
+      enable_sugar: row.enable_sugar ?? shopDefaults.sugar,
+      enable_ice: row.enable_ice ?? shopDefaults.ice,
+      enable_coffee: row.enable_coffee ?? shopDefaults.coffee,
+      enable_toppings: row.enable_toppings ?? shopDefaults.toppings
+    };
+  });
   state.products = data.products.map((row) => ({
     ...row,
     stock_qty: Number(row.stock_qty ?? row.stockQty ?? 0),
