@@ -471,6 +471,7 @@ const translations = {
     createUserRateLimit: "Supabase កំពុងកំណត់ចំនួន email signup។ សូមរង់ចាំបន្តិច រួចសាកម្តងទៀត ឬប្រើ email ថ្មី។",
     createUserExists: "Email នេះមានគណនីរួចហើយ។ សូមប្រើ email ផ្សេង ឬលុបគណនីចាស់ជាមុន។",
     createUserFunctionMissing: "មុខងារ admin-create-user មិនទាន់ deploy នៅ Supabase ទេ។ សូម deploy Edge Function នេះជាមុនសិន បន្ទាប់មកបង្កើតគណនីឡើងវិញ។",
+    confirmDeleteUser: "តើអ្នកពិតជាចង់លុបគណនីនេះមែនទេ?",
     createPdfFailed: "មិនអាចបង្កើត PDF បាន",
     saveExpenseFailed: "រក្សាទុកចំណាយមិនបាន",
     saveProductFailed: "រក្សាទុកទំនិញមិនបាន",
@@ -615,6 +616,7 @@ const translations = {
     createUserRateLimit: "Supabase email signup rate limit was reached. Please wait a bit and try again, or use a different email.",
     createUserExists: "This email already has an account. Please use a different email or remove the old account first.",
     createUserFunctionMissing: "The admin-create-user Edge Function is not deployed in Supabase yet. Deploy that function first, then create the account again.",
+    confirmDeleteUser: "Are you sure you want to delete this account?",
     createPdfFailed: "Could not generate the PDF.",
     saveExpenseFailed: "Could not save the expense.",
     saveProductFailed: "Could not save the product.",
@@ -5693,6 +5695,7 @@ elements.adminCreateUserForm.addEventListener("submit", async (event) => {
 
 const handleDeleteUser = async (targetUserId) => {
   if (!targetUserId || !state.profile) return;
+  if (!window.confirm(t("confirmDeleteUser"))) return;
   try {
     await runWithStatus({
       title: state.language === "en" ? "Removing account" : "កំពុងលុបគណនី",
