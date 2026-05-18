@@ -3756,7 +3756,7 @@ function renderAdminScreen() {
           <article class="record-row">
             <div>
               <strong>${safeText(user.username || user.email || "-")}</strong>
-              <div class="meta-line">${safeText([user.role, user.shop_id || user.shopId, user.phone].filter(Boolean).join(" • "))}</div>
+              <div class="meta-line">${safeText([user.email, user.role, user.shop_id || user.shopId, user.phone, user.source === "auth_only" ? "auth only" : ""].filter(Boolean).join(" • "))}</div>
             </div>
             ${locked ? "" : `
               <div class="record-actions__buttons">
@@ -4674,6 +4674,20 @@ function createSupabaseBackend() {
       };
     },
     async fetchPlatformData() {
+      try {
+        const functionResult = await callFunction("admin-create-user", { action: "list" });
+        if (functionResult?.shops && functionResult?.users) {
+          return {
+            shops: functionResult.shops || [],
+            users: functionResult.users || []
+          };
+        }
+      } catch (error) {
+        if (edgeFunctionUnavailable(error)) {
+          throw new Error("admin-create-user Edge Function is not deployed.");
+        }
+        console.warn("Falling back to public admin directory.", error);
+      }
       const [shopsRes, usersRes] = await Promise.all([
         supabase.from("shops").select("*").order("created_at", { ascending: false }),
         supabase.from("users").select("*").neq("status", "disabled").order("created_at", { ascending: false })
@@ -5145,6 +5159,17 @@ function createSupabaseBackend() {
     async deleteUser(actorProfile, targetUserId) {
       if (!targetUserId) throw new Error("User not found.");
       if (targetUserId === actorProfile.id) throw new Error("You cannot delete your own account.");
+      if (isPlatformAdminProfile(actorProfile)) {
+        try {
+          await callFunction("admin-create-user", { action: "delete", targetUserId });
+          return;
+        } catch (error) {
+          if (edgeFunctionUnavailable(error)) {
+            throw new Error("admin-create-user Edge Function is not deployed.");
+          }
+          throw error;
+        }
+      }
       let { data: targetUser, error: targetError } = await supabase
         .from("users")
         .select("id, username, role, phone, shop_id, status")
@@ -5703,7 +5728,11 @@ const handleDeleteUser = async (targetUserId) => {
       successTitle: state.language === "en" ? "Account removed" : "លុបគណនីបាន"
     }, () => backend.deleteUser(state.profile, targetUserId));
     state.users = state.users.filter((item) => item.id !== targetUserId);
-    state.platformData.users = (state.platformData.users || []).filter((item) => item.id !== targetUserId);
+    if (isPlatformAdminProfile() && backend.fetchPlatformData) {
+      state.platformData = await backend.fetchPlatformData();
+    } else {
+      state.platformData.users = (state.platformData.users || []).filter((item) => item.id !== targetUserId);
+    }
     renderAll();
   } catch (error) {
     window.alert(createUserErrorMessage(error));

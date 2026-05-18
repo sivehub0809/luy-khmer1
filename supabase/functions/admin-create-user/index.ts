@@ -40,6 +40,58 @@ const relationMissing = (error: unknown) => {
   return message.includes("schema cache") || message.includes("could not find the table") || message.includes("relation");
 };
 
+const fetchPlatformDirectory = async (adminClient: ReturnType<typeof createClient>) => {
+  const [shopsRes, usersRes, authUsersRes] = await Promise.all([
+    adminClient.from("shops").select("*").order("created_at", { ascending: false }),
+    adminClient.from("users").select("*").order("created_at", { ascending: false }),
+    adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 })
+  ]);
+
+  if (shopsRes.error) throw shopsRes.error;
+  if (usersRes.error) throw usersRes.error;
+  if (authUsersRes.error) throw authUsersRes.error;
+
+  const shops = shopsRes.data || [];
+  const publicUsers = usersRes.data || [];
+  const publicUsersById = new Map(publicUsers.map((user) => [user.id, user]));
+  const authUsers = authUsersRes.data?.users || [];
+
+  const mergedUsers = authUsers.map((authUser) => {
+    const publicUser = publicUsersById.get(authUser.id);
+    publicUsersById.delete(authUser.id);
+    return {
+      id: authUser.id,
+      username: publicUser?.username || authUser.user_metadata?.username || authUser.email?.split("@")[0] || "-",
+      email: publicUser?.email || authUser.email || "",
+      phone: publicUser?.phone || authUser.phone || authUser.user_metadata?.phone || "",
+      role: publicUser?.role || authUser.user_metadata?.role || "owner",
+      shop_id: publicUser?.shop_id || null,
+      status: publicUser?.status || "active",
+      created_at: publicUser?.created_at || authUser.created_at || null,
+      source: publicUser ? "linked" : "auth_only"
+    };
+  });
+
+  for (const publicUser of publicUsersById.values()) {
+    mergedUsers.push({
+      id: publicUser.id,
+      username: publicUser.username || publicUser.email || "-",
+      email: publicUser.email || "",
+      phone: publicUser.phone || "",
+      role: publicUser.role || "owner",
+      shop_id: publicUser.shop_id || null,
+      status: publicUser.status || "active",
+      created_at: publicUser.created_at || null,
+      source: "profile_only"
+    });
+  }
+
+  return {
+    shops,
+    users: mergedUsers.filter((user) => user.status !== "disabled")
+  };
+};
+
 serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -83,6 +135,61 @@ serve(async (request) => {
     }
 
     const body = await request.json();
+    const action = String(body?.action || "create").trim().toLowerCase();
+
+    if (action === "list") {
+      const directory = await fetchPlatformDirectory(adminClient);
+      return new Response(JSON.stringify(directory), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    if (action === "delete") {
+      const targetUserId = String(body?.targetUserId || "").trim();
+      if (!targetUserId) {
+        return new Response(JSON.stringify({ error: "Missing target user id." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+      if (targetUserId === actor.id) {
+        return new Response(JSON.stringify({ error: "You cannot delete your own account." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      const directory = await fetchPlatformDirectory(adminClient);
+      const targetUser = directory.users.find((user) => user.id === targetUserId);
+      if (!targetUser) {
+        return new Response(JSON.stringify({ error: "User not found." }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+      if (String(targetUser.role || "").toLowerCase() === "admin" || String(targetUser.email || "").toLowerCase() === "nilaademo@gmail.com") {
+        return new Response(JSON.stringify({ error: "Platform admin account cannot be deleted." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      const aliasDelete = await adminClient.from("login_aliases").delete().eq("user_id", targetUserId);
+      if (aliasDelete.error && !relationMissing(aliasDelete.error)) throw aliasDelete.error;
+
+      const profileDelete = await adminClient.from("users").delete().eq("id", targetUserId);
+      if (profileDelete.error && !relationMissing(profileDelete.error)) throw profileDelete.error;
+
+      const authDelete = await adminClient.auth.admin.deleteUser(targetUserId);
+      if (authDelete.error) throw authDelete.error;
+
+      return new Response(JSON.stringify({ ok: true, deletedUserId: targetUserId }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
     const username = String(body?.username || "").trim();
     const email = username.toLowerCase();
     const phone = normalizePhone(body?.phone || "");
